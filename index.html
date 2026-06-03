@@ -1,69 +1,215 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>里维斯 · AI 工具教程</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Microsoft YaHei','PingFang SC','Helvetica Neue',sans-serif;
-    background: #F5F0EB; color: #1A1A2E; min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 60px 20px 40px;
-  }
-  .container { max-width: 640px; width: 100%; }
-  .logo { font-size: 28px; font-weight: 800; margin-bottom: 6px; color: #2D1B69; }
-  .tagline { font-size: 15px; color: #8A8A9E; margin-bottom: 40px; }
-  .card {
-    background: #FFF9F0; border-radius: 16px; padding: 24px;
-    margin-bottom: 16px; border: 1px solid #EDE8E0;
-    transition: all 0.25s ease; cursor: pointer;
-    display: flex; align-items: center; gap: 18px;
-    text-decoration: none; color: inherit;
-  }
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124,92,252,0.10);
-    border-color: rgba(124,92,252,0.25);
-  }
-  .card .icon {
-    width: 48px; height: 48px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; flex-shrink: 0;
-  }
-  .card .icon.cc { background: linear-gradient(135deg, #FF6B35, #7C5CFC); color: #fff; }
-  .card .icon.mx { background: linear-gradient(135deg, #2ECC71, #1ABC9C); color: #fff; }
-  .card .info h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-  .card .info p { font-size: 14px; color: #8A8A9E; line-height: 1.5; }
-  .card .arrow { margin-left: auto; color: #C8C4BE; font-size: 20px; flex-shrink: 0; }
-  .footer { margin-top: 40px; font-size: 13px; color: #B8B4AE; text-align: center; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>里维斯 Leevis · AI 工具实操</title>
+  <meta name="description" content="里维斯 Leevis — AI 工具实操博主。产品经理视角，分享 Claude Code、Cursor、Copilot 等 AI 编程工具的安装配置与使用教程。">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/style.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%236C4DF6'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-family='sans-serif' font-weight='700'>L</text></svg>">
 </head>
 <body>
-<div class="container">
-  <div class="logo">里维斯 · AI</div>
-  <div class="tagline">用AI提升效率，而不是被AI替代</div>
 
-  <a class="card" href="/claude-code-tutorial/">
-    <div class="icon cc">CC</div>
-    <div class="info">
-      <h3>Claude Code + DeepSeek V4 教程</h3>
-      <p>Windows 安装配置 · 国内网络直连 · 全部命令可复制</p>
+<!-- Skip Link -->
+<a href="#main" class="skip-link">跳到主要内容</a>
+
+<!-- Nav Bar -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      里维斯 Leevis
+    </a>
+    <div class="nav-actions">
+      <a href="https://www.xiaohongshu.com/user/profile/6a0d8d80000000000103e802?xsec_token=YB6cSKj45qSFz2HT9q5cdBEjZHWeDn1mTltqpWUsWe0f0=&xsec_source=app_share&&apptime=1780124461&shareRedId=OEcyRDtJPDk2NzUyOTgwNjY0OTpJPTY7&share_id=8cbed99e4f9c41a5992fd4554260c0fc&xhsshare=CopyLink" class="nav-link" target="_blank" rel="noopener" aria-label="小红书主页">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="6"/>
+          <path d="M8 8h3.5a2.5 2.5 0 0 1 0 5H8V8Z"/>
+          <path d="M16 8v5a2.5 2.5 0 0 1-5 0"/>
+          <circle cx="16" cy="8" r="1.5"/>
+        </svg>
+        <span class="nav-link-text">小红书</span>
+      </a>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换深色/浅色模式">
+        <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
     </div>
-    <div class="arrow">→</div>
-  </a>
+  </div>
+</header>
 
-  <a class="card" href="/mx-shell-tutorial/">
-    <div class="icon mx">MX</div>
-    <div class="info">
-      <h3>Mx-Shell AI 短片创作</h3>
-      <p>从剧本到视频 · AI 短片全流程操作手册</p>
+<main id="main">
+  <div class="page-layout">
+
+    <!-- ====== Left Sidebar ====== -->
+    <aside class="sidebar">
+
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-avatar">
+          <img src="assets/avatar.png" alt="里维斯 Leevis 头像" width="80" height="80">
+        </div>
+        <h1 class="hero-name">里维斯 Leevis</h1>
+        <p class="hero-role">AI 工具实操博主 · 产品经理视角</p>
+        <p class="hero-tagline">把 AI 真正用到工作里</p>
+        <div class="hero-cta">
+          <a href="https://www.xiaohongshu.com/user/profile/6a0d8d80000000000103e802?xsec_token=YB6cSKj45qSFz2HT9q5cdBEjZHWeDn1mTltqpWUsWe0f0=&xsec_source=app_share&&apptime=1780124461&shareRedId=OEcyRDtJPDk2NzUyOTgwNjY0OTpJPTY7&share_id=8cbed99e4f9c41a5992fd4554260c0fc&xhsshare=CopyLink" class="btn btn-primary" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="6"/><path d="M8 8h3.5a2.5 2.5 0 0 1 0 5H8V8Z"/><path d="M16 8v5a2.5 2.5 0 0 1-5 0"/><circle cx="16" cy="8" r="1.5"/>
+            </svg>
+            关注小红书
+          </a>
+          <a href="#tutorials" class="btn btn-secondary">浏览教程</a>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="section" id="about">
+        <h2 class="section-title">关于我</h2>
+        <div class="section-line"></div>
+        <p class="about-text">
+          Hey，我是里维斯 👋<br><br>
+          一名产品经理，日常大量使用 AI 工具提效。我把自己踩过的坑、好用的配置、实际工作中的工具链整理成教程，让更多人少走弯路。
+        </p>
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-number">--</span>
+            <span class="stat-label">已写教程</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">--</span>
+            <span class="stat-label">探索工具</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">--</span>
+            <span class="stat-label">占位待填</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="section" id="cta">
+        <div class="cta-card">
+          <h2>📕 在小红书找到我</h2>
+          <p>每天分享 AI 工具实操教程，评论你想要的工具，下期安排</p>
+          <a href="https://www.xiaohongshu.com/user/profile/6a0d8d80000000000103e802?xsec_token=YB6cSKj45qSFz2HT9q5cdBEjZHWeDn1mTltqpWUsWe0f0=&xsec_source=app_share&&apptime=1780124461&shareRedId=OEcyRDtJPDk2NzUyOTgwNjY0OTpJPTY7&share_id=8cbed99e4f9c41a5992fd4554260c0fc&xhsshare=CopyLink" class="btn btn-primary" target="_blank" rel="noopener">
+            🔴 关注「里维斯」
+          </a>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- ====== Right: Main Content ====== -->
+    <div class="main-content">
+
+      <!-- Tutorials -->
+      <section class="section" id="tutorials">
+        <h2 class="section-title">教程 &amp; 工具指南</h2>
+        <div class="section-line"></div>
+        <div class="tutorial-list">
+
+          <!-- Tutorial Card 1 -->
+          <a href="posts/claude-code-deepseek-setup.html" class="tutorial-card">
+            <div class="tutorial-card-icon">🧷</div>
+            <h3>Claude Code + DeepSeek V4 完整安装配置文档</h3>
+            <p>手把手教你用 DeepSeek 驱动 Claude Code，国内直连，全部命令可复制，避坑指南一应俱全。</p>
+            <div class="tutorial-card-meta">
+              <span class="tutorial-card-meta-left">2026-05-30 · Claude Code</span>
+              <span class="tutorial-card-meta-right">→ 阅读</span>
+            </div>
+          </a>
+
+          <!-- Tutorial Card 2 -->
+          <a href="mx-shell.html" class="tutorial-card">
+            <div class="tutorial-card-icon">🎬</div>
+            <h3>Mx-Shell AI 短片创作操作手册</h3>
+            <p>从剧本到视频，AI 短片全流程创作方法论，包含分镜设计、提示词工程、后期剪辑实战。</p>
+            <div class="tutorial-card-meta">
+              <span class="tutorial-card-meta-left">2026-06-03 · Mx-Shell</span>
+              <span class="tutorial-card-meta-right">→ 阅读</span>
+            </div>
+          </a>
+
+          <!-- Placeholder -->
+          <div class="tutorial-card-placeholder">即将更新...</div>
+
+        </div>
+      </section>
+
     </div>
-    <div class="arrow">→</div>
-  </a>
+  </div>
+</main>
 
-  <div class="footer">持续更新中 · 关注「里维斯」解锁更多AI工具</div>
-</div>
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p>© 2026 里维斯 · AI</p>
+    <p>由 GitHub Pages 托管</p>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var html = document.documentElement;
+  var toggle = document.getElementById('themeToggle');
+  var sunIcon = document.getElementById('themeIconSun');
+  var moonIcon = document.getElementById('themeIconMoon');
+  var nav = document.getElementById('nav');
+
+  function getTheme() { return html.getAttribute('data-theme'); }
+
+  function setTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    } else {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    }
+    try { localStorage.setItem('leevis-theme', theme); } catch(e) {}
+  }
+
+  var saved;
+  try { saved = localStorage.getItem('leevis-theme'); } catch(e) {}
+  if (saved) {
+    setTheme(saved);
+  } else {
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+  }
+
+  toggle.addEventListener('click', function() {
+    setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  });
+
+  // Nav scroll effect
+  var ticking = false;
+  function updateNav() {
+    if (window.scrollY > 10) { nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+    ticking = false;
+  }
+  window.addEventListener('scroll', function() {
+    if (!ticking) { requestAnimationFrame(updateNav); ticking = true; }
+  }, { passive: true });
+  updateNav();
+})();
+</script>
 </body>
 </html>
