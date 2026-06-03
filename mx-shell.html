@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mx-Shell AI 短片创作操作手册 | 丧尸清道夫方法论</title>
+<style>
+/* === 深色模式（默认） === */
+:root {
+  --bg: #0a0a0f;
+  --card-bg: #14141f;
+  --card-border: #1e1e30;
+  --text: #d4d4dc;
+  --text-dim: #7a7a8c;
+  --accent: #e85d04;
+  --accent2: #faa307;
+  --green: #2ecc71;
+  --blue: #3498db;
+  --purple: #9b59b6;
+  --code-bg: #0d0d1a;
+  --code-text: #a0a0b8;
+  --header-bg: rgba(10, 10, 15, 0.95);
+  --header-text: #d4d4dc;
+  --title-color: #fff;
+  --tip-bg: rgba(52,152,219,0.08);
+  --warn-bg: rgba(232,93,4,0.08);
+  --success-bg: rgba(46,204,113,0.08);
+  --tag-bg-orange: rgba(232,93,4,0.15);
+  --tag-bg-blue: rgba(52,152,219,0.15);
+  --tag-bg-green: rgba(46,204,113,0.15);
+  --tag-bg-purple: rgba(155,89,182,0.15);
+  --th-bg: rgba(232,93,4,0.08);
+  --tr-even-bg: rgba(255,255,255,0.02);
+  --tab-hover: rgba(232,93,4,0.1);
+  --radius: 12px;
+  --gap: 24px;
+  --max-w: 960px;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+}
+
+/* === 浅色模式 === */
+[data-theme="light"] {
+  --bg: #F5F5F0;
+  --card-bg: #FFFFFF;
+  --card-border: #E0E0DC;
+  --text: #212121;
+  --text-dim: #6E6E73;
+  --accent: #E65100;
+  --accent2: #F57C00;
+  --green: #2E7D32;
+  --blue: #1565C0;
+  --purple: #7B1FA2;
+  --code-bg: #F0EFEA;
+  --code-text: #555555;
+  --header-bg: rgba(245,245,240,0.95);
+  --header-text: #212121;
+  --title-color: #111;
+  --tip-bg: rgba(21,101,192,0.06);
+  --warn-bg: rgba(230,81,0,0.06);
+  --success-bg: rgba(46,125,50,0.06);
+  --tag-bg-orange: rgba(230,81,0,0.1);
+  --tag-bg-blue: rgba(21,101,192,0.1);
+  --tag-bg-green: rgba(46,125,50,0.1);
+  --tag-bg-purple: rgba(123,31,162,0.1);
+  --th-bg: rgba(230,81,0,0.06);
+  --tr-even-bg: rgba(0,0,0,0.015);
+  --tab-hover: rgba(230,81,0,0.08);
+  --radius: 12px;
+  --gap: 24px;
+  --max-w: 960px;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  font-size: 15px;
+  padding: 0 0 120px 0;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Header */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--header-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--card-border);
+  padding: 16px 20px;
+  transition: background 0.3s ease;
+}
+header .inner { max-width: var(--max-w); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+header .logo { font-weight: 700; font-size: 18px; color: var(--accent); }
+header .logo span { color: var(--accent2); margin-right: 6px; }
+header nav { display: flex; gap: 4px; flex-wrap: wrap; }
+header nav a {
+  color: var(--text-dim); text-decoration: none;
+  font-size: 13px; padding: 6px 12px; border-radius: 6px;
+  transition: all 0.2s; white-space: nowrap;
+}
+header nav a:hover, header nav a.active { color: var(--accent); background: var(--tab-hover); }
+
+/* Theme toggle */
+.theme-toggle {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  color: var(--text); cursor: pointer; font-size: 18px;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Container */
+.container { max-width: var(--max-w); margin: 0 auto; padding: 40px 20px; }
+
+/* Section */
+.section { margin-bottom: 48px; }
+.section-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px; padding-bottom: 12px;
+  border-bottom: 2px solid var(--card-border);
+}
+.section-num {
+  background: var(--accent); color: #fff; font-weight: 700;
+  font-size: 14px; min-width: 32px; height: 32px;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+.section-title { font-size: 22px; font-weight: 700; color: var(--title-color); }
+.section-desc { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; }
+
+/* Cards */
+.card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 16px;
+}
+.card-title { font-weight: 600; font-size: 16px; color: var(--title-color); margin-bottom: 12px; }
+.card-subtitle { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
+
+/* Code blocks */
+pre {
+  background: var(--code-bg); border: 1px solid var(--card-border);
+  border-radius: 10px; padding: 20px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+  color: var(--code-text); margin: 12px 0; position: relative;
+}
+pre .tag { color: #e06c75; }
+pre .key { color: #61afef; }
+pre .val { color: #98c379; }
+pre .comment { color: #5c6370; font-style: italic; }
+pre .cmd { color: #e5c07b; }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--code-bg); padding: 2px 8px; border-radius: 4px; color: var(--accent2); }
+pre code { background: none; padding: 0; color: inherit; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+th, td { padding: 10px 14px; text-align: left; border: 1px solid var(--card-border); }
+th { background: var(--th-bg); color: var(--accent2); font-weight: 600; }
+td { color: var(--text); }
+tr:nth-child(even) td { background: var(--tr-even-bg); }
+
+/* Tips */
+.tip {
+  background: var(--tip-bg); border-left: 3px solid var(--blue);
+  padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0;
+  font-size: 14px;
+}
+.tip strong { color: var(--blue); }
+.warn {
+  background: var(--warn-bg); border-left: 3px solid var(--accent);
+  padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0;
+}
+.warn strong { color: var(--accent); }
+.success {
+  background: var(--success-bg); border-left: 3px solid var(--green);
+  padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0;
+}
+.success strong { color: var(--green); }
+
+/* Tags */
+.tag-pill {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 500; margin: 2px 4px 2px 0;
+}
+.tag-pill.orange { background: var(--tag-bg-orange); color: var(--accent); }
+.tag-pill.blue { background: var(--tag-bg-blue); color: var(--blue); }
+.tag-pill.green { background: var(--tag-bg-green); color: var(--green); }
+.tag-pill.purple { background: var(--tag-bg-purple); color: var(--purple); }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+/* Checklist */
+.checklist { list-style: none; }
+.checklist li { padding: 6px 0 6px 28px; position: relative; }
+.checklist li::before {
+  content: "☐"; position: absolute; left: 0; color: var(--accent);
+  font-weight: 700;
+}
+
+/* Steps */
+.step { counter-reset: step; }
+.step-item {
+  counter-increment: step; padding: 16px 16px 16px 56px;
+  position: relative; margin-bottom: 12px;
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+}
+.step-item::before {
+  content: counter(step); position: absolute; left: 14px; top: 14px;
+  width: 28px; height: 28px; background: var(--accent);
+  color: #fff; font-weight: 700; font-size: 14px;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+.step-item h4 { margin: 0 0 6px 0; font-size: 16px; color: var(--title-color); }
+.step-item p { margin: 0; color: var(--text); }
+
+/* Tabs (category sections) */
+.tab-switch { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab-btn {
+  padding: 8px 16px; border: 1px solid var(--card-border);
+  border-radius: 8px; background: var(--card-bg); color: var(--text);
+  cursor: pointer; font-size: 14px; transition: all 0.2s;
+}
+.tab-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--tab-hover); }
+.tab-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  header nav { display: none; }
+  .container { padding: 24px 12px; }
+  pre { padding: 14px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <div class="logo"><span>&#9889;</span>丧尸清道夫 创作操作手册</div>
+    <nav>
+      <a href="#s0">总览</a>
+      <a href="#s1">工具链</a>
+      <a href="#s2">五段式模板</a>
+      <a href="#s3">分镜写法</a>
+      <a href="#s4">10个技巧</a>
+      <a href="#s5">调试指南</a>
+      <a href="#s6">完整示例</a>
+      <a href="#s7">附录</a>
+    </nav>
+    <button class="theme-toggle" onclick="toggleTheme()" title="切换深浅色模式" id="themeBtn">&#9788;</button>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ============ S0: 总览 ============ -->
+<section class="section" id="s0">
+  <div class="section-header">
+    <div class="section-num">0</div>
+    <div class="section-title">操作手册总览</div>
+  </div>
+  <div class="section-desc">
+    本手册基于 Mx-Shell 2026.05.12 直播录屏（约 13 万字）、公开提示词文档（70+ 段落），以及 CSDN/happy-oyster/GitHub 等第三方深度分析综合整理。目标：让你看完就能自己写出一流 AI 视频提示词。
+  </div>
+
+  <div class="card">
+    <div class="card-title">Mx-Shell 创作哲学（三个核心信条）</div>
+    <div class="step">
+      <div class="step-item">
+        <h4>信条一：像指挥摄影师一样指挥 AI</h4>
+        <p>不要写「关键词列表」，要写「分镜脚本」。AI 需要的是<strong>调度指令</strong>，不是形容词堆砌。</p>
+      </div>
+      <div class="step-item">
+        <h4>信条二：写瑕疵 = 写真实</h4>
+        <p>「战损痕迹触目惊心」「各处磨损掉漆」「保留轻微面部瑕疵」——完美的画面就是假的画面。AI 无法凭空产生真实感，你必须明确要求瑕疵。</p>
+      </div>
+      <div class="step-item">
+        <h4>信条三：抽卡是常态</h4>
+        <p>整部《丧尸清道夫》生成 400 张图片 + 200+ 个视频镜头，每个镜头 2-20 次才能挑出能用的。不是你写得不好，是 AI 本身就有随机性。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">操作手册结构导航</div>
+    <table>
+      <tr><th>章节</th><th>内容</th><th>适合谁</th></tr>
+      <tr><td>1. 工具链配置</td><td>全套工具清单、使用场景、优先级</td><td>所有人</td></tr>
+      <tr><td>2. 五段式提示词模板</td><td>核心方法论，逐段拆解 + 示例</td><td>所有人</td></tr>
+      <tr><td>3. 分镜写法详解</td><td>按秒切片 / 按镜头切片 两种模式</td><td>写提示词时参考</td></tr>
+      <tr><td>4. 10 个实战技巧</td><td>每个技巧的「为什么有效」+ 操作方式</td><td>进阶提升</td></tr>
+      <tr><td>5. 常见问题调试</td><td>5 种失败模式的根因 + 解决方案</td><td>遇到问题时查阅</td></tr>
+      <tr><td>6. 完整示例</td><td>3 个可直接使用的完整提示词模板</td><td>直接套用</td></tr>
+      <tr><td>7. 附录</td><td>摄影机速查表、词汇库、色调参考、资源链接</td><td>写提示词时查阅</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============ S1: 工具链 ============ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">工具链配置</div>
+  </div>
+  <div class="section-desc">Mx-Shell 实际使用的全套工具，按环节分类。注意每个工具的「使用场景」——不是所有工具都要一起用。</div>
+
+  <table>
+    <tr><th>环节</th><th>工具</th><th>占比</th><th>使用场景</th><th>重要提示</th></tr>
+    <tr>
+      <td><span class="tag-pill orange">视频生成</span></td>
+      <td><strong>小云雀 Seedance 2.0</strong>（沉浸式短片模式）</td>
+      <td>80-90%</td>
+      <td>主力视频生成</td>
+      <td>不要用 Fast 版！Fast 版会损失质感和细节</td>
+    </tr>
+    <tr>
+      <td><span class="tag-pill blue">图像生成</span></td>
+      <td><strong>GPT Image</strong></td>
+      <td>80%</td>
+      <td>场景图、角色参考图</td>
+      <td>Mx-Shell 首选，画质一致性最好</td>
+    </tr>
+    <tr>
+      <td><span class="tag-pill blue">图像辅助</span></td>
+      <td><strong>Midjourney / Krea</strong></td>
+      <td>20%</td>
+      <td>特定风格的场景图</td>
+      <td>当 GPT Image 风格不匹配时用</td>
+    </tr>
+    <tr>
+      <td><span class="tag-pill purple">材质优化</span></td>
+      <td><strong>Flux Max</strong></td>
+      <td>补充</td>
+      <td>金属、瓷砖、皮肤细节</td>
+      <td>不是必须，追求极致质感时用</td>
+    </tr>
+    <tr>
+      <td><span class="tag-pill purple">三视图</span></td>
+      <td><strong>Nanobanana</strong></td>
+      <td>仅角色设计</td>
+      <td>生成角色正面/侧面/背面</td>
+      <td>确保角色造型立体连贯</td>
+    </tr>
+    <tr>
+      <td><span class="tag-pill green">文案</span></td>
+      <td><strong>豆包</strong></td>
+      <td>辅助</td>
+      <td>打斗戏、对话逻辑</td>
+      <td>豆包写完自己改，不要直接用</td>
+    </tr>
+    <tr>
+      <td><span class="tag-pill green">剪辑/调色</span></td>
+      <td><strong>剪映</strong></td>
+      <td>后期</td>
+      <td>调色、拼接、粒子特效</td>
+      <td>废土橙黄主色调在剪映里统一</td>
+    </tr>
+    <tr>
+      <td><span class="tag-pill green">配乐</span></td>
+      <td><strong>Artlist.io</strong></td>
+      <td>后期</td>
+      <td>版权音乐</td>
+      <td>不是 AI 生成！版权音乐。仅一句配音用了 AI</td>
+    </tr>
+  </table>
+
+  <div class="tip">
+    <strong>核心工具只有两个</strong>：小云雀 Seedance 2.0（视频生成）+ GPT Image（图片生成）。其他都是锦上添花。
+    Mx-Shell 的大部分视频只用这两个工具就完成了。
+  </div>
+</section>
+
+<!-- ============ S2: 五段式模板 ============ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">五段式提示词模板（核心方法论）</div>
+  </div>
+  <div class="section-desc">
+    这是 Mx-Shell 所有作品的通用骨架。假面骑士 ×5、丧尸清道夫、合金装备——全用这套结构，只替换变量。
+    <strong>顺序不能乱。</strong>
+  </div>
+
+  <!-- 全景图 -->
+  <div class="card">
+    <div class="card-title">五段式全景</div>
+    <table>
+      <tr><th>段</th><th>作用</th><th>关键词</th><th>必填/可选</th></tr>
+      <tr><td>1. 核心主题</td><td>给 AI 定审美基调</td><td>3-6 个风格标签</td><td><span class="tag-pill green">必填</span></td></tr>
+      <tr><td>2. 人物与基础设定</td><td>画面里有谁/穿什么/站在哪</td><td>面部 / 服装 / 场景</td><td><span class="tag-pill green">必填</span></td></tr>
+      <tr><td>3. 氛围与画质</td><td>摄影机型号定画质</td><td>摄影机 + 镜头 + 色调</td><td><span class="tag-pill green">必填</span></td></tr>
+      <tr><td>4. 运镜规则</td><td>镜头怎么动</td><td>景别 / 角度 / 呼吸感</td><td><span class="tag-pill green">必填</span></td></tr>
+      <tr><td>5. 分镜（时间轴）</td><td>按秒 or 按镜头展开</td><td>动作+镜头+特效 三件套</td><td><span class="tag-pill green">必填</span></td></tr>
+    </table>
+  </div>
+
+  <!-- 段一 -->
+  <div class="card">
+    <div class="card-title">段一：核心主题</div>
+    <div class="card-subtitle">一行风格标签，用 | 分隔，3-6 个。从「画面类型」到「题材」到「美学风格」层层递进。</div>
+    <pre><code><span class="comment"># 丧尸清道夫</span>
+核心主题：原子朋克 | 末日丧尸 | 电影级质感 | 超写实 | 杜绝游戏CG感
+
+<span class="comment"># 假面骑士战损变身</span>
+核心主题：写实暗黑特摄 | BLACK SUN美学 | 破碎肉身 | 战损变身 | 末日战场
+
+<span class="comment"># 重型机甲</span>
+核心主题：写实科技感 | 科幻机甲 | 磅礴史诗 | 重工业机械美学 | 真人演绎</code></pre>
+
+    <div class="card-subtitle" style="margin-top:16px;">可选的风格标签词汇库：</div>
+    <table>
+      <tr><th>类型</th><th>可用标签</th></tr>
+      <tr><td>真实感锚点</td><td>电影级质感、超写实、真人实景拍摄、杜绝游戏CG感、变形宽荧幕电影质感</td></tr>
+      <tr><td>美学定调</td><td>暗黑写实、原子朋克、蒸汽朋克、赛博朋克、废土工业、复古港风</td></tr>
+      <tr><td>题材</td><td>特摄剧、末日生存、孤胆英雄、机械武侠、重型机甲</td></tr>
+      <tr><td>情绪</td><td>破碎肉身、战损变身、肃杀、磅礴史诗、压抑沉重</td></tr>
+    </table>
+  </div>
+
+  <!-- 段二 -->
+  <div class="card">
+    <div class="card-title">段二：人物与基础设定</div>
+    <div class="card-subtitle">三行格式：面部 / 服装 / 场景。每行都要有质地、有动态、有瑕疵。</div>
+    <pre><code><span class="comment">【人物与基础设定】</span>
+<span class="key">面部</span>：参照上传图片，五官、脸型、发型百分百还原，杜绝美化。
+      面部伤口，纱布，血渍保持一致。刘海覆额，表情全程阴郁。
+      变身瞬间，眉心仅轻微蹙起，拒绝昂扬斗志与眼神高光，保持压抑感。
+<span class="key">服装</span>：哑光黑色皮质长风衣，金属腰带为哑光质地，腰带核心为暗红色水晶。
+<span class="key">场景</span>：末日战场，微风，硝烟弥漫，阴天荒野，灰蓝色调天空。
+      天空中划过带有火焰与浓烟的陨石。</code></pre>
+
+    <div class="warn">
+      <strong>关键原则：写质地而不是写颜色</strong><br>
+      「哑光黑色皮质」信息量是「黑色皮衣」的 3 倍；「生锈金属躯干」>「灰色机器人」<br>
+      <strong>写瑕疵必加：</strong>「保留轻微面部瑕疵」「战衣远非平整」「各处磨损掉漆」「关节部位油污」
+    </div>
+  </div>
+
+  <!-- 段三 -->
+  <div class="card">
+    <div class="card-title">段三：氛围与画质（全书最有价值的技巧）</div>
+    <div class="card-subtitle">Mx-Shell 的独家发现：写具体摄影机型号，比写一百遍「电影感」都有效。AI 训练数据中大量电影元数据都和真实摄影机型号绑定。</div>
+    <pre><code><span class="comment">【氛围与画质】</span>
+<span class="key">视觉基调</span>：变形宽荧幕电影质感。模拟 IMAX 胶片摄影机，
+        搭配 Panavision C 系列镜头（焦段 35mm，光圈 f4）。
+<span class="key">色彩与影调</span>：低饱和灰蓝主调。暗部信息压缩，保留细节。
+          边缘添加轻微柔焦与适度的胶片颗粒感。
+<span class="key">风格核心</span>：参考《爱，死亡和机器人》美学风格。
+        营造压抑、沉重、实拍的肉身痛苦感。</code></pre>
+
+    <div class="card-subtitle" style="margin-top:16px;">摄影机 + 镜头速查表（直接抄）：</div>
+    <table>
+      <tr><th>想要的风格</th><th>摄影机 + 镜头</th></tr>
+      <tr><td>史诗感 / 大场面</td><td>IMAX 胶片摄影机 + Panavision C 系列镜头（35mm，f4）</td></tr>
+      <tr><td>暗调赛博 / 写实硬核</td><td>索尼威尼斯电影机 + 佳能 K-35 系列镜头</td></tr>
+      <tr><td>港片 / 武侠</td><td>柯达 35mm 复古胶片，跳过漂白胶片质感</td></tr>
+      <tr><td>商业人像</td><td>Canon EF 85mm f/1.2</td></tr>
+    </table>
+
+    <div class="tip">
+      <strong>如果 AI 不识别中文摄影机名，换成英文</strong>：<br>
+      「IMAX film camera with Panavision C Series 35mm f/4 lens」
+    </div>
+  </div>
+
+  <!-- 段四 -->
+  <div class="card">
+    <div class="card-title">段四：运镜规则</div>
+    <div class="card-subtitle">三行：单镜头 or 多镜头 / 拍摄角度 / 呼吸感。其中「呼吸感」是 Mx-Shell 最核心的技巧。</div>
+    <pre><code><span class="comment">【运镜规则】</span>
+<span class="key">单镜头</span>：一镜到底，无剪辑。
+<span class="key">角度</span>：开场仰拍，人物半身左侧面 30 度，聚焦腰部以上部位。
+     开始变身后镜头以极缓速度环绕至正面平视上半身。
+     变身完成后环绕至人物右侧面俯拍。
+<span class="key">呼吸感</span>：手持拍摄，全程保持极其轻微的、如呼吸般的镜头浮动，增强临场感。</code></pre>
+
+    <div class="success">
+      <strong>「呼吸感」为什么如此重要？</strong><br>
+      AI 默认输出绝对静止的 CG 画面。加上「呼吸般的浮动」，画面立刻像真人手持摄影机拍摄。<br>
+      <strong>一句话改变质感。</strong>Mx-Shell 每个视频提示词都写这句话。
+    </div>
+
+    <div class="card-subtitle" style="margin-top:16px;">运镜词汇库：</div>
+    <table>
+      <tr><th>类别</th><th>词汇</th></tr>
+      <tr><td>景别</td><td>极近距离特写 / 特写 / 近景 / 中景 / 全景 / 大全景</td></tr>
+      <tr><td>角度</td><td>仰拍 / 俯拍 / 平视 / 过肩镜头 / 高空垂直俯拍</td></tr>
+      <tr><td>运动</td><td>极缓向前推进 / 环绕 / 跟随运动拍摄 / 固定机位 / FPV 模式</td></tr>
+      <tr><td>节奏</td><td>极缓 / 匀速 / 突然 / 应激性 0.1 秒微颤 / 极慢动作</td></tr>
+    </table>
+  </div>
+
+  <!-- 段五 -->
+  <div class="card">
+    <div class="card-title">段五：分镜（时间轴）</div>
+    <div class="card-subtitle">两种写法按需选择——单镜头用「按秒切片」，多镜头用「按镜头切片」。</div>
+  </div>
+</section>
+
+<!-- ============ S3: 分镜写法详解 ============ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">分镜写法详解</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">写法 A：按秒切片（适合单镜头一镜到底）</div>
+    <div class="card-subtitle">每段「动作 + 镜头 + 特效」三件套，可选择加「声音」「面部」。</div>
+    <pre><code><span class="comment">【分镜时间轴】</span>
+
+<span class="tag">0-3秒 · 凝视</span>
+<span class="key">动作</span>：主角略微低头，目光锁定腰带，脊背紧绷。
+     右手缓慢抬起，握住腰带主体。
+<span class="key">镜头</span>：极缓向前推进，捕捉身体因呼吸产生的微幅起伏。
+<span class="key">特效</span>：整颗眼球骤然亮起白金色光芒，眼眶周围皲裂。
+     眼睛亮起的炫光使画面镜头产生光斑。
+
+<span class="tag">3-6秒 · 启动</span>
+<span class="key">声音</span>：低语「HENSHIN」
+<span class="key">动作</span>：手掌用力按压腰带核心，水晶核心本体被挤压而开裂，
+     红光伴随晶体的裂纹亮起。
+<span class="key">特效</span>：金属机械装置被暴力唤醒，核心主体沿中线开裂。
+     空气向内塌陷，产生畸变弧光。
+<span class="key">镜头</span>：低频嗡鸣由远及近，镜头随之一同产生
+     应激性的 0.1 秒微颤。
+
+<span class="tag">6-9秒 · 撕裂</span>
+<span class="key">动作</span>：身体开始异化，甲壳从脊椎突出...
+<span class="key">特效</span>：电光火石间，战衣从破裂肌肉中长出...
+<span class="key">镜头</span>：镜头极缓环绕，捕捉变身全貌...</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">写法 B：按镜头切片（适合多镜头叙事）</div>
+    <div class="card-subtitle">每个分镜四件套：景别 + 构图 + 运镜手法 + 画面内容。这是《丧尸清道夫》实际使用的方法。</div>
+    <pre><code><span class="comment">【丧尸清道夫 分镜示例】</span>
+
+<span class="tag">分镜一：</span>
+<span class="key">景别</span>：中景，拍摄机器人腿部以上位置
+<span class="key">构图</span>：机器人背影作为前景居中位于画面中心，
+     背景左侧落地窗，右侧吧台
+<span class="key">运镜手法</span>：跟随运动拍摄
+<span class="key">画面内容</span>：机器人背对镜头向前方移动，
+         手舞足蹈进入别墅休闲区，潇洒转身作为舞蹈 END 动作，
+         led 显示器保持绿色微笑表情。
+         片刻后画外传来玻璃酒瓶被打碎的声音，
+         机器人受到惊吓，下意识向画面左侧后撤半步，
+         led 显示器瞬间切换至黄色害怕表情。
+
+<span class="tag">分镜二：</span>
+<span class="key">景别</span>：全景，平视拍摄吧台全貌
+<span class="key">构图</span>：空镜平视拍摄吧台全貌，
+     画面下方三分之一处为吧台和吧台椅子，
+     上方为墙面酒柜
+<span class="key">运镜手法</span>：镜头缓慢前推，渲染氛围
+<span class="key">画面内容</span>：吧台后方传来悉悉簌簌的声音，
+         像是有什么东西躲在吧台下翻找
+
+<span class="tag">分镜三：</span>
+<span class="key">景别</span>：特写
+<span class="key">构图</span>：机器人正面特写，位于画面中心
+<span class="key">运镜手法</span>：固定机位，镜头跟随机器人微颤
+<span class="key">画面内容</span>：机器人摆出防御姿态，双手交叉于胸前，
+         关节微微颤抖，LED 保持黄色害怕表情</code></pre>
+  </div>
+
+  <div class="tip">
+    <strong>选择规则：</strong><br>
+    变身、武器充能、单一场景 → 用 <strong>写法 A（按秒）</strong><br>
+    多个场景切换、有故事线、有对话逻辑 → 用 <strong>写法 B（按镜头）</strong>
+  </div>
+</section>
+
+<!-- ============ S4: 10个技巧 ============ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="section-title">10 个立刻有效的实战技巧</div>
+  </div>
+
+  <div class="step">
+    <div class="step-item">
+      <h4>不要给 AI 参考图（除非画质够高）</h4>
+      <p>AI 垫图时容易复现参考图的<strong>画风</strong>（包括 CG 感、动漫感），而不是参考它的<strong>设计</strong>。Mx-Shell 的假面骑士系列全部靠文字描述生成。例外：参考图是 3D 渲染或高画质实拍。</p>
+    </div>
+    <div class="step-item">
+      <h4>写摄影机型号代替「电影感」</h4>
+      <p>AI 训练数据中的电影元数据和具体摄影机型号绑定。「IMAX 胶片摄影机 + Panavision C 系列镜头 35mm f4」比「电影感」精确一百倍。</p>
+    </div>
+    <div class="step-item">
+      <h4>描述瑕疵 = 描述真实</h4>
+      <p>所有提示词都加：「保留轻微面部瑕疵」「战损痕迹触目惊心」「各处磨损掉漆」「关节部位油污」。完美的画面 = 假的画面。</p>
+    </div>
+    <div class="step-item">
+      <h4>给镜头加「呼吸感」</h4>
+      <p><code>手持拍摄，全程保持极其轻微的、如呼吸般的镜头浮动，增强临场感。</code>一句话消灭 CG 僵直感。</p>
+    </div>
+    <div class="step-item">
+      <h4>接受抽卡是常态</h4>
+      <p>不要追求一次成型。每个镜头 2-20 次才能挑出能用的。Mx-Shell 的哲学：「我可以同时抽着两个场景的卡，然后编写着第三个场景的词。」</p>
+    </div>
+    <div class="step-item">
+      <h4>版权违规 → 删字眼换近义词</h4>
+      <p>Seedance 2.0 对版权敏感。钢铁侠 → 原子朋克未来主义复古风；HENSHIN → 自创音节。遇到拦截不要硬刚，找近义词。</p>
+    </div>
+    <div class="step-item">
+      <h4>长视频 = 短片段 + 剪辑拼接</h4>
+      <p>30 秒一镜到底很难抽。Mx-Shell 的《合金装备》打斗段就是分两段生成 + 后期剪辑。不要追求一口气生成。</p>
+    </div>
+    <div class="step-item">
+      <h4>同一色调，前后镜头才能拼</h4>
+      <p>最大剪辑坑：A 镜头偏暖橙，B 镜头偏冷蓝，剪在一起色差爆炸。<strong>在场景图阶段就把色调定死</strong>，所有视频提示词的「色彩与影调」段统一。</p>
+    </div>
+    <div class="step-item">
+      <h4>没必要做 4K，720p 够了</h4>
+      <p>Mx-Shell 的原话：「我的视频基本都是 720p。」国内平台会再压缩。省下来的算力多抽几次卡更重要。</p>
+    </div>
+    <div class="step-item">
+      <h4>不一定要用人脸</h4>
+      <p>头盔/面具/机器人更容易。AI 最难保持人脸的跨镜头一致性。这是《丧尸清道夫》选机器人主角的深层原因——LED 像素脸比真人脸稳定一万倍。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S5: 调试指南 ============ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div class="section-title">常见问题调试指南</div>
+  </div>
+
+  <table>
+    <tr><th>问题</th><th>根因</th><th>解决方案</th></tr>
+    <tr>
+      <td><strong>画面不稳定 / 闪烁</strong></td>
+      <td>动作描述太多</td>
+      <td>把「walks, fights, jumps, escapes」改成「walks slowly, notices movement, reacts with one controlled strike」。遵守三步动作链原则。</td>
+    </tr>
+    <tr>
+      <td><strong>主角面部漂移</strong></td>
+      <td>参考图约束不够</td>
+      <td>加一行：「Use the reference image ONLY to preserve facial identity, hairstyle, body proportion. Do not copy unrelated clothing, background, or pose.」</td>
+    </tr>
+    <tr>
+      <td><strong>风格不统一</strong></td>
+      <td>风格词互相冲突</td>
+      <td>如果同时写 realistic + anime + cyberpunk + documentary，AI 会在不同帧间跳风格。<strong>只保留一个主风格</strong>，其他用 lighting 和 texture 描述。</td>
+    </tr>
+    <tr>
+      <td><strong>丧尸动作太流畅</strong></td>
+      <td>没写动作方式</td>
+      <td>写成：「moves unevenly from behind an abandoned car, with stiff shoulders, slow unstable steps, and unnatural head movement」——用具体运动方式代替形容词。</td>
+    </tr>
+    <tr>
+      <td><strong>画面「AI 味」太重</strong></td>
+      <td>大词太多，具体视觉描述太少</td>
+      <td>把「ultra detailed, masterpiece, epic, dramatic」全部删掉，换成可执行的物理细节：湿沥青反射灯光、沙尘漫过路牌、远处建筑因热浪扭曲。</td>
+    </tr>
+  </table>
+
+  <div class="card">
+    <div class="card-title">动作链规则：5-8 秒视频只能容纳三步</div>
+    <div class="card-subtitle">这是最常见的失败原因——试图在一个短片段里塞太多动作。</div>
+    <pre><code><span class="comment"># 错误：动作密度过高</span>
+She runs, fights zombies, jumps over cars, shoots,
+explodes everything, escapes from the city.
+<span class="comment">→ 主角瞬移、丧尸数量失控、镜头乱切</span>
+
+<span class="comment"># 正确：三步动作链</span>
+第一步：在废弃车辆之间缓慢行走
+第二步：举起手电筒照向移动的影子
+第三步：以控制性的近距离动作击退靠近的丧尸
+<span class="comment">→ 一个镜头内完成，节奏清晰</span></code></pre>
+  </div>
+</section>
+
+<!-- ============ S6: 完整示例 ============ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div class="section-title">三个完整提示词模板（直接使用）</div>
+  </div>
+
+  <!-- 模板1 -->
+  <div class="card">
+    <div class="card-title">模板一：15 秒变身（单镜头一镜到底）</div>
+    <div class="card-subtitle">适用于：假面骑士变身、机甲合体、角色形态切换。替换带 <code>【】</code> 的变量即可。</div>
+    <pre><code><span class="comment">【提示词开始】</span>
+
+核心主题：写实暗黑特摄 | <span class="cmd">【你的美学风格】</span> | 破碎肉身 | 战损变身 | <span class="cmd">【背景设定】</span>
+
+【人物与基础设定】
+面部：参照上传图片，五官、脸型、发型百分百还原，杜绝美化。
+      保留轻微面部瑕疵。表情全程<span class="cmd">【情绪】</span>。
+服装：<span class="cmd">【详细服装描述，含质地、颜色、状态】</span>
+场景：<span class="cmd">【详细场景描述，含动态元素（风/烟/光）】</span>
+
+【氛围与画质】
+视觉基调：变形宽荧幕电影质感。模拟 <span class="cmd">【摄影机型号】</span>，
+        搭配 <span class="cmd">【镜头型号】</span>。
+色彩与影调：<span class="cmd">【色调描述】</span>。暗部信息压缩，保留细节。
+          边缘添加轻微柔焦与适度的胶片颗粒感。
+
+【运镜规则】
+单镜头：一镜到底，无剪辑。
+角度：开场<span class="cmd">【角度】</span>，开始变身后镜头以极缓速度环绕至<span class="cmd">【目标角度】</span>。
+呼吸感：手持拍摄，全程保持极其轻微的、如呼吸般的镜头浮动，增强临场感。
+
+【分镜时间轴】
+0-3秒 · <span class="cmd">【阶段一：凝视/准备】</span>
+动作：<span class="cmd">【角色动作】</span>
+镜头：极缓向前推进，捕捉身体因呼吸产生的微幅起伏。
+特效：<span class="cmd">【发光/能量特效】</span>
+3-6秒 · <span class="cmd">【阶段二：启动/变身】</span>
+声音：<span class="cmd">【变身触发词】</span>
+动作：<span class="cmd">【变身动作】</span>
+特效：<span class="cmd">【变身特效】</span>
+镜头：低频嗡鸣由远及近，镜头随之一同产生应激性的 0.1 秒微颤。
+6-9秒 · <span class="cmd">【阶段三：撕裂/异化】</span>
+动作：<span class="cmd">【身体变化】</span>
+特效：<span class="cmd">【进一步特效】</span>
+镜头：<span class="cmd">【最终镜头位置】</span>
+
+<span class="comment">【提示词结束】</span></code></pre>
+  </div>
+
+  <!-- 模板2 -->
+  <div class="card">
+    <div class="card-title">模板二：丧尸/末日场景片段（按秒，5-8 秒）</div>
+    <div class="card-subtitle">适用于：丧尸动作场景、末日生存、战斗片段。内置三步动作链规则。</div>
+    <pre><code>Create a cinematic zombie <span class="cmd">【职业/身份】</span> short video.
+
+Subject:
+A <span class="cmd">【角色外貌 + 服装 + 道具】</span>
+
+Reference image role:
+Use the reference image only to preserve the main character's
+facial identity, hairstyle, body proportion, and general visual tone.
+Do not copy unrelated clothing, background, pose, lighting, text,
+or image quality from the reference image.
+
+Scene:
+<span class="cmd">【场景描述，包含每个元素的空间关系】</span>
+
+Action:
+<span class="cmd">【三步动作链：
+第一步（前进/移动）
+第二步（发现异常）
+第三步（处理威胁）】</span>
+The action should feel tense, practical, and grounded.
+
+Camera:
+Low-angle tracking shot following slightly behind and beside.
+Slow forward camera movement, shallow depth of field,
+slight handheld shake, no fast random cuts.
+
+Lighting:
+<span class="cmd">【色调 + 光源描述】</span>
+
+Style:
+Realistic live-action survival horror film, gritty post-apocalyptic mood,
+practical effects feeling, detailed texture, grounded cinematic tension.
+
+Negative constraints:
+Avoid cartoon style, anime style, video game UI, random subtitles,
+floating objects, duplicated limbs, distorted hands, melting faces,
+excessive blood splatter, chaotic camera cuts, unrealistic zombie movement,
+superhero poses, glossy fashion look, plastic AI skin.</pre>
+  </div>
+
+  <!-- 模板3 -->
+  <div class="card">
+    <div class="card-title">模板三：多镜头叙事片段（3-5 个镜头）</div>
+    <div class="card-subtitle">适用于：有故事线的短片片段，多个场景切换。</div>
+    <pre><code><span class="comment">【提示词开始：多镜头叙事】</span>
+
+核心主题：<span class="cmd">【风格标签 | 标签 | 标签】</span>
+
+【氛围与画质】
+视觉基调：变形宽荧幕电影质感。模拟 <span class="cmd">【摄影机】</span>。
+色彩与影调：<span class="cmd">【色调】</span>。暗部细节保留，边缘轻微柔焦。
+
+【运镜规则】
+多镜头：多个固定机位剪辑。
+呼吸感：手持拍摄，全程保持极其轻微的、如呼吸般的镜头浮动。
+
+【分镜】
+分镜一：
+景别：<span class="cmd">【景别】</span>
+构图：<span class="cmd">【构图描述，谁在前谁在后】</span>
+运镜手法：<span class="cmd">【运动方式】</span>
+画面内容：<span class="cmd">【完整的画面内容，含动作、表情、光影变化】</span>
+
+分镜二：
+景别：<span class="cmd">【景别】</span>
+构图：<span class="cmd">【构图描述】</span>
+运镜手法：<span class="cmd">【运动方式】</span>
+画面内容：<span class="cmd">【完整画面内容】</span>
+
+分镜三：
+景别：<span class="cmd">【景别】</span>
+构图：<span class="cmd">【构图描述】</span>
+运镜手法：<span class="cmd">【运动方式】</span>
+画面内容：<span class="cmd">【完整画面内容】</span>
+
+<span class="comment">【提示词结束】</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">模板复用验证：改 4-5 个变量 = 全新作品</div>
+    <table>
+      <tr><th>变量</th><th>蟑螂侠</th><th>火焰恶魔</th><th>雷龙</th><th>你的作品</th></tr>
+      <tr><td>主色</td><td>黑红</td><td>黑红</td><td>白金</td><td>【选一个】</td></tr>
+      <tr><td>水晶</td><td>暗红</td><td>暗红</td><td>暗蓝</td><td>【选一个】</td></tr>
+      <tr><td>触发词</td><td>HENSHIN</td><td>HENSHIN</td><td>AMAZONS</td><td>【自创音节】</td></tr>
+      <tr><td>头盔</td><td>复眼+触角</td><td>冠状犄角</td><td>龙角+龙鳞</td><td>【你的设计】</td></tr>
+      <tr><td>时长</td><td>15s</td><td>15s</td><td>15s</td><td>15s</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============ S7: 附录 ============ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <div class="section-title">附录：速查资料</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">摄影机 + 镜头速查表</div>
+    <table>
+      <tr><th>质感</th><th>摄影机</th><th>镜头</th></tr>
+      <tr><td>史诗 / 大场面</td><td>IMAX 胶片摄影机</td><td>Panavision C 系列 35mm f4</td></tr>
+      <tr><td>暗调赛博</td><td>索尼威尼斯电影机</td><td>佳能 K-35 系列</td></tr>
+      <tr><td>港片 / 武侠</td><td>柯达 35mm 复古胶片</td><td>跳过漂白胶片质感</td></tr>
+      <tr><td>商业人像</td><td>Canon EOS</td><td>EF 85mm f/1.2</td></tr>
+      <tr><td>纪录片 / 手持</td><td>ARRI ALEXA Mini</td><td>Zeiss Super Speed 35mm</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">色调速查表</div>
+    <table>
+      <tr><th>色调名称</th><th>描述</th><th>适用场景</th></tr>
+      <tr><td>低饱和灰蓝</td><td>偏冷，暗部压缩，保留细节</td><td>赛博朋克、末日废土</td></tr>
+      <tr><td>好莱坞青橙</td><td>高光青蓝 + 暗部橙黄</td><td>动作、战争、史诗</td></tr>
+      <tr><td>60 年代复古暖橙 + 海盐蓝</td><td>原子朋克专属</td><td>复古未来主义、丧尸清道夫</td></tr>
+      <tr><td>暗调低照明高对比度</td><td>深黑 + 稀疏光源</td><td>恐怖、悬疑、异形</td></tr>
+      <tr><td>柯达金 200 电影胶片</td><td>暖黄 + 轻微褪色</td><td>西部、公路、回忆</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">负面约束模板（直接粘贴到每个提示词末尾）</div>
+    <pre><code>Negative constraints:
+Avoid cartoon style, anime style, video game UI, random subtitles,
+floating objects, duplicated limbs, distorted hands, melting faces,
+excessive blood splatter, chaotic camera cuts, unrealistic zombie movement,
+superhero poses, glossy fashion look, plastic AI skin,
+over-sharpening, over-smoothing, and random weapons.</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">开源资源链接</div>
+    <table>
+      <tr><th>资源</th><th>地址</th></tr>
+      <tr><td>10+ 完整作品原始提示词 + 模板</td><td>github.com/SVD-Studio/MX-Shell-ai-shortfilm-prompts</td></tr>
+      <tr><td>Claude Code Skill（自动生成提示词）</td><td>同一仓库，输入 /shortfilm-prompt</td></tr>
+      <tr><td>完整方法论 + 17 条 FAQ</td><td>同一仓库 methodology.zh.md</td></tr>
+      <tr><td>丧尸清道夫提示词开源版</td><td>github.com/jnMetaCode/ai-shortfilm-prompts</td></tr>
+      <tr><td>Mx-Shell 的 B 站主页</td><td>B 站搜索「Mx-Shell」</td></tr>
+      <tr><td>小云雀 Seedance 2.0</td><td>小云雀官网</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">创作前自检清单</div>
+    <ul class="checklist">
+      <li>核心主题是否包含 3-6 个风格标签？</li>
+      <li>人物设定是否写了「面部 / 服装 / 场景」三行？</li>
+      <li>服装是否写了质地（哑光/皮质/金属）而非仅颜色？</li>
+      <li>是否加了「保留轻微面部瑕疵」或战损描述？</li>
+      <li>是否用了具体摄影机型号而非「电影感」？</li>
+      <li>是否加了「呼吸感」一行？</li>
+      <li>分镜是否按秒或按镜头拆分，每段有「动作+镜头+特效」？</li>
+      <li>动作是否遵守三步动作链原则（5-8 秒只写三步）？</li>
+      <li>是否加了负面约束列表？</li>
+      <li>是否做好了抽卡 2-20 次的心理准备？</li>
+    </ul>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function() {
+  const html = document.documentElement;
+  const btn = document.getElementById('themeBtn');
+  const saved = localStorage.getItem('mxshell-theme');
+  if (saved === 'light') {
+    html.setAttribute('data-theme', 'light');
+    if (btn) btn.innerHTML = '&#9790;';
+  }
+  window.toggleTheme = function() {
+    const isLight = html.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      html.removeAttribute('data-theme');
+      localStorage.setItem('mxshell-theme', 'dark');
+      if (btn) btn.innerHTML = '&#9788;';
+    } else {
+      html.setAttribute('data-theme', 'light');
+      localStorage.setItem('mxshell-theme', 'light');
+      if (btn) btn.innerHTML = '&#9790;';
+    }
+  };
+})();
+</script>
+
+  <div style="text-align:center;margin:32px 0 0;padding:20px 0;border-top:1px solid #2a2a3e">
+    <a href="https://leevisfung.github.io/claude-code-tutorial/" style="color:#9B7CFF;font-size:14px;text-decoration:none">&#8592; 返回 里维斯 · AI 教程首页</a>
+  </div>
+
+</body>
+</html>
