@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code + DeepSeek V4 完整安装配置文档</title>
+<style>
+  /* ========== CSS Variables - Light (default) ========== */
+  :root {
+    --bg-body: #F5F0EB;
+    --bg-container: #FFF9F0;
+    --text-primary: #1A1A2E;
+    --text-secondary: #5A5A6E;
+    --text-tertiary: #8A8A9E;
+    --border-color: #EDE8E0;
+    --accent: #7C5CFC;
+    --accent-orange: #FF6B35;
+    --code-bg: #1E1E2E;
+    --code-text: #F8F8F2;
+    --tip-bg: rgba(74,163,255,0.05);
+    --tip-border: #4AA3FF;
+    --warn-bg: rgba(255,107,53,0.04);
+    --warn-border: #FF6B35;
+    --success-bg: rgba(46,204,113,0.04);
+    --success-border: #2ECC71;
+    --folder-bg: #F0EDE8;
+    --folder-text: #5A5A6E;
+    --table-th-bg: #F0EDE8;
+    --table-border: #EDE8E0;
+    --table-code-bg: #F0EDE8;
+    --hl-color: #7C5CFC;
+    --shadow-soft: 0 2px 12px rgba(124,92,252,0.08);
+  }
+
+  /* ========== CSS Variables - Dark ========== */
+  [data-theme="dark"] {
+    --bg-body: #12121E;
+    --bg-container: #1A1A2E;
+    --text-primary: #E8E8F0;
+    --text-secondary: #9A9AB0;
+    --text-tertiary: #6A6A7E;
+    --border-color: #2A2A3E;
+    --accent: #9B7CFF;
+    --accent-orange: #FF8A5C;
+    --code-bg: #12121E;
+    --code-text: #E8E8F0;
+    --tip-bg: rgba(74,163,255,0.08);
+    --tip-border: #5BB4FF;
+    --warn-bg: rgba(255,107,53,0.08);
+    --warn-border: #FF8A5C;
+    --success-bg: rgba(46,204,113,0.08);
+    --success-border: #3DDB82;
+    --folder-bg: #22223A;
+    --folder-text: #9A9AB0;
+    --table-th-bg: #22223A;
+    --table-border: #2A2A3E;
+    --table-code-bg: #22223A;
+    --hl-color: #9B7CFF;
+    --shadow-soft: 0 2px 12px rgba(0,0,0,0.3);
+  }
+
+  /* ========== Base ========== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei','PingFang SC','Helvetica Neue',sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    transition: background 0.35s ease, color 0.35s ease;
+  }
+
+  /* ========== Theme Toggle ========== */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--bg-container);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+    opacity: 0.85;
+  }
+  .theme-toggle:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    box-shadow: 0 2px 16px rgba(124,92,252,0.2);
+  }
+  .theme-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ========== Dynamic Light ========== */
+  #dynamicLight {
+    position: fixed;
+    top: 0; left: 0;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+    will-change: transform, opacity;
+  }
+  :root #dynamicLight {
+    background: radial-gradient(circle, rgba(124,92,252,0.04) 0%, transparent 65%);
+  }
+  [data-theme="dark"] #dynamicLight {
+    background: radial-gradient(circle, rgba(155,124,255,0.06) 0%, rgba(255,107,53,0.03) 40%, transparent 65%);
+  }
+  .container { position: relative; z-index: 1; }
+
+  /* ========== Container ========== */
+  .container {
+    max-width: 820px; margin: 0 auto; padding: 40px 30px 60px;
+    background: var(--bg-container);
+    min-height: 100vh;
+    transition: background 0.35s ease;
+    border-radius: 0;
+  }
+
+  /* ========== Theme-aware transitions ========== */
+  .container, .cta-banner, .code-block, .json-block, .tip, .folder-tree,
+  .pitfall-table th, .pitfall-table td, .bottom-cta,
+  h1, h2, h3, h4, p, li, span, strong, .toc-item, .footer,
+  .meta, .subtitle, .pitfall-table td code,
+  input, select, textarea, button {
+    transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  /* ========== CTA & Bottom CTA (stay same in both themes) ========== */
+  .cta-banner, .bottom-cta {
+    background: linear-gradient(135deg, #FF6B35, #7C5CFC);
+    border-radius: 14px; padding: 24px 28px;
+    margin-bottom: 32px; text-align: center;
+  }
+  .cta-banner h2 { font-size: 26px; margin-bottom: 8px; font-weight: 700; color: #fff; }
+  .cta-banner p { font-size: 16px; line-height: 1.6; font-weight: 500; color: #FFF5E6; }
+
+  .bottom-cta {
+    margin-top: 40px; padding: 28px;
+  }
+  .bottom-cta h3 { font-size: 22px; color: #fff; margin-bottom: 8px; font-weight: 700; }
+  .bottom-cta p { font-size: 15px; color: #FFF5E6; margin-bottom: 0; font-weight: 500; }
+
+  /* ========== Title / Meta ========== */
+  .title { font-size: 34px; font-weight: 800; margin-bottom: 6px; }
+  .subtitle { font-size: 18px; color: var(--text-secondary); margin-bottom: 30px; }
+  .meta {
+    display: flex; gap: 20px; font-size: 14px; color: var(--text-tertiary);
+    margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);
+  }
+
+  /* ========== TOC ========== */
+  .toc { margin-bottom: 32px; }
+  .toc-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .toc-item { padding: 6px 0; color: var(--accent); font-weight: 500; cursor: pointer; }
+  .toc-item::before { content: '> '; color: var(--accent-orange); font-weight: 700; }
+
+  /* ========== Sections ========== */
+  h2.section {
+    font-size: 26px; font-weight: 700; margin: 32px 0 6px;
+    padding-bottom: 6px; border-bottom: 2px solid var(--border-color);
+  }
+  h3.step {
+    font-size: 20px; font-weight: 700; margin: 24px 0 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h3.step .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--accent); color: #fff; font-size: 14px; flex-shrink: 0;
+  }
+
+  p { font-size: 16px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.8; }
+  p strong { color: var(--text-primary); }
+  p .hl { color: var(--hl-color); font-weight: 600; }
+
+  /* ========== Code Blocks ========== */
+  .code-block {
+    background: var(--code-bg); border-radius: 10px; padding: 14px 18px;
+    margin: 10px 0 16px; overflow-x: auto;
+    font-family: 'Consolas','Courier New',monospace;
+    font-size: 14px; line-height: 1.7; color: var(--code-text);
+    user-select: all; -webkit-user-select: all;
+    position: relative;
+    border: 1px solid var(--border-color);
+  }
+  .code-block .prompt { color: #50FA7B; }
+  .code-block .cmd { color: var(--code-text); }
+  .code-block .output { color: #8F9FA8; }
+  .code-block .cmt { color: #6272A4; font-style: italic; }
+  .code-block .key { color: #FF79C6; }
+  .code-block .val { color: #50FA7B; }
+  .code-block .str { color: #F1FA8C; }
+  .code-block .hl { color: #FFB86C; }
+
+  .copy-hint {
+    position: absolute; top: 6px; right: 10px;
+    font-size: 12px; color: rgba(255,255,255,0.3);
+    font-family: 'Microsoft YaHei',sans-serif;
+    pointer-events: none;
+  }
+
+  /* ========== JSON Block ========== */
+  .json-block {
+    background: var(--code-bg); border-radius: 10px; padding: 14px 18px;
+    margin: 10px 0 16px; overflow-x: auto;
+    font-family: 'Consolas','Courier New',monospace;
+    font-size: 13px; line-height: 1.6; color: var(--code-text);
+    user-select: all; -webkit-user-select: all;
+    border: 1px solid var(--border-color);
+  }
+  .json-block .key { color: #FF79C6; }
+  .json-block .val { color: #50FA7B; }
+  .json-block .str { color: #F1FA8C; }
+  .json-block .cmt { color: #6272A4; font-style: italic; }
+
+  /* ========== Tips ========== */
+  .tip {
+    background: var(--tip-bg); border-left: 4px solid var(--tip-border);
+    border-radius: 0 8px 8px 0; padding: 12px 16px;
+    margin: 12px 0 16px; font-size: 15px; color: var(--text-secondary); line-height: 1.7;
+  }
+  .tip strong { color: var(--text-primary); }
+  .tip.warn { border-left-color: var(--warn-border); background: var(--warn-bg); }
+  .tip.success { border-left-color: var(--success-border); background: var(--success-bg); }
+
+  /* ========== Folder Tree ========== */
+  .folder-tree {
+    background: var(--folder-bg); border-radius: 8px; padding: 12px 16px;
+    margin: 10px 0 16px;
+    font-family: 'Consolas','Courier New',monospace;
+    font-size: 14px; line-height: 1.9; color: var(--folder-text);
+  }
+  .folder-tree .folder { color: var(--tip-border); font-weight: 600; }
+  .folder-tree .file { color: var(--folder-text); }
+  .folder-tree .highlight { color: var(--accent); font-weight: 600; }
+
+  /* ========== Lists ========== */
+  ul, ol { margin: 8px 0 16px 20px; }
+  li { font-size: 16px; color: var(--text-secondary); margin-bottom: 6px; line-height: 1.7; }
+  li strong { color: var(--text-primary); }
+
+  /* ========== Table ========== */
+  .pitfall-table {
+    width: 100%; border-collapse: collapse; margin: 12px 0 16px;
+    font-size: 15px;
+  }
+  .pitfall-table th {
+    background: var(--table-th-bg); padding: 10px 14px; text-align: left;
+    font-weight: 600; color: var(--text-primary); border: 1px solid var(--table-border);
+  }
+  .pitfall-table td {
+    padding: 10px 14px; border: 1px solid var(--table-border); color: var(--text-secondary);
+  }
+  .pitfall-table .num {
+    color: var(--accent-orange); font-weight: 700; width: 36px; text-align: center;
+  }
+  .pitfall-table td code {
+    background: var(--table-code-bg); padding: 1px 6px; border-radius: 4px;
+    font-family: 'Consolas','Courier New',monospace; font-size: 13px;
+    color: var(--accent);
+  }
+
+  /* ========== Footer ========== */
+  .footer {
+    margin-top: 30px; text-align: center;
+    font-size: 14px; color: var(--text-tertiary); font-weight: 700;
+  }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 600px) {
+    .container { padding: 20px 16px 40px; }
+    .title { font-size: 26px; }
+    .subtitle { font-size: 15px; }
+    .meta { flex-direction: column; gap: 4px; }
+    .cta-banner, .bottom-cta { padding: 18px 16px; }
+    .cta-banner h2 { font-size: 20px; }
+    .theme-toggle { top: 12px; right: 12px; width: 38px; height: 38px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 返回主页 -->
+<a href="../index.html" style="position: fixed; top: 16px; left: 16px; z-index: 1001; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-container, #FFF9F0); border: 1px solid var(--border-color, #EDE8E0); border-radius: 8px; color: var(--text-secondary, #5A5A6E); font-size: 14px; font-weight: 500; text-decoration: none; font-family: inherit; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">← 回到主页</a>
+
+<!-- 动态光效 -->
+<div id="dynamicLight"></div>
+
+<!-- 主题切换按钮 -->
+<button class="theme-toggle" id="themeToggle" aria-label="切换深色/浅色模式">
+  <svg id="themeIcon" viewBox="0 0 24 24">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+</button>
+
+<div class="container">
+
+  <!-- 顶部钩子 -->
+  <div class="cta-banner">
+    <h2>关注 + 评论，领取更多AI工具教程</h2>
+    <p>这份文档是完整版操作指南，包含全部命令和避坑细节。<br>
+    关注「里维斯」，评论你想要的工具，下期安排。</p>
+  </div>
+
+  <h1 class="title">Claude Code + DeepSeek V4<br>完整安装配置文档</h1>
+  <p class="subtitle">Windows 系统 | 国内网络 | 无需代理 | 全部命令可复制</p>
+  <div class="meta">
+    <span>更新：2026-05-30</span>
+    <span>版本：Claude Code v2.1.157</span>
+    <span>模型：DeepSeek V4 Pro / Flash</span>
+  </div>
+
+  <!-- 目录 -->
+  <div class="toc">
+    <div class="toc-title">目录</div>
+    <div class="toc-item">1. 环境准备 — 安装 Node.js</div>
+    <div class="toc-item">2. 安装 Claude Code</div>
+    <div class="toc-item">3. 获取 DeepSeek API Key</div>
+    <div class="toc-item">4. 创建配置文件 settings.json</div>
+    <div class="toc-item">5. 启动 &amp; 验证</div>
+    <div class="toc-item">6. 常见问题 &amp; 避坑</div>
+  </div>
+
+  <!-- ==================== 前置检查 ==================== -->
+  <h2 class="section">前置检查</h2>
+  <p>在开始之前，确认你的 Windows 版本为 <strong>Windows 10 及以上</strong>。以下所有操作均在 <strong>PowerShell</strong> 终端中执行。</p>
+  <p>打开 PowerShell 的方法：按 <span class="hl">Win + X</span>，选择 <span class="hl">Windows PowerShell</span>（不需要管理员权限）。</p>
+
+  <!-- ==================== 第一步 ==================== -->
+  <h2 class="section">Step 1：环境准备 — 安装 Node.js</h2>
+
+  <h3 class="step"><span class="num">1.1</span> 检查是否已安装</h3>
+  <div class="code-block">
+    <span class="prompt">PS&gt;</span> <span class="cmd">node --version</span>
+  </div>
+  <p>如果有输出版本号（如 v22.14.0），说明已有 Node.js，跳到 <strong>Step 2</strong>。<br>
+  如果提示"无法识别"，则继续安装。</p>
+
+  <h3 class="step"><span class="num">1.2</span> 方式 A（推荐）：winget 安装</h3>
+  <div class="code-block">
+    <span class="prompt">PS&gt;</span> <span class="cmd">winget install OpenJS.NodeJS.LTS</span><br>
+    <span class="output">正在下载并安装... 完成后重启终端即可</span>
+  </div>
+
+  <h3 class="step"><span class="num">1.3</span> 方式 B：下载安装包</h3>
+  <p>打开 <strong>https://nodejs.org/</strong>，点击左侧 <strong>LTS</strong> 版下载 .msi 安装包，运行后一路 Next。</p>
+  <div class="tip">
+    <strong>注意：</strong>安装过程中勾选 <strong>"Automatically install the necessary tools"</strong>，这样会自动配置 PATH 环境变量。
+  </div>
+
+  <h3 class="step"><span class="num">1.4</span> 验证安装</h3>
+  <div class="code-block">
+    <span class="prompt">PS&gt;</span> <span class="cmd">node --version</span><br>
+    <span class="output">v22.14.0</span><br>
+    <span class="prompt">PS&gt;</span> <span class="cmd">npm --version</span><br>
+    <span class="output">10.x.x</span>
+  </div>
+
+  <div class="tip warn">
+    <strong>node 命令找不到？</strong> 重启 PowerShell 再试。如果还不行，重启电脑（安装包已将 Node.js 加入系统 PATH，但需要新会话才能加载）。
+  </div>
+
+  <p><strong>版本要求：</strong>Node.js v18.0.0 以上，推荐 v22 LTS。低于 v16 的版本安装 Claude Code 会报错。</p>
+
+  <!-- ==================== 第二步 ==================== -->
+  <h2 class="section">Step 2：安装 Claude Code</h2>
+
+  <p>确保 Node.js 安装成功后，在 PowerShell 中运行：</p>
+
+  <div class="code-block">
+    <span class="cmt"># 使用国内镜像加速（国内用户一定要加）</span><br>
+    <span class="prompt">PS&gt;</span> <span class="cmd">npm install -g @anthropic-ai/claude-code --registry https://registry.npmmirror.com</span><br>
+    <span class="output">added 1 package in 15s</span>
+  </div>
+
+  <div class="tip warn">
+    <strong>卡在 Installing？</strong> 确认加了 <span class="hl">--registry https://registry.npmmirror.com</span>。国内连 npm 官方源极慢甚至超时，镜像源能提速 100 倍。如果实在不行，可以永久切换镜像源：<br>
+    <span class="hl">npm config set registry https://registry.npmmirror.com</span>
+  </div>
+
+  <p>验证安装：</p>
+  <div class="code-block">
+    <span class="prompt">PS&gt;</span> <span class="cmd">claude --version</span><br>
+    <span class="output">2.1.157</span>
+  </div>
+
+  <p><strong>如果报"无法加载文件"之类的策略错误，</strong>先解除 PowerShell 的执行策略限制：</p>
+  <div class="code-block">
+    <span class="prompt">PS&gt;</span> <span class="cmd">Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</span><br>
+    <span class="output"># 输入 Y 确认即可</span>
+  </div>
+
+  <div class="tip warn">
+    <strong>Windows 安全提示？</strong> 可能会弹出 Windows Defender 阻止运行的窗口，点击"仍然运行"即可。这是 npm 全局安装触发的正常行为，不是病毒。
+  </div>
+
+  <!-- ==================== 第三步 ==================== -->
+  <h2 class="section">Step 3：获取 DeepSeek API Key</h2>
+
+  <p>Claude Code 默认连接 Anthropic 官方 API，国内无法访问。我们需要把它指向 DeepSeek 的兼容接口。</p>
+
+  <ol>
+    <li>打开 <strong>https://platform.deepseek.com/</strong>，注册或登录账号</li>
+    <li>左侧菜单点击 <strong>API Keys</strong></li>
+    <li>点击 <strong>创建新的 API Key</strong></li>
+    <li>复制生成的 <span class="hl">sk-xxxxxxxx</span> 字符串</li>
+  </ol>
+
+  <div class="tip warn">
+    <strong>Key 务必保密！</strong>不要发到公开网络、不要提交到 GitHub。如果泄露，去 DeepSeek 平台删除并重新生成。
+  </div>
+  <div class="tip">
+    <strong>需要充值吗？</strong> DeepSeek V4 Pro 需要账户有余额才能调用。充值入口在平台右上角，最低充值金额通常为 10 元。最新价格：输入（缓存命中）每百万 tokens 仅 <strong>0.025 元</strong>，输入（缓存未命中）<strong>3 元</strong>，输出 <strong>6 元</strong>。关键是这个价格已经<strong>永久降价</strong>了，不是限时折扣，长期用完全不慌。
+  </div>
+
+  <div class="tip success">
+    <strong>喜欢其他模型？一样的方法。</strong> 如果你平时用 Kimi、GLM、通义千问或其他国产大模型，<strong>也可以用同样的配置方式</strong>接入 Claude Code。只需要把 <span class="hl">ANTHROPIC_BASE_URL</span> 换成对应模型厂商提供的 Anthropic 兼容接口地址，<span class="hl">ANTHROPIC_AUTH_TOKEN</span> 换成对应的 API Key 即可。原理都一样，换个端点的事。
+  </div>
+
+  <!-- ==================== 第四步 ==================== -->
+  <h2 class="section">Step 4：创建配置文件 settings.json</h2>
+
+  <p>在用户目录下创建 <strong>.claude</strong> 文件夹，在里面放配置文件：</p>
+
+  <div class="folder-tree">
+    C:\Users\<span class="highlight">你的用户名</span>\<br>
+    &nbsp;&nbsp;|<br>
+    &nbsp;&nbsp;+-- <span class="folder">.claude\</span>  &lt;-- 新建这个文件夹<br>
+    &nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+    &nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+-- <span class="highlight">settings.json</span>  &lt;-- 新建这个文件
+  </div>
+
+  <h3 class="step"><span class="num">4.1</span> 方法一：PowerShell 命令创建</h3>
+  <div class="code-block">
+    <span class="prompt">PS&gt;</span> <span class="cmd">mkdir $env:USERPROFILE\.claude</span><br>
+    <span class="prompt">PS&gt;</span> <span class="cmd">notepad $env:USERPROFILE\.claude\settings.json</span>
+  </div>
+
+  <h3 class="step"><span class="num">4.2</span> 方法二：图形界面创建</h3>
+  <p>按 <span class="hl">Win + R</span> 打开运行，输入 <span class="hl">%userprofile%\.claude</span> 回车。在打开的文件夹里右键，新建 <strong>settings.json</strong> 文件。</p>
+
+  <p>文件创建后，<strong>完整复制粘贴以下内容</strong>，把 <span class="hl">sk-你的Key</span> 替换成上一步拿到的 API Key：</p>
+
+  <div class="json-block">
+    {<br>
+    &nbsp;&nbsp;<span class="str">"env"</span>: {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// DeepSeek API Key，从 platform.deepseek.com 获取</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"ANTHROPIC_AUTH_TOKEN"</span>: <span class="str">"sk-你的Key"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// DeepSeek 提供的 Anthropic 兼容接口地址（国内直连）</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"ANTHROPIC_BASE_URL"</span>: <span class="str">"https://api.deepseek.com/anthropic"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// 默认模型</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"ANTHROPIC_MODEL"</span>: <span class="str">"deepseek-v4-pro[1m]"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// Opus 档 -&gt; V4 Pro（最强，复杂任务）</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"ANTHROPIC_DEFAULT_OPUS_MODEL"</span>: <span class="str">"deepseek-v4-pro[1m]"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// Sonnet 档 -&gt; V4 Pro（主力，日常开发）</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"ANTHROPIC_DEFAULT_SONNET_MODEL"</span>: <span class="str">"deepseek-v4-pro[1m]"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// Haiku 档 -&gt; V4 Flash（轻量，快速响应）</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"ANTHROPIC_DEFAULT_HAIKU_MODEL"</span>: <span class="str">"deepseek-v4-flash"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// 禁用不必要的网络请求（保护隐私）</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"</span>: <span class="str">"1"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">// 最高努力程度，深度推理</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"CLAUDE_CODE_EFFORT_LEVEL"</span>: <span class="str">"max"</span><br>
+    &nbsp;&nbsp;}<br>
+    }
+  </div>
+
+  <p><strong>也可以复制以下纯文本版本（不带注释，更干净）：</strong></p>
+  <div class="json-block">
+    {<span class="str">"env"</span>:{<span class="key">"ANTHROPIC_AUTH_TOKEN"</span>:<span class="str">"sk-你的Key"</span>,<span class="key">"ANTHROPIC_BASE_URL"</span>:<span class="str">"https://api.deepseek.com/anthropic"</span>,<span class="key">"ANTHROPIC_MODEL"</span>:<span class="str">"deepseek-v4-pro[1m]"</span>,<span class="key">"ANTHROPIC_DEFAULT_OPUS_MODEL"</span>:<span class="str">"deepseek-v4-pro[1m]"</span>,<span class="key">"ANTHROPIC_DEFAULT_SONNET_MODEL"</span>:<span class="str">"deepseek-v4-pro[1m]"</span>,<span class="key">"ANTHROPIC_DEFAULT_HAIKU_MODEL"</span>:<span class="str">"deepseek-v4-flash"</span>,<span class="key">"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"</span>:<span class="str">"1"</span>,<span class="key">"CLAUDE_CODE_EFFORT_LEVEL"</span>:<span class="str">"max"</span>}}
+  </div>
+
+  <p><strong>三个必填参数说明：</strong></p>
+  <ul>
+    <li><strong>ANTHROPIC_AUTH_TOKEN</strong> - 你的 DeepSeek API Key，没有这个连不上</li>
+    <li><strong>ANTHROPIC_BASE_URL</strong> - 接口地址，固定为 api.deepseek.com/anthropic，国内直连</li>
+    <li><strong>模型映射</strong> - Opus/Sonnet 用 V4 Pro 深度推理，Haiku 用 V4 Flash 快速响应</li>
+  </ul>
+
+  <div class="tip success">
+    <strong>保存好配置文件后，</strong>不需要重启任何东西，下一步直接启动 Claude Code 即可生效。
+  </div>
+
+  <!-- ==================== 第五步 ==================== -->
+  <h2 class="section">Step 5：启动 &amp; 验证</h2>
+
+  <h3 class="step"><span class="num">5.1</span> 启动 Claude Code</h3>
+  <p>在 PowerShell 中进入你想用的项目目录，运行：</p>
+  <div class="code-block">
+    <span class="prompt">PS&gt;</span> <span class="cmd">cd $env:USERPROFILE\Desktop\test</span><br>
+    <span class="prompt">PS&gt;</span> <span class="cmd">claude</span><br>
+    <span class="output">Claude Code v2.1.157</span><br>
+    <span class="output">  Model: deepseek-v4-pro[1m]</span><br>
+    <span class="output">  Type /help for commands</span>
+  </div>
+
+  <h3 class="step"><span class="num">5.2</span> 首次启动三步引导</h3>
+  <p>第一次运行 claude 命令，会有三步设置：</p>
+  <ol>
+    <li><strong>选择主题样式：</strong>亮色 / 暗色 / 高对比度，随便选一个</li>
+    <li><strong>确认安全须知：</strong>按 <span class="hl">y</span> 回车（Claude Code 可以执行代码，这是正常提示）</li>
+    <li><strong>确认目录信任：</strong>按 <span class="hl">y</span> 回车同意当前目录</li>
+  </ol>
+
+  <h3 class="step"><span class="num">5.3</span> 验证模型配置</h3>
+  <p>进入交互界面后，输入以下命令查看当前使用的模型：</p>
+  <div class="code-block">
+    <span class="prompt">&gt;</span> <span class="cmd">/context</span><br>
+    <span class="output">Configured model: deepseek-v4-pro[1m]</span>
+  </div>
+
+  <p>如果显示 <span class="hl">deepseek-v4-pro[1m]</span>，说明配置成功！可以开始使用了。</p>
+  <p>也可以用 <span class="hl">/model</span> 查看所有可用模型列表：</p>
+  <div class="code-block">
+    <span class="prompt">&gt;</span> <span class="cmd">/model</span><br>
+    <span class="output">Available models:</span><br>
+    <span class="output">  deepseek-v4-pro[1m]   (Opus, Sonnet)</span><br>
+    <span class="output">  deepseek-v4-flash     (Haiku)</span>
+  </div>
+
+  <h3 class="step"><span class="num">5.4</span> 常用快捷键</h3>
+  <div class="code-block">
+    <span class="hl">Ctrl + C</span>  <span class="cmt">中断当前任务</span><br>
+    <span class="hl">Ctrl + L</span>  <span class="cmt">清屏</span><br>
+    <span class="hl">Ctrl + D</span>  <span class="cmt">退出 Claude Code</span><br>
+    <span class="hl">/help</span>     <span class="cmt">查看所有命令</span><br>
+    <span class="hl">/clear</span>    <span class="cmt">清除对话历史</span>
+  </div>
+
+  <!-- ==================== 第六步 ==================== -->
+  <h2 class="section">Step 6：常见问题 &amp; 避坑指南</h2>
+
+  <table class="pitfall-table">
+    <thead><tr><th>#</th><th>问题</th><th>解决方法</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><strong>claude 命令找不到</strong></td><td>重启终端或重启电脑。npm 全局安装的路径需要新会话加载。也可用 <code>npx @anthropic-ai/claude-code</code> 临时启动</td></tr>
+      <tr><td class="num">2</td><td><strong>API Key 无效 / 401 错误</strong></td><td>检查 Key 是否复制完整（无多余空格）。检查 DeepSeek 账户余额。确认 Key 是在 platform.deepseek.com 的 API Keys 页面生成的</td></tr>
+      <tr><td class="num">3</td><td><strong>npm install 超时 / 下载慢</strong></td><td>加 <code>--registry https://registry.npmmirror.com</code>。还可以永久切换：<code>npm config set registry https://registry.npmmirror.com</code></td></tr>
+      <tr><td class="num">4</td><td><strong>settings.json 不生效</strong></td><td>确认路径：<code>C:\Users\你的用户名\.claude\settings.json</code>。文件名是 settings.json 不是 settings.txt。Windows 默认隐藏扩展名，注意检查</td></tr>
+      <tr><td class="num">5</td><td><strong>PowerShell 无法运行脚本</strong></td><td>运行 <code>Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</code> 然后按 Y 同意</td></tr>
+      <tr><td class="num">6</td><td><strong>Claude Code 启动后一直转圈</strong></td><td>网络问题。检查 ANTHROPIC_BASE_URL 是否写对。用浏览器打开 https://api.deepseek.com/anthropic 测试能否访问</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ==================== 其他技巧 ==================== -->
+  <h2 class="section">Bonus：额外技巧</h2>
+
+  <h3 class="step"><span class="num">B.1</span> 模型切换工具 CCSwitch</h3>
+  <p>如果你想一键切换不同模型（如切回官方 Claude、换到其他国产模型），推荐安装 <strong>CCSwitch</strong> 桌面工具。</p>
+  <p>下载地址：<strong>https://github.com/farion1231/cc-switch/releases</strong><br>
+  下载 <span class="hl">CC-Switch-v3.16.0-Windows-Portable.zip</span>，解压即用，无需安装。</p>
+  <p>配置方式：打开 CCSwitch，点击 + 号，预设中选择 DeepSeek，填入 API Key 即可。</p>
+
+  <h3 class="step"><span class="num">B.2</span> 发送图片到 Claude Code</h3>
+  <p>Claude Code 支持多模态识别，快捷键：<span class="hl">Alt + V</span>（Windows） / <span class="hl">Command + V</span>（Mac），直接粘贴截图即可让 AI 分析。</p>
+
+  <h3 class="step"><span class="num">B.3</span> DeepSeek V4 Pro 已永久降价！</h3>
+  <p>重大利好！2026年5月22日 DeepSeek 官方宣布：V4 Pro 的 API 价格在 5 月 31 日结束 2.5 折优惠后，<strong>直接锁定为原价的 1/4，永久不恢复原价</strong>。</p>
+  <p>新价格（永久）：</p>
+  <ul>
+    <li>输入（缓存命中）：<strong>0.025 元 / 百万 tokens</strong></li>
+    <li>输入（缓存未命中）：<strong>3 元 / 百万 tokens</strong></li>
+    <li>输出：<strong>6 元 / 百万 tokens</strong></li>
+  </ul>
+  <p>相当于 600 万输出 tokens 只要 36 元，输入就更便宜了。这个价格在同等能力的模型中<strong>全球最低</strong>，放心用，不会突然涨价。</p>
+
+  <!-- ==================== 底部CTA ==================== -->
+  <div class="bottom-cta">
+    <h3>觉得这份文档有用？</h3>
+    <p>
+      关注 <strong>「里维斯」</strong>，每天分享AI工具实操教程。<br>
+      评论区告诉我你下一个想学的工具，点赞最高的优先安排。<br>
+      收藏这份文档，需要的时候直接翻出来复制命令就行。
+    </p>
+  </div>
+
+  <div class="footer">
+    <strong>里维斯 · AI</strong>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  // ===== 主题切换 =====
+  var html = document.documentElement;
+  var toggle = document.getElementById('themeToggle');
+  var icon = document.getElementById('themeIcon');
+
+  // 太阳图标
+  var sunIcon = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+
+  // 获取当前主题
+  function getTheme() { return html.getAttribute('data-theme'); }
+
+  // 设置主题
+  function setTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      icon.innerHTML = sunIcon;
+    } else {
+      icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    }
+    try { localStorage.setItem('cc-tutorial-theme', theme); } catch(e) {}
+  }
+
+  // 初始化：localStorage > 系统偏好 > light
+  var saved;
+  try { saved = localStorage.getItem('cc-tutorial-theme'); } catch(e) {}
+  if (saved) {
+    setTheme(saved);
+  } else {
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+  }
+
+  // 切换事件
+  toggle.addEventListener('click', function() {
+    setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  });
+
+  // ===== 动态光效 =====
+  var light = document.getElementById('dynamicLight');
+  if (light) {
+    var mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    var cx = mx, cy = my;
+
+    document.addEventListener('mousemove', function(e) {
+      mx = e.clientX;
+      my = e.clientY;
+    });
+
+    function animateLight() {
+      cx += (mx - cx) * 0.06;
+      cy += (my - cy) * 0.06;
+      light.style.left = cx + 'px';
+      light.style.top = cy + 'px';
+      requestAnimationFrame(animateLight);
+    }
+    animateLight();
+  }
+})();
+</script>
+</body>
+</html>
