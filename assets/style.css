@@ -10,8 +10,8 @@
    Design Tokens: Light Mode (default)
    ============================================================ */
 :root {
-  --surface-primary: #FAFAFA;
-  --surface-card: #FFFFFF;
+  --surface-primary: #F5F0EB;
+  --surface-card: #FAF8F5;
   --text-primary: #0F0F0F;
   --text-secondary: #5C5C5C;
   --text-tertiary: #8E8E8E;
@@ -274,10 +274,11 @@ code {
 }
 .tutorial-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
 .tutorial-card-icon {
-  width: 44px; height: 44px; border-radius: var(--radius-md);
+  width: 44px; height: 44px; border-radius: 10px;
   display: flex; align-items: center;
   justify-content: center; margin-bottom: var(--space-16);
   font-size: 0;
+  flex-shrink: 0;
 }
 .tutorial-card-icon span {
   font-family: 'Inter','Microsoft YaHei',sans-serif;
