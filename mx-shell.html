@@ -900,27 +900,31 @@ over-sharpening, over-smoothing, and random weapons.</code></pre>
   const html = document.documentElement;
   const btn = document.getElementById('themeBtn');
   const saved = localStorage.getItem('mxshell-theme');
-  if (saved === 'light') {
-    html.setAttribute('data-theme', 'light');
+  // 初始化: saved === 'dark' → dark, 否则 light (移除 data-theme 就走 :root)
+  if (saved === 'dark') {
+    html.setAttribute('data-theme', 'dark');
+    if (btn) btn.innerHTML = '&#9788;';
+  } else {
+    html.removeAttribute('data-theme');
     if (btn) btn.innerHTML = '&#9790;';
   }
   window.toggleTheme = function() {
-    const isLight = html.getAttribute('data-theme') === 'light';
-    if (isLight) {
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    if (isDark) {
       html.removeAttribute('data-theme');
-      localStorage.setItem('mxshell-theme', 'dark');
-      if (btn) btn.innerHTML = '&#9788;';
-    } else {
-      html.setAttribute('data-theme', 'light');
       localStorage.setItem('mxshell-theme', 'light');
       if (btn) btn.innerHTML = '&#9790;';
+    } else {
+      html.setAttribute('data-theme', 'dark');
+      localStorage.setItem('mxshell-theme', 'dark');
+      if (btn) btn.innerHTML = '&#9788;';
     }
   };
 })();
 </script>
 
-  <div style="text-align:center;margin:32px 0 0;padding:20px 0;border-top:1px solid #2a2a3e">
-    <a href="https://leevisfung.github.io/" style="color:#9B7CFF;font-size:14px;text-decoration:none">&#8592; 返回 里维斯 · AI 教程首页</a>
+  <div style="text-align:center;margin:32px 0 0;padding:20px 0;border-top:1px solid var(--border-color)">
+    <a href="https://leevisfung.github.io/" style="color:var(--accent);font-size:14px;text-decoration:none">&#8592; 返回 里维斯 · AI 教程首页</a>
   </div>
 
 </body>
