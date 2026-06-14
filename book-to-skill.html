@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book-to-Skill Factory 完整教程 | 书转AI Skill 流水线</title>
+<style>
+:root {
+  --bg: #0a0a0f; --card-bg: #14141f; --card-border: #1e1e30;
+  --text: #d4d4dc; --text-dim: #7a7a8c; --accent: #e85d04;
+  --accent2: #faa307; --green: #2ecc71; --blue: #3498db;
+  --purple: #9b59b6; --code-bg: #0d0d1a; --code-text: #a0a0b8;
+  --header-bg: rgba(10,10,15,0.95); --title-color: #fff;
+  --tip-bg: rgba(52,152,219,0.08); --warn-bg: rgba(232,93,4,0.08);
+  --success-bg: rgba(46,204,113,0.08); --th-bg: rgba(232,93,4,0.08);
+  --tr-even: rgba(255,255,255,0.02); --tab-hover: rgba(232,93,4,0.1);
+  --radius: 12px; --max-w: 960px;
+  --font-mono: 'Cascadia Code','Fira Code',Consolas,monospace;
+}
+[data-theme="light"] {
+  --bg: #F5F5F0; --card-bg: #FFFFFF; --card-border: #E0E0DC;
+  --text: #212121; --text-dim: #6E6E73; --accent: #E65100;
+  --accent2: #F57C00; --green: #2E7D32; --blue: #1565C0;
+  --purple: #7B1FA2; --code-bg: #F0EFEA; --code-text: #555;
+  --header-bg: rgba(245,245,240,0.95); --title-color: #111;
+  --tip-bg: rgba(21,101,192,0.06); --warn-bg: rgba(230,81,0,0.06);
+  --success-bg: rgba(46,125,50,0.06); --th-bg: rgba(230,81,0,0.06);
+  --tr-even: rgba(0,0,0,0.015); --tab-hover: rgba(230,81,0,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:80px; }
+body {
+  font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background: var(--bg); color: var(--text); line-height:1.8; font-size:15px;
+  padding: 0 0 120px; transition: background 0.3s, color 0.3s;
+}
+header {
+  position:sticky; top:0; z-index:100; background:var(--header-bg);
+  backdrop-filter:blur(20px); border-bottom:1px solid var(--card-border);
+  padding:16px 20px; transition: background 0.3s;
+}
+header .inner { max-width:var(--max-w); margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+header .logo { font-weight:700; font-size:18px; color:var(--accent); }
+header nav { display:flex; gap:4px; flex-wrap:wrap; }
+header nav a { color:var(--text-dim); text-decoration:none; font-size:13px; padding:6px 10px; border-radius:6px; transition:all 0.2s; white-space:nowrap; }
+header nav a:hover, header nav a.active { color:var(--accent); background:var(--tab-hover); }
+.theme-toggle { background:var(--card-bg); border:1px solid var(--card-border); color:var(--text); cursor:pointer; font-size:14px; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.theme-toggle:hover { border-color:var(--accent); color:var(--accent); }
+.container { max-width:var(--max-w); margin:0 auto; padding:40px 20px; }
+.section { margin-bottom:48px; }
+.section-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; padding-bottom:12px; border-bottom:2px solid var(--card-border); }
+.section-num { background:var(--accent); color:#fff; font-weight:700; font-size:14px; min-width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.section-title { font-size:22px; font-weight:700; color:var(--title-color); }
+.card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:24px; margin-bottom:16px; }
+.card-title { font-weight:600; font-size:16px; color:var(--title-color); margin-bottom:12px; }
+.card-subtitle { font-size:13px; color:var(--text-dim); margin-bottom:10px; }
+pre { background:var(--code-bg); border:1px solid var(--card-border); border-radius:10px; padding:20px; overflow-x:auto; font-family:var(--font-mono); font-size:13px; line-height:1.6; color:var(--code-text); margin:12px 0; white-space:pre-wrap; }
+code { font-family:var(--font-mono); font-size:13px; background:var(--code-bg); padding:2px 8px; border-radius:4px; color:var(--accent2); }
+pre code { background:none; padding:0; color:inherit; }
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; }
+th, td { padding:10px 14px; text-align:left; border:1px solid var(--card-border); }
+th { background:var(--th-bg); color:var(--accent2); font-weight:600; }
+td { color:var(--text); }
+tr:nth-child(even) td { background:var(--tr-even); }
+.tag-pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; margin:2px 4px 2px 0; background:rgba(232,93,4,0.15); color:var(--accent); }
+.tag-pill.green { background:rgba(46,204,113,0.15); color:var(--green); }
+.tag-pill.blue { background:rgba(52,152,219,0.15); color:var(--blue); }
+.tip { background:var(--tip-bg); border-left:3px solid var(--blue); padding:14px 18px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14px; }
+.tip strong { color:var(--blue); }
+.warn { background:var(--warn-bg); border-left:3px solid var(--accent); padding:14px 18px; border-radius:0 8px 8px 0; margin:16px 0; }
+.warn strong { color:var(--accent); }
+.success { background:var(--success-bg); border-left:3px solid var(--green); padding:14px 18px; border-radius:0 8px 8px 0; margin:16px 0; }
+.success strong { color:var(--green); }
+.step-item { padding:16px 16px 16px 56px; position:relative; margin-bottom:12px; background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); }
+.step-item::before { content:attr(data-num); position:absolute; left:14px; top:14px; width:28px; height:28px; background:var(--accent); color:#fff; font-weight:700; font-size:14px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.step-item h4 { margin:0 0 6px 0; font-size:16px; color:var(--title-color); }
+.step-item p { margin:0; color:var(--text); }
+.flow-box { display:flex; align-items:center; justify-content:center; gap:20px; flex-wrap:wrap; padding:32px 20px; margin:16px 0; }
+.flow-node { background:var(--card-bg); border:2px solid var(--accent); border-radius:12px; padding:14px 24px; font-weight:600; color:var(--title-color); text-align:center; font-size:15px; }
+.flow-arrow { font-size:24px; color:var(--accent); }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.prompt-box { background:var(--code-bg); border:2px solid var(--accent); border-radius:12px; padding:24px; margin:12px 0; }
+.prompt-box .plabel { font-size:13px; font-weight:600; color:var(--accent2); margin-bottom:8px; }
+.prompt-box .pbody { font-size:14px; color:var(--text); line-height:1.7; white-space:pre-wrap; }
+.case-card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:24px; margin-bottom:16px; border-left:4px solid var(--green); }
+.case-card .cname { font-size:18px; font-weight:700; color:var(--green); margin-bottom:8px; }
+.case-card .cdata { font-size:14px; color:var(--text); line-height:1.6; }
+.case-card .cgrid { display:flex; gap:16px; flex-wrap:wrap; margin:8px 0; }
+.case-card .cgrid span { background:rgba(46,204,113,0.1); padding:4px 12px; border-radius:6px; font-size:13px; color:var(--green); }
+@media (max-width:768px) { .grid-2 { grid-template-columns:1fr; } header nav { display:none; } .container { padding:24px 12px; } }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--card-border); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <div style="display:flex;align-items:center;gap:12px">
+      <a href="https://leevisfung.github.io/" style="color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:4px">
+        <span style="font-size:16px">&#8592;</span> 主页
+      </a>
+      <div class="logo">&#9889; Book-to-Skill Factory</div>
+    </div>
+    <nav>
+      <a href="#s0">概览</a><a href="#s1">六步SOP</a><a href="#s2">Prompt</a>
+      <a href="#s3">案例</a><a href="#s4">质检</a><a href="#s5">避坑</a><a href="#s6">变现</a>
+    </nav>
+    <button class="theme-toggle" id="themeBtn" aria-label="切换深浅色模式">
+      <svg id="iconSun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg id="iconMoon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- S0 -->
+<section class="section" id="s0">
+  <div class="section-header"><div class="section-num">0</div><div class="section-title">Book-to-Skill Factory 是什么</div></div>
+
+  <div class="card">
+    <div class="card-title">一句话定义</div>
+    <p style="font-size:16px;color:var(--text);">把任意方法论书变成 Cursor / Claude Code / WorkBuddy 等 Agent 上可调用的 AI Skill 的完整流水线。</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">⏱ 效率</div>
+      <p style="font-size:32px;font-weight:700;color:var(--accent);">45 <span style="font-size:16px;color:var(--text-dim);">分钟/本</span></p>
+      <p style="color:var(--text-dim);">熟练后 20 分钟/本</p>
+    </div>
+    <div class="card">
+      <div class="card-title">💰 变现</div>
+      <p style="font-size:32px;font-weight:700;color:var(--green);">¥9.9-29.9 <span style="font-size:16px;color:var(--text-dim);">/本</span></p>
+      <p style="color:var(--text-dim);">闲鱼可卖，批量产出</p>
+    </div>
+  </div>
+
+  <div class="flow-box">
+    <div class="flow-node">书<br><small>纯文本</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node">结构地图</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node">五类台账</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node">SKILL.md</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node">自检交付</div>
+  </div>
+</section>
+
+<!-- S1: 六步SOP -->
+<section class="section" id="s1">
+  <div class="section-header"><div class="section-num">1</div><div class="section-title">六步 SOP 详解</div></div>
+
+  <div class="step-item" data-num="1">
+    <h4>书 → 纯文本</h4>
+    <p>拿到整本书干净的 .txt，图表丢了没关系，文字逻辑在就行。<br>
+    三种方式：<strong>Z-Library</strong>（直接选 TXT）、<strong>Calibre</strong>（免费转换）、<strong>python-docx</strong>（技术向）。<br>
+    <span style="color:var(--warn)">关键：整本直接喂，不要提前摘要——摘要把框架精度丢光。</span></p>
+  </div>
+
+  <div class="step-item" data-num="2">
+    <h4>全局结构地图</h4>
+    <p>用 Prompt 让 AI 通读全书，输出：核心论点 + 命名框架/原则/技法 + 逻辑关系 + 作者语气。</p>
+  </div>
+
+  <div class="step-item" data-num="3">
+    <h4>五类台账提炼</h4>
+    <p>按「框架 / 原则 / 技法 / 反模式 / 作者声音」五类提炼。每条给：名字 + 定义 + 何时用 + 原书表述。框架保留原作者命名，不改写成通用说法。标注优先级 P0/P1/P2。</p>
+  </div>
+
+  <div class="step-item" data-num="4">
+    <h4>生成 SKILL.md</h4>
+    <p>框架少（1-3 个）→ 单文件；框架多（10+）→ 入口文件 + 分文件懒加载。<br>
+    <span style="color:var(--blue);">description 黄金法则：写满触发场景，不能说「一个XX的skill」，要说「当用户需要...时调用」</span></p>
+  </div>
+
+  <div class="step-item" data-num="5">
+    <h4>自检 + 试调用（不可跳过）</h4>
+    <p><strong>召回测试</strong>：准备 5 句用户日常说话，看能否命中 skill。任何一句没命中 → 回补 description 触发词。<br>
+    <strong>调用测试</strong>：用一个真实问题测试，看输出是可执行步骤还是空话。</p>
+  </div>
+
+  <div class="step-item" data-num="6">
+    <h4>多模型 PK（可选）</h4>
+    <p>同一份台账丢给不同模型各生成一版，对比提炼精度。推荐组合：Claude Opus 4.8 + DeepSeek V4 + Gemini 2.5 Pro。</p>
+  </div>
+</section>
+
+<!-- S2: Prompt工具箱 -->
+<section class="section" id="s2">
+  <div class="section-header"><div class="section-num">2</div><div class="section-title">Prompt 工具箱（直接复制）</div></div>
+
+  <div class="card">
+    <div class="card-title">Prompt 1：全局结构地图</div>
+    <div class="prompt-box">
+      <div class="plabel">第二步 · 通读全书</div>
+      <div class="pbody">这是《[书名]》全文。先不要摘要。
+
+通读全书，给我一张全局结构地图：
+- 核心论点是什么？
+- 围绕它有哪些命名框架/原则/技法/反模式？
+- 它们之间什么逻辑关系？
+- 作者的语气有什么辨识度？
+
+我想用它做一个能帮我 [你的目的] 的 skill。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Prompt 2：五类台账提炼</div>
+    <div class="prompt-box">
+      <div class="plabel">第三步 · 结构化提炼</div>
+      <div class="pbody">按这 5 类提炼这本书：框架 / 原则 / 技法 / 反模式 / 作者声音。
+
+每条给：名字 + 一句话定义 + 何时用 + 原书的精确表述。
+框架要保留作者的原始命名，别改写成通用说法。
+哪些是核心必进、哪些是边角可省？标注优先级 P0/P1/P2。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Prompt 3：生成 SKILL.md</div>
+    <div class="prompt-box">
+      <div class="plabel">第四步 · 产出 Skill 文件</div>
+      <div class="pbody">按这份台账生成标准的 SKILL.md 文件。
+
+要求：
+1. description 写满触发场景
+2. 保留原作者所有命名框架
+3. 每条指令必须可执行
+4. 包含具体示例
+5. 语言风格自然、去 AI 味</div>
+    </div>
+  </div>
+
+  <div class="tip"><strong>description 黄金法则对照：</strong><br>
+  ❌ 错误：「一个非暴力沟通的 skill」<br>
+  ✅ 正确：「当用户需要提意见但不显得像指责、化解冲突、和家人/同事沟通敏感话题时调用」</div>
+
+  <table>
+    <tr><th>五类台账</th><th>定义</th><th>优先级</th></tr>
+    <tr><td>框架</td><td>有步骤、有顺序的结构化方法论</td><td><span class="tag-pill">P0 核心</span></td></tr>
+    <tr><td>原则</td><td>指导性的行动准则</td><td><span class="tag-pill">P0 核心</span></td></tr>
+    <tr><td>技法</td><td>具体可执行的技巧</td><td><span class="tag-pill green">P1 重要</span></td></tr>
+    <tr><td>反模式</td><td>常见的错误做法</td><td><span class="tag-pill green">P1 重要</span></td></tr>
+    <tr><td>作者声音</td><td>独特语气/风格/隐喻/金句</td><td><span class="tag-pill blue">P0 保留</span></td></tr>
+  </table>
+</section>
+
+<!-- S3: 案例 -->
+<section class="section" id="s3">
+  <div class="section-header"><div class="section-num">3</div><div class="section-title">真实案例拆解</div></div>
+
+  <div class="case-card">
+    <div class="cname">案例 1：《原子习惯》</div>
+    <div class="cgrid"><span>371KB</span><span>11.3万字</span><span>台版蔡世伟译</span></div>
+    <div class="cdata">
+      <strong>全局结构地图</strong>：核心论点「微小习惯改变→长期复利」→ 习惯四步循环（提示→渴望→回应→奖赏）→ 四大法则 + 反转法则<br>
+      <strong>五类台账</strong>：框架 4 个 · 原则 6 条 · 技法 14 条 · 反模式 7 条 · 金句若干<br>
+      <strong>第五步结果</strong>：召回测试 5/5 命中，调用测试输出 5 个可执行步骤。<br>
+      <strong>多模型PK</strong>：Claude Opus 4.8 版本对比融合后新增商业应用和教养应用模块。
+    </div>
+  </div>
+
+  <div class="case-card" style="border-left-color:var(--blue);">
+    <div class="cname" style="color:var(--blue);">案例 2：《好课像大片》</div>
+    <div class="cgrid"><span>13.8万字符</span><span>Word文档</span><span>客户定制</span></div>
+    <div class="cdata">
+      <strong>全局结构地图</strong>：核心论点「好课本质是换脑」→ 九字方针（讲不同·讲深刻·讲一招）→ 大片八步法<br>
+      <strong>五类台账</strong>：框架 9 个 · 原则 9 条 · 技法 10 条 · 反模式 8 条<br>
+      <strong>客户专属模块</strong>：课程诊断检查表（8个问题查任何一课）+ 调整旧课 6 步操作流程<br>
+      <strong>第五步结果</strong>：召回测试 5/5 命中，调用测试给出完整诊断和重构建议。
+    </div>
+  </div>
+</section>
+
+<!-- S4: 质检 -->
+<section class="section" id="s4">
+  <div class="section-header"><div class="section-num">4</div><div class="section-title">质检清单（每次交付前验证）</div></div>
+  <div class="card">
+    <table>
+      <tr><th>#</th><th>检查项</th><th>合格标准</th></tr>
+      <tr><td>1</td><td>description 触发场景</td><td>覆盖至少 5 个日常触发场景</td></tr>
+      <tr><td>2</td><td>框架命名保留</td><td>原作者命名比例 ≥ 80%</td></tr>
+      <tr><td>3</td><td>指令可执行</td><td>每条指令都不是空话套话</td></tr>
+      <tr><td>4</td><td>示例完整</td><td>包含至少 2 个完整示例</td></tr>
+      <tr><td>5</td><td>召回测试</td><td>5/5 全部命中</td></tr>
+      <tr><td>6</td><td>调用测试</td><td>输出是可操作步骤</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- S5: 避坑 -->
+<section class="section" id="s5">
+  <div class="section-header"><div class="section-num">5</div><div class="section-title">避坑指南</div></div>
+  <div class="card">
+    <table>
+      <tr><th>坑</th><th>解决方案</th><th>严重程度</th></tr>
+      <tr><td>扫描件 PDF 无法直接转 TXT</td><td>先用 OCR 或转 Word</td><td><span class="tag-pill">阻塞</span></td></tr>
+      <tr><td>数据表格在纯文本中丢失结构</td><td>提取后人工核对关键数字</td><td><span class="tag-pill">注意</span></td></tr>
+      <tr><td>担心排版空白导致"不全"</td><td>书字数 ≠ 纯文本字数，正常</td><td><span class="tag-pill">正常</span></td></tr>
+      <tr><td>description 写窄了 = 白做</td><td>多花 10 分钟在第五步自检</td><td><span class="tag-pill">致命</span></td></tr>
+      <tr><td>纯小说/纯理论不适合</td><td>只做方法论书</td><td><span class="tag-pill">原则</span></td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- S6: 变现 -->
+<section class="section" id="s6">
+  <div class="section-header"><div class="section-num">6</div><div class="section-title">变现思路</div></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">闲鱼售卖</div>
+      <p style="color:var(--text);">¥9.9-29.9/本，批量产出。<br>附上展示截图效果更好。</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--blue);">定制服务</div>
+      <p style="color:var(--text);">客户指定书籍，代做 Skill。<br>可接企业/个人定制。</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--green);">课程教人</div>
+      <p style="color:var(--text);">将这套方法论本身做成课程。<br>教别人怎么转 Skill 更值钱。</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--purple);">订阅制</div>
+      <p style="color:var(--text);">每周更新新书 Skill。<br>按月/季订阅，持续收入。</p>
+    </div>
+  </div>
+  <div class="tip" style="margin-top:20px;text-align:center;font-size:15px">
+    想要现成的 skill 可以私信我或加微信：<strong>worker1921</strong>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var h=document.documentElement,b=document.getElementById('themeBtn');
+  var sun=document.getElementById('iconSun'),moon=document.getElementById('iconMoon');
+  function l(){h.setAttribute('data-theme','light');sun.style.display='block';moon.style.display='none';localStorage.setItem('b2s-theme','light');}
+  function d(){h.removeAttribute('data-theme');sun.style.display='none';moon.style.display='block';localStorage.setItem('b2s-theme','dark');}
+  if(localStorage.getItem('b2s-theme')==='light')l();else d();
+  b.addEventListener('click',function(){if(h.getAttribute('data-theme')==='light')d();else l();});
+})();
+</script>
+</body>
+</html>
