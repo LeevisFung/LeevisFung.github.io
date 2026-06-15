@@ -288,6 +288,7 @@ code {
 .tutorial-card-icon.cc { background: linear-gradient(135deg, #FF6B35, #7C5CFC); }
 .tutorial-card-icon.mx { background: linear-gradient(135deg, #2ECC71, #1ABC9C); }
 .tutorial-card-icon.bs { background: linear-gradient(135deg, #E74C3C, #F39C12); }
+.tutorial-card-icon.hm { background: linear-gradient(135deg, #6C4DF6, #8B5CF6); }
 .tutorial-card h3 { font-size: 20px; font-weight: 600; margin-bottom: var(--space-8); }
 .tutorial-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;

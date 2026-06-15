@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent 完整入门指南 — 里维斯·AI Skills</title>
+<meta name="description" content="从零安装到5个真实工作流，10分钟上手 Hermes Agent。含 DeepSeek/通义千问/Kimi 等国内模型 API Key 获取教程。">
+<meta name="color-scheme" content="light dark">
+
+<style>
+/* ============================================================
+   Design Tokens — Light
+   ============================================================ */
+:root {
+  --surface-primary: #F5F0EB;
+  --surface-card: #FAF8F5;
+  --text-primary: #0F0F0F;
+  --text-secondary: #5C5C5C;
+  --text-tertiary: #8E8E8E;
+  --border-subtle: rgba(0,0,0,0.06);
+  --accent: #6C4DF6;
+  --accent-warm: #FF5C28;
+  --accent-orange: #FF6D00;
+  --brand-red: #FF2442;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-card-hover: 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08);
+  --nav-bg: rgba(250,250,250,0.85);
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --green: #22c55e;
+  --blue: #60a5fa;
+  --red: #ef4444;
+  --bg-hero: linear-gradient(135deg, #1a0a00 0%, #2d1400 40%, #1a1a22 100%);
+  --hero-text: #fff;
+  --hero-sub: rgba(255,255,255,0.7);
+  --tag-bg: rgba(255,109,0,0.2);
+  color-scheme: light;
+}
+
+/* ============================================================
+   Design Tokens — Dark
+   ============================================================ */
+[data-theme="dark"] {
+  --surface-primary: #0A0A0A;
+  --surface-card: #141414;
+  --text-primary: #F5F5F5;
+  --text-secondary: #9E9E9E;
+  --text-tertiary: #6E6E6E;
+  --border-subtle: rgba(255,255,255,0.06);
+  --accent: #8B6FFF;
+  --accent-warm: #FF7845;
+  --accent-orange: #FF8A3D;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.2);
+  --shadow-card-hover: 0 2px 4px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.3);
+  --nav-bg: rgba(10,10,10,0.85);
+  --code-bg: #0d0d1a;
+  --code-text: #cdd6f4;
+  --bg-hero: linear-gradient(135deg, #0a0a10 0%, #1a0a1a 40%, #0a0a1a 100%);
+  --hero-text: #f5f5f5;
+  --hero-sub: rgba(255,255,255,0.6);
+  --tag-bg: rgba(139,111,255,0.15);
+  color-scheme: dark;
+}
+
+/* Transitions */
+body, .nav, .hero, .tip, .warn, .skill-card, .code-block, .comparison-table,
+.container, .toc, .section, .footer, button, a, .primary-btn {
+  transition: background 0.3s cubic-bezier(0.4,0,0.2,1),
+              color 0.3s cubic-bezier(0.4,0,0.2,1),
+              border-color 0.3s cubic-bezier(0.4,0,0.2,1),
+              box-shadow 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Base */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', 'PingFang SC', 'Noto Sans SC', -apple-system, 'Microsoft YaHei', sans-serif;
+  line-height: 1.8;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+code {
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 13px;
+}
+
+/* ============================================================
+   Nav Bar — 固定在顶部，匹配主页风格
+   ============================================================ */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 56px; display: flex; align-items: center;
+  background: var(--nav-bg); backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.nav-inner {
+  max-width: 90vw; width: 100%; margin: 0 auto;
+  padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-size: 18px; font-weight: 600; color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.nav-actions { display: flex; align-items: center; gap: 12px; }
+
+.nav-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 500; color: var(--text-secondary);
+  padding: 6px 12px; border-radius: 8px;
+  transition: color 0.15s ease;
+}
+.nav-back:hover { color: var(--text-primary); }
+.nav-back svg { width: 16px; height: 16px; }
+
+/* Theme Toggle */
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border-subtle); background: var(--surface-card);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-primary); font-size: 18px;
+  transition: all 0.15s ease;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   Hero
+   ============================================================ */
+.hero {
+  background: var(--bg-hero);
+  color: var(--hero-text);
+  padding: calc(56px + 60px) 40px 60px;
+  text-align: center;
+}
+.hero-tag {
+  display: inline-block;
+  background: var(--tag-bg);
+  color: var(--accent-orange);
+  padding: 6px 18px; border-radius: 20px;
+  font-size: 14px; font-weight: 600; margin-bottom: 20px;
+}
+.hero h1 { font-size: 42px; font-weight: 900; margin-bottom: 12px; }
+.hero p {
+  font-size: 18px; color: var(--hero-sub);
+  max-width: 600px; margin: 0 auto;
+}
+
+/* ============================================================
+   Container & Content
+   ============================================================ */
+.container { max-width: 780px; margin: 0 auto; padding: 40px 24px; }
+
+/* TOC */
+.toc {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px; padding: 24px 28px; margin-bottom: 36px;
+  box-shadow: var(--shadow-card);
+}
+.toc h2 { font-size: 18px; color: var(--accent); margin-bottom: 14px; }
+.toc ol { padding-left: 20px; }
+.toc li { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; }
+.toc a { color: var(--accent); }
+
+/* Sections */
+.section { margin-bottom: 48px; }
+.section h2 {
+  font-size: 24px; font-weight: 800; color: var(--text-primary);
+  margin-bottom: 16px; padding-bottom: 8px;
+  border-bottom: 3px solid var(--accent); display: inline-block;
+}
+.section h3 {
+  font-size: 18px; font-weight: 700; color: var(--text-primary);
+  margin: 20px 0 10px;
+}
+.section h4 {
+  font-size: 16px; font-weight: 700; color: var(--text-primary);
+  margin: 16px 0 8px;
+}
+.section p { font-size: 15px; color: var(--text-secondary); margin-bottom: 12px; }
+.section ul, .section ol { padding-left: 24px; font-size: 15px; color: var(--text-secondary); margin-bottom: 12px; }
+.section li { margin-bottom: 4px; }
+.section .inline-code {
+  background: var(--border-subtle);
+  padding: 2px 6px; border-radius: 4px;
+  font-family: 'Fira Code', 'Consolas', monospace; font-size: 13px;
+}
+
+/* Code blocks */
+.code-block {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 10px; padding: 16px 20px; margin: 14px 0;
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px; line-height: 1.7; overflow-x: auto;
+}
+.code-block .comment { color: #6c7086; }
+.code-block .cmd { color: #a6e3a1; }
+.code-block .flag { color: #89b4fa; }
+.code-block .url { color: #f9e2af; }
+.code-block .key { color: #f38ba8; }
+
+/* Tips & Warnings */
+.tip {
+  background: rgba(108,77,246,0.06); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0;
+}
+[data-theme="dark"] .tip { background: rgba(139,111,255,0.08); }
+.tip-title { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.tip p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+
+.warn {
+  background: rgba(239,68,68,0.06); border-left: 4px solid var(--red);
+  border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0;
+}
+[data-theme="dark"] .warn { background: rgba(239,68,68,0.08); }
+.warn-title { font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+.warn p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+
+/* Skill Cards */
+.skill-card {
+  background: var(--surface-card); border: 1px solid var(--border-subtle);
+  border-radius: 10px; padding: 18px 22px; margin: 12px 0;
+  display: flex; gap: 16px; align-items: flex-start;
+  box-shadow: var(--shadow-card);
+}
+.skill-num {
+  background: var(--accent); color: #fff; width: 36px; height: 36px;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; flex-shrink: 0;
+}
+.skill-info h4 { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
+.skill-info p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+.skill-info .star { color: var(--accent-warm); font-weight: 700; font-size: 13px; }
+
+/* Provider Cards — API 渠道卡片 */
+.provider-card {
+  background: var(--surface-card); border: 1px solid var(--border-subtle);
+  border-radius: 10px; padding: 20px 22px; margin: 14px 0;
+  box-shadow: var(--shadow-card);
+}
+.provider-card h4 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0; }
+.provider-card .provider-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.provider-card .provider-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 12px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.provider-tag.free { background: rgba(34,197,94,0.12); color: var(--green); }
+.provider-tag.fast { background: rgba(96,165,250,0.12); color: var(--blue); }
+.provider-tag.china { background: rgba(239,68,68,0.12); color: var(--red); }
+.provider-tag.cheap { background: rgba(108,77,246,0.12); color: var(--accent); }
+.provider-card p { font-size: 14px; color: var(--text-secondary); margin: 0 0 6px 0; }
+.provider-card .provider-url {
+  font-size: 13px; color: var(--accent);
+  word-break: break-all; font-family: 'Fira Code', monospace;
+}
+
+/* Recommended badge */
+.provider-rec {
+  display: inline-block; background: var(--accent-warm); color: #fff;
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+  vertical-align: middle; margin-left: 6px;
+}
+
+/* Comparison Table */
+.comparison-table {
+  width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;
+  border-radius: 10px; overflow: hidden;
+}
+.comparison-table th {
+  background: var(--accent); color: #fff;
+  padding: 10px 14px; text-align: left; font-weight: 700;
+}
+.comparison-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.comparison-table tr:hover td { background: rgba(108,77,246,0.03); }
+
+/* Primary Button */
+.primary-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent); color: #fff;
+  padding: 10px 20px; border-radius: 10px;
+  font-size: 15px; font-weight: 600; border: none; cursor: pointer;
+  transition: all 0.2s ease;
+}
+.primary-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(108,77,246,0.3); }
+
+/* Bottom CTA */
+.bottom-cta {
+  background: var(--surface-card); border: 1px solid var(--border-subtle);
+  border-radius: 12px; padding: 24px; text-align: center; margin-top: 20px;
+  box-shadow: var(--shadow-card);
+}
+.bottom-cta p { font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 24px 0; text-align: center;
+}
+.footer p { font-size: 14px; color: var(--text-tertiary); margin: 0; }
+.footer a { color: var(--accent); }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+  .hero { padding: calc(56px + 40px) 20px 40px; }
+  .hero h1 { font-size: 28px; }
+  .hero p { font-size: 15px; }
+  .container { padding: 24px 16px; }
+  .skill-card { flex-direction: column; gap: 12px; }
+  .comparison-table { font-size: 12px; }
+  .comparison-table th, .comparison-table td { padding: 8px 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+::selection { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- Nav Bar -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="https://leevisfung.github.io/" class="nav-logo" aria-label="回到里维斯首页">
+      <span class="nav-logo-dot"></span>
+      里维斯 · AI Skills
+    </a>
+    <div class="nav-actions">
+      <a href="https://leevisfung.github.io/" class="nav-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        回到主页
+      </a>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换深色/浅色模式">
+        <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-tag">📖 免费教程 · 关注里维斯领取</div>
+  <h1>Hermes Agent 完整入门指南</h1>
+  <p>从零安装到5个真实工作流，含 DeepSeek / 通义千问 / Kimi 国内模型接入，10分钟上手</p>
+</div>
+
+<div class="container">
+
+<!-- TOC -->
+<div class="toc">
+  <h2>📑 目录</h2>
+  <ol>
+    <li><a href="#s1">Hermes 是什么？</a></li>
+    <li><a href="#s2">安装环境准备</a></li>
+    <li><a href="#s3">获取 API Key（含国内模型汇总）</a></li>
+    <li><a href="#s4">Hermes 安装步骤</a></li>
+    <li><a href="#s5">8个必装 Skill 详解</a></li>
+    <li><a href="#s6">5个真实工作流（完整操作步骤）</a></li>
+    <li><a href="#s7">Hermes vs Claude vs Cursor 对比</a></li>
+    <li><a href="#s8">常见踩坑 & 解决</a></li>
+    <li><a href="#s9">进阶：自己写 Skill</a></li>
+  </ol>
+</div>
+
+<!-- Section 1 -->
+<div class="section" id="s1">
+  <h2>1. Hermes 是什么？</h2>
+  <p>Hermes 是一个开源的 AI Agent 框架，可以理解为一个「能装插件的 ChatGPT」。它的核心优势：</p>
+  <ul>
+    <li><strong>免费开源</strong> — 不用每月花 $200 订阅 Claude Max</li>
+    <li><strong>Skill 生态</strong> — 200+ 社区技能，想干啥装啥</li>
+    <li><strong>本地运行</strong> — 数据不离开你的电脑</li>
+    <li><strong>记忆能力</strong> — 装上 hindsight 后能记住所有对话</li>
+    <li><strong>支持国内模型</strong> — 可以接 DeepSeek、通义千问、Kimi 等国内 API，<strong>完全不用翻墙</strong></li>
+  </ul>
+  <div class="tip">
+    <div class="tip-title">💡 适合谁？</div>
+    <p>产品经理、运营、独立开发者、内容创作者 — 任何想让 AI 帮你干活但不想花钱订阅的人。尤其适合国内用户，搭配 DeepSeek API 使用体验极好。</p>
+  </div>
+</div>
+
+<!-- Section 2 -->
+<div class="section" id="s2">
+  <h2>2. 安装环境准备</h2>
+  <p>你需要准备以下环境（15 分钟搞定）：</p>
+
+  <h3>2.1 安装 Node.js</h3>
+  <div class="code-block">
+<span class="comment"># macOS / Linux</span>
+<span class="cmd">brew install node</span>
+
+<span class="comment"># Windows</span>
+<span class="comment"># 去 https://nodejs.org 下载 LTS 版本安装</span>
+
+<span class="comment"># 验证安装</span>
+<span class="cmd">node --version</span>  <span class="comment"># 需要 >= 18.x</span>
+  </div>
+
+  <h3>2.2 安装 Git（可选但推荐）</h3>
+  <div class="code-block">
+<span class="comment"># macOS</span>
+<span class="cmd">brew install git</span>
+
+<span class="comment"># Windows: 去 https://git-scm.com 下载</span>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">💡 国内用户网络加速</div>
+    <p>如果 npm install 很慢，先设置国内镜像：<br><code class="inline-code">npm config set registry https://registry.npmmirror.com</code></p>
+  </div>
+</div>
+
+<!-- Section 3 — API Key (重构：按模型分类，重点突出 DeepSeek) -->
+<div class="section" id="s3">
+  <h2>3. 获取 API Key（国内用户必看）</h2>
+  <p>Hermes 支持接入几乎所有主流 AI 模型。以下按推荐优先级排列，<strong>国内用户首选 DeepSeek</strong>。</p>
+
+  <!-- DeepSeek ⭐ -->
+  <div class="provider-card">
+    <h4>🥇 DeepSeek <span class="provider-rec">强烈推荐</span></h4>
+    <div class="provider-tags">
+      <span class="provider-tag free">注册送 $5</span>
+      <span class="provider-tag china">国内直连</span>
+      <span class="provider-tag fast">速度极快</span>
+      <span class="provider-tag cheap">超便宜</span>
+    </div>
+    <p>国内最强开源模型，V4-Pro 参数 1.6T，中文能力顶级，OpenAI API 格式完全兼容。</p>
+    <p><strong>获取步骤：</strong></p>
+    <ol>
+      <li>访问 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a></li>
+      <li>用手机号或邮箱注册（国内手机号直接收验证码）</li>
+      <li>登录后点击左侧 <strong>「API Keys」</strong> → 点「创建 API Key」</li>
+      <li>复制保存 key（<strong>只显示一次</strong>，格式为 <code class="inline-code">sk-xxxxxxxx</code>）</li>
+    </ol>
+    <p><strong>免费额度：</strong>注册即送 $5，每天 50 次免费调用。日常轻度使用基本不花钱。</p>
+    <p><strong>价格：</strong>V4-Flash 输入 $0.14/百万 token，输出 $0.28/百万 token — 是 GPT-4 的 1/100。</p>
+    <p class="provider-url">API 地址：https://api.deepseek.com | 模型名：deepseek-chat (V4) / deepseek-reasoner (R1推理)</p>
+    <div class="code-block" style="margin-top:12px;">
+<span class="comment"># Hermes 配置 DeepSeek</span>
+<span class="cmd">hermes config set api-key</span> <span class="key">sk-your-deepseek-key</span>
+<span class="cmd">hermes config set base-url</span> <span class="url">https://api.deepseek.com</span>
+<span class="cmd">hermes config set model</span> <span class="flag">deepseek-chat</span>
+    </div>
+  </div>
+
+  <!-- Kimi -->
+  <div class="provider-card">
+    <h4>🥈 月之暗面 Kimi <span class="provider-rec">推荐</span></h4>
+    <div class="provider-tags">
+      <span class="provider-tag free">有免费额度</span>
+      <span class="provider-tag china">国内直连</span>
+      <span class="provider-tag fast">长上下文</span>
+    </div>
+    <p>Kimi 以超长上下文著称（128K），适合分析长篇文档、论文、合同等场景。</p>
+    <p><strong>获取步骤：</strong></p>
+    <ol>
+      <li>访问 <a href="https://platform.moonshot.cn" target="_blank">platform.moonshot.cn</a></li>
+      <li>注册后进入控制台 → 「API Keys」→ 创建密钥</li>
+      <li>新用户赠送 15 元体验额度</li>
+    </ol>
+    <p class="provider-url">API 地址：https://api.moonshot.cn/v1 | 模型名：moonshot-v1-8k / moonshot-v1-128k</p>
+    <div class="code-block" style="margin-top:12px;">
+<span class="comment"># Hermes 配置 Kimi</span>
+<span class="cmd">hermes config set api-key</span> <span class="key">sk-your-kimi-key</span>
+<span class="cmd">hermes config set base-url</span> <span class="url">https://api.moonshot.cn/v1</span>
+<span class="cmd">hermes config set model</span> <span class="flag">moonshot-v1-128k</span>
+    </div>
+  </div>
+
+  <!-- 通义千问 -->
+  <div class="provider-card">
+    <h4>🥉 通义千问 Qwen（阿里云百炼）</h4>
+    <div class="provider-tags">
+      <span class="provider-tag free">10万次/月免费</span>
+      <span class="provider-tag china">国内直连</span>
+      <span class="provider-tag cheap">企业级稳定</span>
+    </div>
+    <p>阿里云百炼平台，企业版每月 10 万次免费调用，稳定性高，有丰富的 SDK 支持。</p>
+    <p><strong>获取步骤：</strong></p>
+    <ol>
+      <li>访问 <a href="https://bailian.console.aliyun.com" target="_blank">bailian.console.aliyun.com</a></li>
+      <li>用阿里云账号登录 → 开通「百炼」服务</li>
+      <li>点击右上角头像 → 「API-KEY 管理」→ 创建 API Key</li>
+    </ol>
+    <p class="provider-url">API 地址：https://dashscope.aliyuncs.com/compatible-mode/v1 | 模型名：qwen-plus / qwen-max</p>
+  </div>
+
+  <!-- 智谱 -->
+  <div class="provider-card">
+    <h4>智谱 ChatGLM</h4>
+    <div class="provider-tags">
+      <span class="provider-tag free">赠送额度</span>
+      <span class="provider-tag china">国内直连</span>
+    </div>
+    <p>清华系，GLM 模型在多模态和代码能力上有优势。</p>
+    <p><strong>获取步骤：</strong></p>
+    <ol>
+      <li>访问 <a href="https://open.bigmodel.cn" target="_blank">open.bigmodel.cn</a></li>
+      <li>注册后进入「API Keys」页面创建密钥</li>
+      <li>新用户赠送一定额度</li>
+    </ol>
+    <p class="provider-url">API 地址：https://open.bigmodel.cn/api/paas/v4 | 模型名：glm-4 / glm-4-flash</p>
+  </div>
+
+  <!-- 豆包 -->
+  <div class="provider-card">
+    <h4>豆包（火山引擎）</h4>
+    <div class="provider-tags">
+      <span class="provider-tag cheap">超低价格</span>
+      <span class="provider-tag china">国内直连</span>
+    </div>
+    <p>字节跳动旗下，Doubao 模型价格极低，适合大批量调用场景。</p>
+    <p><strong>获取步骤：</strong></p>
+    <ol>
+      <li>访问 <a href="https://console.volcengine.com/ark" target="_blank">console.volcengine.com/ark</a></li>
+      <li>注册火山引擎账号 → 开通「豆包大模型」服务</li>
+      <li>在「API Key 管理」创建密钥</li>
+    </ol>
+    <p class="provider-url">API 地址：https://ark.cn-beijing.volces.com/api/v3 | 模型名：doubao-pro-32k</p>
+  </div>
+
+  <!-- OpenAI / Anthropic -->
+  <div class="provider-card">
+    <h4>OpenAI / Anthropic（海外直连）</h4>
+    <div class="provider-tags">
+      <span class="provider-tag fast">性能最强</span>
+    </div>
+    <p>如果你有海外网络条件，也可以直接接 GPT-4o 或 Claude 模型：</p>
+    <ul>
+      <li><strong>OpenAI</strong> — <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></li>
+      <li><strong>Anthropic</strong> — <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></li>
+    </ul>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">💡 我的推荐组合</div>
+    <p><strong>主力：DeepSeek V4</strong>（日常编码、写作、分析，国产便宜快）<br>
+    <strong>长文档：Kimi</strong>（处理大型文档、合同、论文）<br>
+    <strong>重活：OpenAI GPT-4o</strong>（有海外网络时，复杂推理场景用）</p>
+  </div>
+</div>
+
+<!-- Section 4 -->
+<div class="section" id="s4">
+  <h2>4. Hermes 安装步骤</h2>
+  <div class="code-block">
+<span class="comment"># 第1步：安装 Hermes CLI</span>
+<span class="cmd">npm install -g @hermes-ai/cli</span>
+
+<span class="comment"># 第2步：初始化项目</span>
+<span class="cmd">hermes init my-agent</span>
+<span class="cmd">cd my-agent</span>
+
+<span class="comment"># 第3步：配置 API Key（DeepSeek 示例）</span>
+<span class="cmd">hermes config set api-key sk-your-deepseek-key</span>
+<span class="cmd">hermes config set base-url https://api.deepseek.com</span>
+<span class="cmd">hermes config set model deepseek-chat</span>
+
+<span class="comment"># 第4步：启动！</span>
+<span class="cmd">hermes start</span>
+  </div>
+  <p>看到 "Hermes is running!" 就说明安装成功了 🎉</p>
+  <div class="warn">
+    <div class="warn-title">⚠️ 首次启动要点</div>
+    <p>第一次启动时会下载一些依赖包，可能等 1-2 分钟。如果卡住了可以 <code class="inline-code">Ctrl+C</code> 后重新 <code class="inline-code">hermes start</code>。</p>
+  </div>
+</div>
+
+<!-- Section 5 — Skills -->
+<div class="section" id="s5">
+  <h2>5. 8个必装 Skill 详解</h2>
+  <p>这是小红书上篇爆款笔记（50赞/110收藏）的完整版，每个 Skill 附带安装命令和踩坑记录：</p>
+
+  <div class="skill-card">
+    <div class="skill-num">1</div>
+    <div class="skill-info">
+      <h4>hindsight — 长期记忆层 <span class="star">⭐ 社区 No.1</span></h4>
+      <p>语义 + 图谱 + 时间三维检索，让 Hermes 记住所有对话，再也不失忆。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill hindsight</div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-num">2</div>
+    <div class="skill-info">
+      <h4>open-design — 本地设计工具 <span class="star">⭐ 28k Star</span></h4>
+      <p>31 个可组合技能 + 129 个设计系统，不用开 Figma 就能出设计稿。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill open-design</div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-num">3</div>
+    <div class="skill-info">
+      <h4>drawio-skill — 一句话出图 <span class="star">⭐ 1.1k Star</span></h4>
+      <p>说人话就能生成流程图 / UML / 架构图，自动输出 draw.io 格式。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill drawio-skill</div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-num">4</div>
+    <div class="skill-info">
+      <h4>avoid-ai-writing — 去 AI 味 <span class="star">⭐ 1.2k Star</span></h4>
+      <p>写完小红书/公众号正文跑一遍，AI 痕迹全消。做内容的必备。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill avoid-ai-writing</div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-num">5</div>
+    <div class="skill-info">
+      <h4>mission-control — 多 Agent 编排 <span class="star">⭐ 3.7k Star</span></h4>
+      <p>同时跑多个 Hermes 实例，可视化调度，像看仪表盘一样管它们。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill mission-control</div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-num">6</div>
+    <div class="skill-info">
+      <h4>SkillClaw — Skill 管家 <span class="star">⭐ 705 Star</span></h4>
+      <p>装多了会打架？帮你整理、去重、自动进化。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill skillclaw</div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-num">7</div>
+    <div class="skill-info">
+      <h4>hermes-workspace — Web GUI <span class="star">⭐ 500+ Star</span></h4>
+      <p>不想敲命令行的直接装，浏览器里聊天 + 终端 + Skill 管理三合一。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill hermes-workspace</div>
+    </div>
+  </div>
+
+  <div class="skill-card">
+    <div class="skill-num">8</div>
+    <div class="skill-info">
+      <h4>Cybersecurity-Skills — 网安技能包 <span class="star">⭐ 5.6k Star</span></h4>
+      <p>754 个结构化网安技能，完整映射 MITRE ATT&CK，安全从业者一个包搞定。</p>
+      <div class="code-block" style="margin:8px 0 0;">hermes install skill cybersecurity-skills</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">💡 安装建议</div>
+    <p>先装 hindsight + drawio-skill，跑通再加其他的。别一次装超过 5 个，有些 Skill 会冲突。用 SkillClaw 自动检测冲突。</p>
+  </div>
+</div>
+
+<!-- Section 6 — Workflows -->
+<div class="section" id="s6">
+  <h2>6. 5个真实工作流（完整操作步骤）</h2>
+  <p>上篇笔记只是简介，这里是完整操作步骤：</p>
+
+  <h3>工作流1：自动写周报</h3>
+  <p>前提：hindsight 已运行至少 3 天，积累足够的对话记忆。</p>
+  <div class="code-block">
+<span class="comment"># 1. 确保 hindsight 已安装并运行了3天以上</span>
+<span class="cmd">hermes chat</span>
+
+<span class="comment"># 2. 让它总结你这一周做了什么</span>
+<span class="comment">> 帮我总结这周的工作内容，按项目分组</span>
+
+<span class="comment"># 3. 生成正式周报</span>
+<span class="comment">> 按公司周报模板格式输出，每个项目包含：目标、进展、下周计划</span>
+
+<span class="comment"># 4. 用 avoid-ai-writing 去味（可选）</span>
+<span class="comment">> 用 avoid-ai-writing 过一遍刚才的周报</span>
+  </div>
+  <div class="warn">
+    <div class="warn-title">⚠️ 踩坑</div>
+    <p>头 3 天 hindsight 啥都记不住，因为还没积累足够的对话。别急，坚持用就行。另外，它不会主动记录你在终端里打的命令，需要你在聊天里提一句「我刚跑了 git push」。</p>
+  </div>
+
+  <h3>工作流2：一句话出设计稿</h3>
+  <div class="code-block">
+<span class="cmd">hermes chat</span>
+
+<span class="comment">> 用 open-design 帮我做一个极简风格的登录页</span>
+
+<span class="comment"># Hermes 会自动调用 open-design 生成 UI</span>
+<span class="comment"># 输出文件在 ./output/login-page.html</span>
+
+<span class="comment"># 如果要调整：</span>
+<span class="comment">> 把按钮颜色改成品牌色 #FF6D00，背景加个模糊渐变</span>
+  </div>
+  <div class="warn">
+    <div class="warn-title">⚠️ 踩坑</div>
+    <p>字体有时会乱码，手动在 HTML 里换成本地字体就行。复杂布局（比如 Dashboard）生成质量一般，简单页面效果最好。</p>
+  </div>
+
+  <h3>工作流3：画流程图不用手</h3>
+  <div class="code-block">
+<span class="cmd">hermes chat</span>
+
+<span class="comment">> 画一个用户注册流程图，包含手机号验证和邮箱验证两条路径</span>
+
+<span class="comment"># 自动生成 draw.io XML 文件</span>
+<span class="comment"># 下载到 draw.io 打开即可编辑</span>
+
+<span class="comment"># 进阶：画系统架构图</span>
+<span class="comment">> 画一个微服务架构图，包含网关、用户服务、订单服务、数据库</span>
+  </div>
+  <div class="warn">
+    <div class="warn-title">⚠️ 踩坑</div>
+    <p>超过 20 个节点的复杂图会丢连线，建议拆成多个小图分别生成。另外生成的 XML 文件需要 draw.io 桌面版打开，网页版可能加载失败。</p>
+  </div>
+
+  <h3>工作流4：多 Agent 同时跑</h3>
+  <div class="code-block">
+<span class="comment"># 启动 mission-control</span>
+<span class="cmd">hermes install skill mission-control</span>
+<span class="cmd">hermes mission start</span>
+
+<span class="comment"># 在 GUI 里创建3个 Agent：</span>
+<span class="comment"># Agent1: 写文案（用 avoid-ai-writing 做后处理）</span>
+<span class="comment"># Agent2: 做配图（用 open-design 生成）</span>
+<span class="comment"># Agent3: 查数据（用 browser-browse 爬网页）</span>
+
+<span class="comment"># 在控制台看3个 Agent 同时工作</span>
+  </div>
+  <div class="warn">
+    <div class="warn-title">⚠️ 踩坑</div>
+    <p>同时开超过 4 个 Agent 电脑会卡，特别是做图那个比较吃资源。API 调用量也会成倍增加，注意费用。</p>
+  </div>
+
+  <h3>工作流5：AI 写的稿过一遍去味</h3>
+  <div class="code-block">
+<span class="cmd">hermes chat</span>
+
+<span class="comment">> 帮我写一篇小红书种草笔记，主题是"程序员省时间神器"</span>
+
+<span class="comment"># 写完后让 avoid-ai-writing 处理</span>
+<span class="comment">> 用 avoid-ai-writing 过一遍刚才那篇，去掉 AI 味</span>
+
+<span class="comment"># 处理完直接复制发布</span>
+  </div>
+  <div class="warn">
+    <div class="warn-title">⚠️ 踩坑</div>
+    <p>过度去味会变成口水话，跑一遍就够，别跑两遍。实测数据显示：去味前收藏率 ~2%，去味后能到 ~8%。</p>
+  </div>
+</div>
+
+<!-- Section 7 — Comparison -->
+<div class="section" id="s7">
+  <h2>7. Hermes vs Claude vs Cursor 对比</h2>
+  <table class="comparison-table">
+    <tr>
+      <th>对比项</th>
+      <th>Hermes + Skill</th>
+      <th>Cursor Pro</th>
+      <th>Claude Max</th>
+    </tr>
+    <tr><td>月费</td><td><strong>免费</strong>（API 按量）</td><td>$20/月</td><td>$200/月</td></tr>
+    <tr><td>代码补全</td><td>✅ hermes-code</td><td>✅ 原生</td><td>✅ 原生</td></tr>
+    <tr><td>项目重构</td><td>✅ refactor-agent</td><td>✅ 原生</td><td>✅ 但需手动</td></tr>
+    <tr><td>Code Review</td><td>✅ hermes-review</td><td>⚠️ 有限</td><td>✅ 原生</td></tr>
+    <tr><td>生成测试</td><td>✅ hermes-test</td><td>⚠️ 有限</td><td>✅ 原生</td></tr>
+    <tr><td>生成文档</td><td>✅ doc-generator</td><td>❌</td><td>✅ 手动</td></tr>
+    <tr><td>生成设计</td><td>✅ open-design</td><td>❌</td><td>❌</td></tr>
+    <tr><td>画流程图</td><td>✅ drawio-skill</td><td>❌</td><td>❌</td></tr>
+    <tr><td>长期记忆</td><td>✅ hindsight</td><td>❌</td><td>⚠️ 项目级</td></tr>
+    <tr><td>去 AI 味</td><td>✅ avoid-ai-writing</td><td>❌</td><td>❌</td></tr>
+    <tr><td>国内直连</td><td>✅ DeepSeek/Qwen</td><td>❌ 需代理</td><td>❌ 需代理</td></tr>
+  </table>
+  <div class="tip">
+    <div class="tip-title">💡 结论</div>
+    <p>日常编码 → Cursor 足够；需要更多 Agent 能力（记忆、设计、流程图）→ Hermes 性价比最高；预算充足 → Claude Max 体验最好。国内用户强烈建议 Hermes + DeepSeek 组合。</p>
+  </div>
+</div>
+
+<!-- Section 8 — Troubleshooting -->
+<div class="section" id="s8">
+  <h2>8. 常见踩坑 & 解决</h2>
+
+  <h3>❌ 安装时报 "permission denied"</h3>
+  <div class="code-block"><span class="cmd">sudo npm install -g @hermes-ai/cli</span>  <span class="comment"># macOS/Linux</span>
+<span class="comment"># Windows: 用管理员身份打开终端</span></div>
+
+  <h3>❌ Skill 安装后不生效</h3>
+  <div class="code-block"><span class="cmd">hermes skill list</span>  <span class="comment"># 看看是不是显示 installed</span>
+<span class="cmd">hermes restart</span>   <span class="comment"># 重启 Hermes</span></div>
+
+  <h3>❌ API 报 429 错误（限速）</h3>
+  <div class="code-block"><span class="comment"># DeepSeek 每天 50 次免费调用，超了就等明天</span>
+<span class="comment"># 或者换个模型继续用：</span>
+<span class="cmd">hermes config set model deepseek-chat</span>  <span class="comment"># 换回 V4（V3 可能已经限速）</span></div>
+
+  <h3>❌ 两个 Skill 打架了</h3>
+  <div class="code-block"><span class="comment"># 用 SkillClaw 自动检测冲突</span>
+<span class="cmd">hermes install skill skillclaw</span>
+<span class="cmd">hermes skillclaw check</span></div>
+
+  <h3>❌ hindsight 说"没有记忆"</h3>
+  <p>头 3 天正常，它需要积累对话数据。多用它聊天就行。如果一周后还不行，检查 hintight 是否在 skill list 里显示为 "active"。</p>
+
+  <h3>❌ DeepSeek API 连接超时</h3>
+  <div class="code-block"><span class="comment"># 检查 base-url 是否正确</span>
+<span class="cmd">hermes config get base-url</span>
+<span class="comment"># 正确值为：https://api.deepseek.com</span>
+<span class="comment"># 不要加 /v1 后缀（Hermes 会自动加）</span></div>
+</div>
+
+<!-- Section 9 — Create Skill -->
+<div class="section" id="s9">
+  <h2>9. 进阶：自己写 Skill</h2>
+  <p>Hermes 的 Skill 本质就是一个 Markdown 文件 + 可选的 JS 脚本：</p>
+
+  <div class="code-block">
+<span class="comment"># 创建 Skill 目录</span>
+<span class="cmd">mkdir -p ~/.hermes/skills/my-skill</span>
+<span class="cmd">cd ~/.hermes/skills/my-skill</span>
+
+<span class="comment"># 创建 SKILL.md（必须）</span>
+<span class="cmd">cat > SKILL.md << 'EOF'</span>
+---
+name: my-skill
+description: 我的自定义技能
+trigger: 当用户说"帮我XXX"时触发
+---
+
+# My Skill
+
+你是一个 XXX 专家。当用户请求 XXX 时：
+1. 先了解需求
+2. 给出方案
+3. 执行并验证
+EOF
+
+<span class="comment"># 重新加载 Skill</span>
+<span class="cmd">hermes skill reload</span>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">💡 技巧</div>
+    <p>写 Skill 最重要的不是代码，是 <strong>trigger 触发条件</strong> 写清楚。触发条件越精准，Skill 越不容易被误调用。建议参考社区高星 Skill 的 SKILL.md 写法。</p>
+  </div>
+</div>
+
+<!-- Bottom CTA -->
+<div class="bottom-cta">
+  <p>📝 这份教程持续更新中</p>
+  <p style="font-size:15px;color:var(--text-secondary);margin-bottom:16px;">
+    关注小红书「里维斯Leevis」获取最新版<br>有问题评论区留言，我都会回 👇
+  </p>
+  <a href="https://leevisfung.github.io/" class="primary-btn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    回到里维斯 · AI 教程首页
+  </a>
+</div>
+
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>里维斯 · AI Skills · 2026 · <a href="https://www.xiaohongshu.com/user/profile/6a0d8d80000000000103e802">小红书主页</a></p>
+  <p>由 GitHub Pages 托管</p>
+</footer>
+
+<!-- Theme Toggle Script -->
+<script>
+(function() {
+  var html = document.documentElement;
+  var toggle = document.getElementById('themeToggle');
+  var sunIcon = document.getElementById('themeIconSun');
+  var moonIcon = document.getElementById('themeIconMoon');
+
+  function getTheme() { return html.getAttribute('data-theme'); }
+
+  function setTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    } else {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    }
+    try { localStorage.setItem('leevis-theme', theme); } catch(e) {}
+  }
+
+  var saved;
+  try { saved = localStorage.getItem('leevis-theme'); } catch(e) {}
+  if (saved) {
+    setTheme(saved);
+  } else {
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+  }
+
+  toggle.addEventListener('click', function() {
+    setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  });
+})();
+</script>
+
+</body>
+</html>
