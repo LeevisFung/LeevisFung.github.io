@@ -595,7 +595,7 @@ code {
     <div class="skill-info">
       <h4>hindsight — 长期记忆层 <span class="star">⭐ 社区 No.1</span></h4>
       <p>语义 + 图谱 + 时间三维检索，让 Hermes 记住所有对话，再也不失忆。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill hindsight</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install hindsight</div>
     </div>
   </div>
 
@@ -604,7 +604,7 @@ code {
     <div class="skill-info">
       <h4>open-design — 本地设计工具 <span class="star">⭐ 28k Star</span></h4>
       <p>31 个可组合技能 + 129 个设计系统，不用开 Figma 就能出设计稿。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill open-design</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install open-design</div>
     </div>
   </div>
 
@@ -613,7 +613,7 @@ code {
     <div class="skill-info">
       <h4>drawio-skill — 一句话出图 <span class="star">⭐ 1.1k Star</span></h4>
       <p>说人话就能生成流程图 / UML / 架构图，自动输出 draw.io 格式。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill drawio-skill</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install drawio-skill</div>
     </div>
   </div>
 
@@ -622,7 +622,7 @@ code {
     <div class="skill-info">
       <h4>avoid-ai-writing — 去 AI 味 <span class="star">⭐ 1.2k Star</span></h4>
       <p>写完小红书/公众号正文跑一遍，AI 痕迹全消。做内容的必备。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill avoid-ai-writing</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install avoid-ai-writing</div>
     </div>
   </div>
 
@@ -631,7 +631,7 @@ code {
     <div class="skill-info">
       <h4>mission-control — 多 Agent 编排 <span class="star">⭐ 3.7k Star</span></h4>
       <p>同时跑多个 Hermes 实例，可视化调度，像看仪表盘一样管它们。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill mission-control</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install mission-control</div>
     </div>
   </div>
 
@@ -640,7 +640,7 @@ code {
     <div class="skill-info">
       <h4>SkillClaw — Skill 管家 <span class="star">⭐ 705 Star</span></h4>
       <p>装多了会打架？帮你整理、去重、自动进化。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill skillclaw</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install skillclaw</div>
     </div>
   </div>
 
@@ -649,7 +649,7 @@ code {
     <div class="skill-info">
       <h4>hermes-workspace — Web GUI <span class="star">⭐ 500+ Star</span></h4>
       <p>不想敲命令行的直接装，浏览器里聊天 + 终端 + Skill 管理三合一。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill hermes-workspace</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install hermes-workspace</div>
     </div>
   </div>
 
@@ -658,7 +658,7 @@ code {
     <div class="skill-info">
       <h4>Cybersecurity-Skills — 网安技能包 <span class="star">⭐ 5.6k Star</span></h4>
       <p>754 个结构化网安技能，完整映射 MITRE ATT&CK，安全从业者一个包搞定。</p>
-      <div class="code-block" style="margin:8px 0 0;">hermes install skill cybersecurity-skills</div>
+      <div class="code-block" style="margin:8px 0 0;">hermes skills install cybersecurity-skills</div>
     </div>
   </div>
 
@@ -730,7 +730,7 @@ code {
   <h3>工作流4：多 Agent 同时跑</h3>
   <div class="code-block">
 <span class="comment"># 启动 mission-control</span>
-<span class="cmd">hermes install skill mission-control</span>
+<span class="cmd">hermes skills install mission-control</span>
 <span class="cmd">hermes mission start</span>
 
 <span class="comment"># 在 GUI 里创建3个 Agent：</span>
@@ -799,7 +799,7 @@ code {
 <span class="comment"># Windows: 用管理员身份打开终端</span></div>
 
   <h3>❌ Skill 安装后不生效</h3>
-  <div class="code-block"><span class="cmd">hermes skill list</span>  <span class="comment"># 看看是不是显示 installed</span>
+  <div class="code-block"><span class="cmd">hermes skills list</span>  <span class="comment"># 看看是不是显示 installed</span>
 <span class="cmd">hermes restart</span>   <span class="comment"># 重启 Hermes</span></div>
 
   <h3>❌ API 报 429 错误（限速）</h3>
@@ -809,7 +809,7 @@ code {
 
   <h3>❌ 两个 Skill 打架了</h3>
   <div class="code-block"><span class="comment"># 用 SkillClaw 自动检测冲突</span>
-<span class="cmd">hermes install skill skillclaw</span>
+<span class="cmd">hermes skills install skillclaw</span>
 <span class="cmd">hermes skillclaw check</span></div>
 
   <h3>❌ hindsight 说"没有记忆"</h3>
@@ -849,7 +849,7 @@ trigger: 当用户说"帮我XXX"时触发
 EOF
 
 <span class="comment"># 重新加载 Skill</span>
-<span class="cmd">hermes skill reload</span>
+<span class="cmd">hermes skills reload</span>
   </div>
 
   <div class="tip">
