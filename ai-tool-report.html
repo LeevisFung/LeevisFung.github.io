@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Landscape 2026 -- 核心概念与工具全景横评</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+/* ========== THEME VARIABLES ========== */
+:root{
+  --font-display:'Cormorant Garamond','Noto Serif SC',serif;
+  --font-body:'Source Sans 3','Noto Sans SC',sans-serif;
+  --space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px;--space-4xl:80px;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.2);--shadow-xl:0 16px 48px rgba(0,0,0,.25);
+  --transition-fast:0.2s ease;--transition-normal:0.3s ease;--transition-slow:0.5s ease;
+  --accent-gold:#e8a838;--accent-cyan:#38bdf8;
+}
+[data-theme="dark"]{
+  --bg-primary:#080c14;--bg-card:#111827;--bg-secondary:#1a2235;--bg-hover:#232d42;
+  --text-primary:#f0f2f5;--text-secondary:#9ca8bc;--text-muted:#6b7a94;
+  --border-color:#2a3448;--border-light:#334155;
+  --card-shadow:0 4px 24px rgba(0,0,0,.3);--card-shadow-hover:0 12px 40px rgba(0,0,0,.4);
+  --progress-from:#e8a838;--progress-to:#38bdf8;
+  --table-stripe:rgba(255,255,255,.02);--table-hover:rgba(232,168,56,.06);
+  --noise-opacity:.03;
+  --gradient-hero:linear-gradient(135deg,#e8a83808 0%,#38bdf808 50%,transparent 100%);
+  --gradient-card-top:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan));
+  --badge-bg:rgba(232,168,56,.12);--badge-border:rgba(232,168,56,.3);--badge-text:#e8a838;
+  --quote-bg:rgba(56,189,248,.06);--quote-border:#38bdf8;
+}
+[data-theme="light"]{
+  --bg-primary:#faf8f5;--bg-card:#ffffff;--bg-secondary:#f1ece6;--bg-hover:#e8e2da;
+  --text-primary:#1a1e2e;--text-secondary:#4a5568;--text-muted:#8896a8;
+  --border-color:#dcd5cc;--border-light:#e5dfd7;
+  --card-shadow:0 2px 12px rgba(0,0,0,.06);--card-shadow-hover:0 8px 30px rgba(0,0,0,.1);
+  --progress-from:#c98820;--progress-to:#0284c7;
+  --table-stripe:rgba(0,0,0,.02);--table-hover:rgba(232,168,56,.08);
+  --noise-opacity:.04;
+  --gradient-hero:linear-gradient(135deg,#e8a83810 0%,#38bdf810 50%,transparent 100%);
+  --gradient-card-top:linear-gradient(90deg,#c98820,#0284c7);
+  --badge-bg:rgba(201,136,32,.1);--badge-border:rgba(201,136,32,.25);--badge-text:#c98820;
+  --quote-bg:rgba(2,132,199,.05);--quote-border:#0284c7;
+}
+
+/* ========== BASE STYLES ========== */
+body{
+  font-family:var(--font-body);background:var(--bg-primary);color:var(--text-primary);
+  line-height:1.7;overflow-x:hidden;position:relative;min-height:100vh;
+  transition:background var(--transition-normal),color var(--transition-normal);
+}
+/* grid background */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(var(--border-color) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border-color) 1px,transparent 1px);
+  background-size:60px 60px;opacity:.15;
+}
+/* noise texture */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
+  opacity:var(--noise-opacity);
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:256px 256px;
+}
+#app{position:relative;z-index:2}
+
+/* ========== PROGRESS BAR ========== */
+#progressBar{
+  position:fixed;top:0;left:0;height:3px;z-index:1001;
+  background:linear-gradient(90deg,var(--progress-from),var(--progress-to));
+  width:0%;transition:width .15s ease;
+}
+
+/* ========== NAV ========== */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:var(--bg-primary);border-bottom:1px solid var(--border-color);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:background var(--transition-normal);
+}
+.nav-inner{
+  max-width:1280px;margin:0 auto;padding:0 var(--space-xl);
+  display:flex;align-items:center;justify-content:space-between;height:64px;
+}
+.nav-brand{
+  font-family:var(--font-display);font-size:1.4rem;font-weight:700;
+  background:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;letter-spacing:.5px;
+}
+.nav-links{display:flex;gap:var(--space-sm);align-items:center;flex-wrap:wrap}
+.nav-links a{
+  color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;
+  padding:6px 12px;border-radius:var(--radius-sm);transition:all var(--transition-fast);
+  letter-spacing:.3px;
+}
+.nav-links a:hover{color:var(--text-primary);background:var(--bg-hover)}
+.nav-back{
+  display:inline-flex;align-items:center;gap:4px;
+  color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;
+  padding:6px 12px;border-radius:var(--radius-sm);transition:all var(--transition-fast);
+  white-space:nowrap;letter-spacing:.3px;
+}
+.nav-back:hover{color:var(--accent-gold);background:var(--bg-hover)}
+#themeToggle{
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--border-color);
+  background:var(--bg-card);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;transition:all var(--transition-fast);flex-shrink:0;
+  margin-left:var(--space-sm);color:var(--text-primary);
+}
+#themeToggle:hover{background:var(--bg-hover);border-color:var(--accent-gold)}
+#themeToggle svg{width:18px;height:18px}
+
+/* ========== HERO ========== */
+.hero{
+  padding:140px var(--space-xl) 80px;text-align:center;position:relative;
+  background:var(--gradient-hero);overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at 30% 50%,rgba(232,168,56,.04) 0%,transparent 50%),
+             radial-gradient(circle at 70% 50%,rgba(56,189,248,.04) 0%,transparent 50%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--badge-bg);border:1px solid var(--badge-border);
+  color:var(--badge-text);font-size:.8rem;font-weight:600;
+  padding:6px 16px;border-radius:20px;margin-bottom:var(--space-lg);
+  letter-spacing:.5px;
+}
+.hero h1{
+  font-family:var(--font-display);font-size:clamp(2.4rem,5vw,4rem);
+  font-weight:700;line-height:1.15;margin-bottom:var(--space-lg);
+  background:linear-gradient(135deg,var(--text-primary) 30%,var(--accent-gold) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero p{
+  font-size:clamp(1rem,2vw,1.2rem);color:var(--text-secondary);
+  max-width:720px;margin:0 auto;
+}
+
+/* ========== SECTION ========== */
+.section{padding:var(--space-4xl) var(--space-xl);max-width:1280px;margin:0 auto}
+.section-header{
+  text-align:center;margin-bottom:var(--space-3xl);
+  font-family:var(--font-display);
+}
+.section-header h2{
+  font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;
+  margin-bottom:var(--space-md);position:relative;display:inline-block;
+}
+.section-header h2::after{
+  content:'';display:block;width:60px;height:3px;
+  background:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan));
+  margin:var(--space-md) auto 0;border-radius:2px;
+}
+.section-header p{color:var(--text-secondary);font-size:1rem;font-family:var(--font-body);max-width:600px;margin:0 auto}
+
+/* ========== CARDS GRID ========== */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--space-lg)}
+.card-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-lg)}
+@media(max-width:768px){.card-grid-2,.card-grid{grid-template-columns:1fr}}
+
+.card{
+  background:var(--bg-card);border:1px solid var(--border-color);
+  border-radius:var(--radius-lg);padding:var(--space-xl);
+  transition:all var(--transition-normal);position:relative;overflow:hidden;
+  box-shadow:var(--card-shadow);
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--gradient-card-top);opacity:0;transition:opacity var(--transition-normal);
+}
+.card:hover{
+  transform:translateY(-4px);box-shadow:var(--card-shadow-hover);
+  border-color:var(--border-light);
+}
+.card:hover::before{opacity:1}
+.card-icon{margin-bottom:var(--space-md);color:var(--accent-gold)}
+.card-icon svg{width:36px;height:36px}
+.card h3{font-family:var(--font-display);font-size:1.25rem;font-weight:700;margin-bottom:var(--space-sm)}
+.card h4{font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:var(--space-sm);color:var(--accent-gold)}
+.card p{color:var(--text-secondary);font-size:.92rem;line-height:1.65;margin-bottom:var(--space-sm)}
+.card .tag{
+  display:inline-block;font-size:.75rem;font-weight:600;padding:2px 10px;
+  border-radius:12px;background:var(--badge-bg);color:var(--badge-text);margin-right:4px;
+}
+
+/* ========== TABLES ========== */
+.table-wrap{
+  overflow-x:auto;margin-bottom:var(--space-xl);
+  border:1px solid var(--border-color);border-radius:var(--radius-lg);background:var(--bg-card);
+}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead{background:var(--bg-secondary)}
+th{
+  padding:var(--space-md) var(--space-lg);text-align:left;font-weight:600;
+  color:var(--text-secondary);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;
+  white-space:nowrap;border-bottom:1px solid var(--border-color);
+}
+td{
+  padding:var(--space-md) var(--space-lg);border-bottom:1px solid var(--border-color);
+  color:var(--text-secondary);vertical-align:middle;
+}
+tbody tr{transition:all var(--transition-fast);border-left:3px solid transparent}
+tbody tr:nth-child(even){background:var(--table-stripe)}
+tbody tr:hover{background:var(--table-hover);border-left-color:var(--accent-gold)}
+td strong{color:var(--text-primary);font-weight:600}
+
+/* ========== SCORE BAR ========== */
+.score-bar-wrap{display:flex;align-items:center;gap:var(--space-sm);margin:2px 0}
+.score-bar-label{font-size:.82rem;color:var(--text-secondary);min-width:72px;flex-shrink:0}
+.score-bar-track{flex:1;height:6px;background:var(--bg-secondary);border-radius:3px;overflow:hidden}
+.score-bar-fill{
+  height:100%;border-radius:3px;width:0%;transition:width 1s ease;
+  background:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan));
+}
+.score-bar-fill.animated{width:var(--score-width)}
+.score-bar-value{font-size:.82rem;font-weight:600;color:var(--text-primary);min-width:30px;text-align:right}
+.mini-bar-row{display:flex;align-items:center;gap:8px;margin:4px 0}
+.mini-bar-label{font-size:.78rem;color:var(--text-secondary);min-width:52px}
+.mini-bar-track{flex:1;height:4px;background:var(--bg-secondary);border-radius:2px;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:2px;width:0%;transition:width 1s ease;background:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan))}
+.mini-bar-fill.animated{width:var(--score-width)}
+.mini-bar-val{font-size:.78rem;font-weight:600;color:var(--text-primary);min-width:24px;text-align:right}
+
+/* ========== REVIEW CARD (model/IDE detail) ========== */
+.review-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--space-xl);margin-bottom:var(--space-lg);position:relative;overflow:hidden}
+.review-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-card-top);opacity:0;transition:opacity var(--transition-normal)}
+.review-card:hover::before{opacity:1}
+.review-card:hover{border-color:var(--border-light)}
+.review-card .rating-badge{display:inline-flex;align-items:center;gap:6px;background:var(--badge-bg);color:var(--badge-text);padding:3px 12px;border-radius:12px;font-size:.8rem;font-weight:600;margin-bottom:var(--space-sm)}
+.review-card h3{font-family:var(--font-display);font-size:1.2rem;font-weight:700;margin-bottom:4px}
+.review-card .sub{color:var(--text-muted);font-size:.85rem;margin-bottom:var(--space-md)}
+.review-card .desc{color:var(--text-secondary);font-size:.9rem;line-height:1.65;margin-bottom:var(--space-md)}
+.review-card .pros{color:#34d399;font-size:.88rem;padding-left:var(--space-md);margin-bottom:4px}
+.review-card .cons{color:#f87171;font-size:.88rem;padding-left:var(--space-md);margin-bottom:var(--space-md)}
+
+/* ========== QUOTE ========== */
+.quote-block{
+  background:var(--quote-bg);border-left:3px solid var(--quote-border);
+  padding:var(--space-lg) var(--space-xl);border-radius:0 var(--radius-md) var(--radius-md) 0;
+  margin:var(--space-lg) 0;font-size:.92rem;color:var(--text-secondary);line-height:1.7;
+}
+
+/* ========== TREND CARDS ========== */
+.trend-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-lg)}
+@media(max-width:768px){.trend-grid{grid-template-columns:1fr}}
+.trend-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--space-lg) var(--space-xl);position:relative;transition:all var(--transition-normal)}
+.trend-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-card-top);opacity:0;transition:opacity var(--transition-normal)}
+.trend-card:hover::before{opacity:1}
+.trend-card:hover{transform:translateY(-3px);box-shadow:var(--card-shadow-hover)}
+.trend-card .num{font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:var(--accent-gold);margin-bottom:var(--space-sm)}
+.trend-card p{color:var(--text-secondary);font-size:.9rem;line-height:1.65}
+
+/* ========== FOOTER ========== */
+footer{
+  text-align:center;padding:var(--space-2xl) var(--space-xl);
+  border-top:1px solid var(--border-color);color:var(--text-muted);
+  font-size:.85rem;
+}
+
+/* ========== BACK TO TOP ========== */
+#backToTop{
+  position:fixed;bottom:32px;right:32px;z-index:999;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--bg-card);border:1px solid var(--border-color);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:translateY(20px);pointer-events:none;
+  transition:all var(--transition-normal);color:var(--text-secondary);
+  box-shadow:var(--shadow-md);
+}
+#backToTop.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+#backToTop:hover{background:var(--bg-hover);border-color:var(--accent-gold);color:var(--accent-gold)}
+#backToTop svg{width:20px;height:20px}
+
+/* ========== REVEAL ========== */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ========== SCENE TABLE (vertical layout) ========== */
+.scene-table td:first-child{font-weight:600;color:var(--text-primary);white-space:nowrap}
+
+/* ========== PRICE TAG ========== */
+.price-tag{display:inline-block;background:var(--badge-bg);color:var(--badge-text);padding:2px 10px;border-radius:10px;font-size:.8rem;font-weight:600}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:640px){
+  .nav-links a{font-size:.78rem;padding:4px 8px}
+  .nav-inner{padding:0 var(--space-md)}
+  .section{padding:var(--space-2xl) var(--space-md)}
+  .hero{padding:120px var(--space-md) 60px}
+  .review-card{padding:var(--space-lg)}
+  .table-wrap{font-size:.8rem}
+  th,td{padding:var(--space-sm) var(--space-md)}
+}
+</style>
+</head>
+<body>
+<div id="progressBar"></div>
+<nav>
+  <div class="nav-inner">
+    <a href="https://leevisfung.github.io/" class="nav-back" aria-label="回到主页">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span>主页</span>
+    </a>
+    <div class="nav-brand">AI Landscape 2026</div>
+    <div class="nav-links">
+      <a href="#concepts">概念</a>
+      <a href="#models">大模型</a>
+      <a href="#ide">IDE</a>
+      <a href="#agent">Agent</a>
+      <a href="#ecosystem">生态</a>
+      <button id="themeToggle" aria-label="切换主题">
+        <svg id="moonIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="sunIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div id="app">
+<!-- ========== HERO ========== -->
+<section class="hero">
+  <div class="hero-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    v1.0 / 数据截至 2026.7.20
+  </div>
+  <h1>AI 核心概念与工具全景横评</h1>
+  <p>国内外大语言模型、编程 IDE、Agent 应用深度对比与选型指南</p>
+  <p>Created By 里维斯Leevis</p>
+
+</section>
+
+<!-- ========== CHAPTER 1: CONCEPTS ========== -->
+<section class="section" id="concepts">
+  <div class="section-header reveal">
+    <h2>第一章 AI 核心概念全景</h2>
+    <p>在深入探讨 AI 如何嵌入软件研发全流程之前，我们需要先理解几个核心概念。这些概念是后续工具选型和操作指南的基础。</p>
+  </div>
+
+  <div class="card-grid-2">
+    <!-- LLM -->
+    <div class="card reveal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/>
+          <line x1="9" y1="19" x2="15" y2="19"/>
+          <line x1="10" y1="22" x2="14" y2="22"/>
+          <circle cx="12" cy="9" r="1"/>
+          <circle cx="9" cy="9" r=".5"/>
+          <circle cx="15" cy="9" r=".5"/>
+        </svg>
+      </div>
+      <h3>大语言模型（LLM）</h3>
+      <p>基于海量文本数据训练的人工智能模型，能够理解和生成人类语言。通过预测下一个词的方式完成对话、写作、代码生成、推理分析等任务。</p>
+      <p><span class="tag">自然语言</span><span class="tag">代码生成</span><span class="tag">多模态</span><span class="tag">工具调用</span></p>
+      <p style="margin-top:var(--space-sm);font-size:.88rem;color:var(--text-muted)">关键认知：LLM 不是"万能工具"，而是"万能助手"。理解它的边界，比迷信它的能力更重要。</p>
+    </div>
+
+    <!-- Skill -->
+    <div class="card reveal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+          <line x1="10" y1="6.5" x2="14" y2="6.5"/>
+          <line x1="6.5" y1="10" x2="6.5" y2="14"/>
+        </svg>
+      </div>
+      <h3>Skill（技能）</h3>
+      <p>预封装的、可复用的 AI 能力模块，将特定领域的方法论、工作流程和最佳实践打包成"技能包"，让 AI 能够按照标准化流程完成任务。</p>
+      <p><span class="tag">报告撰写</span><span class="tag">代码审查</span><span class="tag">数据分析</span><span class="tag">部署运维</span></p>
+    </div>
+
+    <!-- MCP -->
+    <div class="card reveal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 14.899A7 7 0 1 1 19.1 9.9"/>
+          <path d="M4 14.899A7 7 0 0 1 19.1 9.9"/>
+          <path d="M9.1 19.9A7 7 0 0 1 4 14.9"/>
+          <line x1="12" y1="12" x2="12" y2="21"/>
+          <line x1="8" y1="16" x2="16" y2="16"/>
+          <circle cx="12" cy="16" r="1"/>
+        </svg>
+      </div>
+      <h3>模型上下文协议（MCP）</h3>
+      <p>开放协议标准，允许 AI 模型与外部工具、数据源和服务进行标准化连接。由 Anthropic 发起，类似 AI 领域的"USB 接口"。</p>
+      <p><span class="tag">开放协议</span><span class="tag">工具连接</span><span class="tag">国际标准</span></p>
+      <p style="margin-top:var(--space-sm);font-size:.88rem;color:var(--text-muted)">SDK 月下载量达 9700 万次。MCP 解决的核心问题是"AI 的手够不到的地方"。</p>
+    </div>
+
+    <!-- AI 编程 IDE -->
+    <div class="card reveal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+          <line x1="12" y1="2" x2="12" y2="22"/>
+        </svg>
+      </div>
+      <h3>AI 编程 IDE</h3>
+      <p>将大模型能力深度集成到开发环境中的工具。超越传统"代码补全"范畴，能够理解项目上下文、自主执行多步骤编码任务，甚至从需求描述直接生成完整项目。</p>
+      <p><span class="tag">AI 原生 IDE</span><span class="tag">IDE 插件</span><span class="tag">Agent 编码</span></p>
+    </div>
+
+    <!-- Agent 应用 -->
+    <div class="card reveal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="1" width="18" height="22" rx="2"/>
+          <circle cx="12" cy="18" r="1.5"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+          <line x1="10" y1="9" x2="14" y2="9"/>
+          <circle cx="9" cy="6" r=".5"/>
+          <circle cx="15" cy="6" r=".5"/>
+        </svg>
+      </div>
+      <h3>AI Agent 应用</h3>
+      <p>面向办公和生产力场景的 AI 智能体平台。核心特征包括：AI 智能体模式自主规划执行多步骤任务、工具操控能力、Skill/插件生态、跨软件协同。</p>
+      <p><span class="tag">智能体</span><span class="tag">工具操控</span><span class="tag">插件生态</span></p>
+    </div>
+
+    <!-- 提示词工程 -->
+    <div class="card reveal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <line x1="8" y1="9" x2="16" y2="9"/>
+          <line x1="8" y1="13" x2="12" y2="13"/>
+        </svg>
+      </div>
+      <h3>提示词工程</h3>
+      <p>与 AI 大模型高效交互的核心技能。好的提示词能显著提升 AI 输出的质量和准确性。高质量提示词遵循 CREATE 五要素框架。</p>
+      <p><span class="tag">Context</span><span class="tag">Role</span><span class="tag">Expectation</span><span class="tag">Action</span><span class="tag">Tone</span></p>
+    </div>
+  </div>
+
+  <!-- CREATE Framework table -->
+  <div class="reveal" style="margin-top:var(--space-3xl)">
+    <h3 style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;text-align:center;margin-bottom:var(--space-lg)">CREATE 五要素框架</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>要素</th><th>含义</th><th>示例</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Context</strong></td><td>背景信息</td><td>"我们是一家制造企业，使用 Spring Boot + Vue 前后端分离架构"</td></tr>
+          <tr><td><strong>Role</strong></td><td>角色设定</td><td>"你是一位有 10 年经验的资深 Java 后端架构师"</td></tr>
+          <tr><td><strong>Expectation</strong></td><td>期望输出</td><td>"输出一份详细的接口设计文档，包含请求/响应示例"</td></tr>
+          <tr><td><strong>Action</strong></td><td>具体任务</td><td>"根据以下需求描述设计用户认证模块的 API"</td></tr>
+          <tr><td><strong>Tone</strong></td><td>风格/格式</td><td>"使用 Markdown 格式，语言简洁专业"</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 2: MODELS ========== -->
+<section class="section" id="models">
+  <div class="section-header reveal">
+    <h2>第二章 大语言模型横评</h2>
+    <p>国内六大模型 vs 国际四大模型，多维度深度对比</p>
+  </div>
+
+  <!-- 2.1 Domestic overview table -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-bottom:var(--space-lg)" class="reveal">国内六大模型概览</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>维度</th><th>DeepSeek</th><th>GLM / 智谱</th><th>通义千问 Qwen</th><th>文心 ERNIE</th><th>Kimi</th><th>豆包</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>最新版本</strong></td><td>V4 Pro/Flash</td><td>GLM-5.2</td><td>Qwen3.7-Max/Plus</td><td>ERNIE 5.0</td><td>K3</td><td>Doubao-Seed-2.0</td></tr>
+          <tr><td><strong>总参数</strong></td><td>1.6万亿(Pro)</td><td>7450亿</td><td>397B</td><td>2.4万亿</td><td><strong>2.8万亿</strong></td><td>未公开</td></tr>
+          <tr><td><strong>上下文</strong></td><td>100万token</td><td>128K+</td><td>100万token</td><td>百万级</td><td><strong>100万token</strong></td><td>128K</td></tr>
+          <tr><td><strong>架构</strong></td><td>MoE+CSA/HCA</td><td>MoE+DSA</td><td>稠密+MoE双架构</td><td>超稀疏MoE</td><td>MoE</td><td>MoE</td></tr>
+          <tr><td><strong>开源</strong></td><td>Apache 2.0</td><td>Apache 2.0</td><td>Apache 2.0</td><td>4.5开源</td><td>开源</td><td>底座Apache 2.0</td></tr>
+          <tr><td><strong>输入价格(¥/百万token)</strong></td><td>3</td><td>--</td><td>~0.8(轻量)</td><td>4.5免费</td><td>6.5</td><td>--</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Domestic model detail cards -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-lg)" class="reveal">
+    <!-- DeepSeek -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 8.5/10</div>
+      <h3>DeepSeek V4</h3>
+      <div class="sub">效率工程路线，MoE专家激活效率提升34%</div>
+      <div class="desc">优势：1M token 全系列标配、单 token 推理成本极低、100万 token 全系列标配。价格：永久降价至原价 1/4，V4-Pro 输入 ¥3/输出 ¥6。缺点：峰谷分时定价对白天调用不友好；中文能力 CMMLU 86.8% 略逊于前三。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="80"></div></div><span class="score-bar-value">8.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="75"></div></div><span class="score-bar-value">7.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="100"></div></div><span class="score-bar-value">10</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="80"></div></div><span class="score-bar-value">8.0</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：代码开发、长文本处理、成本敏感场景</div>
+    </div>
+
+    <!-- GLM -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 8.0/10</div>
+      <h3>GLM-5.2</h3>
+      <div class="sub">Agentic Engineering，专注模型像软件工程师一样工作</div>
+      <div class="desc">优势：编程能力开源最强（SWE-bench 77.8 分）、适配 7 大国产芯片、异步 RL 训练框架。缺点：发布后经历限流和价格上调争议；免费版与付费版体验差距大。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="75"></div></div><span class="score-bar-value">7.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低至中 | 适用：复杂软件工程、长周期 Agent 任务、国产化替代</div>
+    </div>
+
+    <!-- Qwen -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 8.5/10</div>
+      <h3>通义千问 Qwen3.7</h3>
+      <div class="sub">平台生态路线，线性注意力替代75%标准注意力层</div>
+      <div class="desc">优势：开源生态最完善（端侧 0.8B 到旗舰全覆盖）、首次实现跨文本/图像/代码的全域思考、CMMLU 90.2%。缺点：闭源旗舰版与开源版能力差距存在；DashScope 平台有一定学习成本。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="95"></div></div><span class="score-bar-value">9.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="80"></div></div><span class="score-bar-value">8.0</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：全模态应用、高性价比批量处理、私有化部署</div>
+    </div>
+
+    <!-- ERNIE -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 7.5/10</div>
+      <h3>文心 ERNIE 5.0</h3>
+      <div class="sub">中文原生最强、企业级产品矩阵</div>
+      <div class="desc">优势：中文理解和文化常识最突出、ERNIE 4.5 完全免费、2.4万亿参数原生全模态。缺点：国际评测排名不及 DeepSeek/GLM 等新锐；5.0 API 价格偏高。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="70"></div></div><span class="score-bar-value">7.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="70"></div></div><span class="score-bar-value">7.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="60"></div></div><span class="score-bar-value">6.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="75"></div></div><span class="score-bar-value">7.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：中文内容创作、法律/医疗/政务垂直领域</div>
+    </div>
+
+    <!-- Kimi -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 9.0/10</div>
+      <h3>Kimi K3（2026.7.16 发布）</h3>
+      <div class="sub">智能体编程与知识工作旗舰，全球参数最大的开源模型</div>
+      <div class="desc">参数：2.8万亿总参数、100万 token 上下文窗口，基于 Kimi Delta Attention 架构。优势：全球参数最大的开源模型（超越 Llama 4 Behemoth）、原生支持视觉理解、知识工作能力对标顶尖闭源模型。缺点：刚发布，实际使用体验和稳定性还需验证；API 价格尚未完全公开。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="95"></div></div><span class="score-bar-value">9.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="80"></div></div><span class="score-bar-value">8.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="100"></div></div><span class="score-bar-value">10</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：复杂软件工程、长文本知识工作、需要开源可私有化部署的大规模场景</div>
+    </div>
+
+    <!-- Doubao -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 8.0/10</div>
+      <h3>豆包 Doubao 2.0</h3>
+      <div class="sub">全模态理解 + 物理世界推理 + 中文工程化适配</div>
+      <div class="desc">优势：原生全模态（视频/图像/音频/文本统一理解）、CMMLU 约 90-91% 中文第一梯队、中文需求理解精准、GUI 端到端执行、音频能力突出。代码能力 SWE-bench 78.8%、HumanEval 88.3%。缺点：闭源无开源版本；Pro 版输出价格偏高。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="80"></div></div><span class="score-bar-value">8.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="75"></div></div><span class="score-bar-value">7.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="50"></div></div><span class="score-bar-value">5.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="80"></div></div><span class="score-bar-value">8.0</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：极低 | 适用：多模态场景（音视频分析）、中文开发场景、GUI 自动化操作</div>
+    </div>
+  </div>
+
+  <!-- 2.2 International overview table -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg)" class="reveal">国际四大模型概览</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>维度</th><th>OpenAI GPT-5.6</th><th>Anthropic Claude</th><th>Google Gemini</th><th>Meta Llama 4</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>最新版本</strong></td><td>5.6 Sol/Terra/Luna</td><td>Opus 4.6/Sonnet 4.6/Fable 5</td><td>3.5 Pro/Flash</td><td>Scout/Maverick</td></tr>
+          <tr><td><strong>总参数</strong></td><td>未公开</td><td>未公开</td><td>未公开</td><td>最高2万亿(Behemoth)</td></tr>
+          <tr><td><strong>上下文</strong></td><td>1M token</td><td>1M(Opus 4.6)</td><td>最高2M token</td><td>10M token</td></tr>
+          <tr><td><strong>架构</strong></td><td>--</td><td>--</td><td>--</td><td>MoE(16/128专家)</td></tr>
+          <tr><td><strong>开源</strong></td><td>闭源</td><td>闭源</td><td>闭源</td><td>Apache 2.0(部分)</td></tr>
+          <tr><td><strong>输入价格($/百万token)</strong></td><td>$5(Sol)/$2.5(Terra)/$1(Luna)</td><td>$5(Opus)/$3(Sonnet)</td><td>$2(Pro)/$0.5(Flash)</td><td>免费(自行部署)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- International model detail cards -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-lg)" class="reveal">
+    <!-- GPT-5.6 -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 9.0/10</div>
+      <h3>OpenAI GPT-5.6（2026.7.10 上线）</h3>
+      <div class="sub">三档定位：Sol（旗舰，$5/$30）、Terra（均衡，$2.5/$15）、Luna（轻量，$1/$6）</div>
+      <div class="desc">优势：Coding Agent Index 80（行业最高）、Terminal-Bench 91.9%（Ultra 模式）、Agents' Last Exam 52.7%。缺点：闭源仅 API；价格较高（Sol 输出 $30/百万 token）。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="95"></div></div><span class="score-bar-value">9.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="70"></div></div><span class="score-bar-value">7.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="70"></div></div><span class="score-bar-value">7.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="50"></div></div><span class="score-bar-value">5.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="95"></div></div><span class="score-bar-value">9.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：追求极致编程/Agent 能力、预算充足</div>
+    </div>
+
+    <!-- Claude -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 8.5/10</div>
+      <h3>Anthropic Claude 系列（2026.2 更新）</h3>
+      <div class="sub">Opus 4.6（$5/$25）：1M token、Terminal-Bench 最高分；Sonnet 4.6（$3/$15）；Fable 5（~$10/$50）</div>
+      <div class="desc">优势：MCP 发起方、Computer Use 操控电脑、Claude Code 已移至 $100/月 Max 套餐。缺点：价格持续攀升；中文能力非专精。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="65"></div></div><span class="score-bar-value">6.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="60"></div></div><span class="score-bar-value">6.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="50"></div></div><span class="score-bar-value">5.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：企业级协作（Cowork）、深度编程（Claude Code）</div>
+    </div>
+
+    <!-- Gemini -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 7.5/10</div>
+      <h3>Google Gemini 系列</h3>
+      <div class="sub">3.5 Pro（2M上下文）/ 3.5 Flash（性价比极高）</div>
+      <div class="desc">优势：2M 超长上下文、Flash 免费层级、Gemini Advanced $19.99/月、Project Astra 多模态 Agent。缺点：3.5 Pro 多次延期（"训练退化"）、Coding Agent Index 仅 42.7（偏科严重）。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="65"></div></div><span class="score-bar-value">6.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="70"></div></div><span class="score-bar-value">7.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="50"></div></div><span class="score-bar-value">5.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="80"></div></div><span class="score-bar-value">8.0</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：长上下文场景、免费级开发测试、多模态</div>
+    </div>
+
+    <!-- Llama 4 -->
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 7.5/10</div>
+      <h3>Meta Llama 4 系列（2025.4 发布）</h3>
+      <div class="sub">Scout（1090亿/17亿活跃）/ Maverick（4000亿/17亿活跃）/ Behemoth（2万亿, 未开源）</div>
+      <div class="desc">优势：10M token 超长上下文、首批原生多模态开源模型、200种语言训练。缺点：Behemoth 未开源；Meta 战略转向闭源+开源双线并行。</div>
+      <div class="score-bar-wrap"><span class="score-bar-label">代码能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="75"></div></div><span class="score-bar-value">7.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">中文能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="50"></div></div><span class="score-bar-value">5.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">性价比</span><div class="score-bar-track"><div class="score-bar-fill" data-score="85"></div></div><span class="score-bar-value">8.5</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">开源生态</span><div class="score-bar-track"><div class="score-bar-fill" data-score="90"></div></div><span class="score-bar-value">9.0</span></div>
+      <div class="score-bar-wrap"><span class="score-bar-label">Agent能力</span><div class="score-bar-track"><div class="score-bar-fill" data-score="70"></div></div><span class="score-bar-value">7.0</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：中 | 适用：私有化部署、多语言场景、研究实验</div>
+    </div>
+  </div>
+
+  <!-- 2.3 Ranking tables -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg)" class="reveal">代码能力排名（基于 Artificial Analysis 2026.6 + Arena 2026.7.16）</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>排名</th><th>模型</th><th>关键 Benchmark</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td><strong>Kimi K3</strong></td><td>Arena Frontend Code 全球第一（1679 分，超 Claude Fable 5 和 GPT-5.6 Sol）</td></tr>
+          <tr><td><strong>2</strong></td><td>通义千问 Qwen3.7 Max</td><td>Coding 指数 50.1（国产最高），SWE-bench 79.2%，HumanEval 90.2%</td></tr>
+          <tr><td><strong>3</strong></td><td>GPT-5.6 Sol</td><td>Coding Agent Index 80, Terminal-Bench 91.9%</td></tr>
+          <tr><td><strong>4</strong></td><td>Claude Mythos 5</td><td>SWE-Bench Pro 80.3%（最高）</td></tr>
+          <tr><td><strong>5</strong></td><td>Claude Fable 5</td><td>SWE-Bench Pro 80.0%, Arena 1631 分</td></tr>
+          <tr><td><strong>6</strong></td><td>豆包 Seed 2.0 Pro</td><td>SWE-bench 78.8%, HumanEval 88.3%（中文开发场景最优）</td></tr>
+          <tr><td><strong>7</strong></td><td>DeepSeek V4-Pro</td><td>Agentic Coding 开源首位</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="reveal quote-block">代码能力国内模型已全面跻身全球第一梯队。Kimi K3 刚发布即登顶全球前端代码榜，Qwen3.7 Max 综合编程能力国产最强。豆包代码能力国产前列但非第一，其差异化优势在中文工程化适配（中文注释、中文需求理解、看图写代码）。</div>
+
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">中文能力排名</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>排名</th><th>模型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td>豆包 2.0 128B / Qwen3.7 系列</td><td>第一梯队，CMMLU 约 90-91%，中文原生场景最优</td></tr>
+          <tr><td><strong>2</strong></td><td>GLM-5 系列</td><td>第一梯队，CMMLU 约 89-90%，长文本中文理解优秀</td></tr>
+          <tr><td><strong>3</strong></td><td>Kimi K3</td><td>第一梯队，2.8万亿参数，中文综合能力强</td></tr>
+          <tr><td><strong>4</strong></td><td>DeepSeek V4-Pro</td><td>第二梯队，CMMLU 约 87%，中文能力良好</td></tr>
+          <tr><td><strong>5</strong></td><td>国际模型（GPT-5.6/Claude 4.6）</td><td>可用但非专精，深度中文场景弱于国产</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="reveal quote-block">中文能力是国内模型的绝对主场。豆包、Qwen、GLM 三家处于第一梯队，各有侧重（豆包偏口语化、Qwen 偏多模态+开发、GLM 偏推理），不宜简单说某一家"领先"。</div>
+
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">价格竞争力（输出价格排序，越低越好）</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>模型</th><th>输出价格</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td><strong>DeepSeek V4-Pro</strong></td><td>¥6（~$0.86）</td><td><strong>国内最便宜，永久降价</strong></td></tr>
+          <tr><td>Gemini 3 Flash</td><td>$3</td><td>国际性价比之王，有免费层级</td></tr>
+          <tr><td>GPT-5.6 Luna</td><td>$6</td><td>高吞吐场景最优</td></tr>
+          <tr><td>Gemini 3.1 Pro (<200K)</td><td>$4</td><td>推理翻倍，价格不变</td></tr>
+          <tr><td>GPT-5.6 Terra</td><td>$15</td><td>--</td></tr>
+          <tr><td>Claude Sonnet 4.6</td><td>$15</td><td>编程追平 Opus</td></tr>
+          <tr><td>Claude Opus 4.6</td><td>$25</td><td>长文本/推理最强</td></tr>
+          <tr><td>GPT-5.6 Sol</td><td>$30</td><td>编程最强但昂贵</td></tr>
+          <tr><td>Claude Fable 5</td><td>~$50</td><td>综合智能最高</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="reveal quote-block">国内模型输出价格通常为国际同级别的 1/5 到 1/10。DeepSeek V4-Pro 折算后是国际最低价。</div>
+
+  <!-- Scenario recommendation -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">场景推荐速查</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table class="scene-table">
+        <thead><tr><th>场景</th><th>国内首选</th><th>国际首选</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>日常编码（性价比）</td><td>DeepSeek V4-Flash</td><td>Gemini 3 Flash</td><td>极低价格，Flash 层级免费</td></tr>
+          <tr><td>极致代码能力</td><td>Kimi K3 / Qwen3.7 Max</td><td>GPT-5.6 Sol</td><td>K3 登顶全球前端代码榜，Qwen Coding 指数国产最高</td></tr>
+          <tr><td>长文档处理</td><td>Kimi K3 / DeepSeek V4</td><td>Gemini 3.5 Pro（2M）</td><td>超长上下文</td></tr>
+          <tr><td>中文内容创作</td><td>豆包 / Qwen3.7 / ERNIE 4.5</td><td>--</td><td>中文第一梯队，各有侧重</td></tr>
+          <tr><td>多模态</td><td>豆包 / Qwen3.7-Plus</td><td>Gemini 3.5 Pro</td><td>原生全模态</td></tr>
+          <tr><td>Agent/智能体</td><td>GLM-5.2</td><td>GPT-5.6 Sol</td><td>Agent 能力最强</td></tr>
+          <tr><td>开源私有化</td><td>Kimi K3 / Qwen3.7 / DeepSeek V4</td><td>Llama 4</td><td>Apache 2.0，社区成熟</td></tr>
+          <tr><td>企业级安全</td><td>ERNIE 5.0 + 千帆</td><td>Claude Opus 4.6 (Cowork)</td><td>合规认证完善</td></tr>
+          <tr><td>预算充足追求极致</td><td>--</td><td>GPT-5.6 Sol + Claude Opus 4.6</td><td>行业天花板</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 3: IDE ========== -->
+<section class="section" id="ide">
+  <div class="section-header reveal">
+    <h2>第三章 AI 编程工具 / IDE 横评</h2>
+    <p>国内外 7 款 AI 编程 IDE 与插件的多维度对比</p>
+  </div>
+
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>评分维度</th><th>Trae</th><th>Cursor</th><th>Claude Code</th><th>GitHub Copilot</th><th>ZCode 3.0</th><th>Windsurf</th><th>通义灵码</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>厂商</strong></td><td>字节跳动</td><td>Anysphere</td><td>Anthropic</td><td>Microsoft</td><td>智谱AI</td><td>Codeium</td><td>阿里云</td></tr>
+          <tr><td><strong>代码生成</strong></td><td><strong>9.5</strong></td><td>9.3</td><td><strong>9.8</strong></td><td>9.0</td><td>9.0</td><td>8.8</td><td>8.7</td></tr>
+          <tr><td><strong>IDE体验</strong></td><td>9.3</td><td><strong>9.5</strong></td><td>6.5</td><td>9.0</td><td>7.8</td><td>8.7</td><td>8.5</td></tr>
+          <tr><td><strong>中文适配</strong></td><td><strong>9.8</strong></td><td>7.5</td><td>8.0</td><td>7.0</td><td><strong>9.5</strong></td><td>8.2</td><td><strong>9.5</strong></td></tr>
+          <tr><td><strong>Agent能力</strong></td><td>9.0</td><td>9.2</td><td><strong>9.8</strong></td><td>7.5</td><td>7.8</td><td>8.0</td><td>7.8</td></tr>
+          <tr><td><strong>价格</strong></td><td><span class="price-tag">永久免费</span></td><td>$20/月</td><td>按量付费</td><td>$10/月</td><td>¥49起/月</td><td>$15/月</td><td><span class="price-tag">免费</span></td></tr>
+          <tr><td><strong>综合评分</strong></td><td><strong>9.5</strong></td><td><strong>8.7</strong></td><td><strong>8.5</strong></td><td><strong>8.1</strong></td><td><strong>8.3</strong></td><td><strong>8.0</strong></td><td><strong>8.0</strong></td></tr>
+          <tr><td><strong>推荐场景</strong></td><td>国内首选；SOLO 零代码全栈；中文最优</td><td>国际化项目；Agent 跨文件编辑最强</td><td>终端式开发；推理天花板</td><td>VS Code/JetBrains 生态</td><td>1M上下文；中文最优；中长程任务</td><td>轻量级 AI IDE；中英文均可</td><td>阿里云生态；中文代码生成优秀</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="reveal quote-block" style="margin-bottom:var(--space-xl)">数据来源：CSDN 评测、开发者社区投票（2026年5-6月）</div>
+
+  <!-- One-line review cards -->
+  <h3 style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;margin-bottom:var(--space-lg)" class="reveal">各工具一句话点评</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--space-md)">
+    <div class="card reveal"><h4>Trae</h4><p>国内 AI 编程 IDE 标杆，SOLO 模式实现零代码全栈开发，永久免费，中文适配最佳。</p></div>
+    <div class="card reveal"><h4>Cursor</h4><p>国际 AI 编程工具领导者，Composer 2 多文件编辑能力最强，2026 年改为按量计费后成本上升。</p></div>
+    <div class="card reveal"><h4>Claude Code</h4><p>终端式 AI 编程 Agent，推理能力天花板，非独立 IDE，适合习惯命令行的高阶开发者。</p></div>
+    <div class="card reveal"><h4>GitHub Copilot</h4><p>GitHub 生态深度整合，2026 年 6 月起按 Token 计费，重度用户成本可能大幅上升。</p></div>
+    <div class="card reveal"><h4>ZCode 3.0</h4><p>智谱自研 Agent 内核（ADE 定位），GLM-5.2 在 Code Arena 盲测全球可用模型第一（1595 分），1M Token 无损上下文是核心优势，中文适配最优；但高峰期响应偏慢、超长程自主执行（10h+）仍有差距。¥49 起/月，新用户连续 5 天免费（GLM-5.2 每天 300 万 Token）。</p></div>
+    <div class="card reveal"><h4>Windsurf</h4><p>Cascade Agent 体验接近 Cursor，被 Cognition AI 收购后方向待观察。</p></div>
+    <div class="card reveal"><h4>通义灵码（Qoder）</h4><p>阿里云出品，中文代码生成优秀，IDE 插件形态即装即用，个人永久免费。</p></div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 4: AGENT ========== -->
+<section class="section" id="agent">
+  <div class="section-header reveal">
+    <h2>第四章 AI Agent 应用横评</h2>
+    <p>国内 7 款与国际 5 款 AI Agent 应用深度对比</p>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-bottom:var(--space-lg)" class="reveal">国内工具概览</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>维度</th><th>WorkBuddy</th><th>Trae Work</th><th>通义千问桌面版</th><th>Kimi</th><th>豆包</th><th>文小言</th><th>Coze 扣子</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>厂商</strong></td><td>腾讯</td><td>字节跳动</td><td>阿里</td><td>月之暗面</td><td>字节跳动</td><td>百度</td><td>字节跳动</td></tr>
+          <tr><td><strong>综合评分</strong></td><td><strong>8.0</strong></td><td><strong>9.0</strong></td><td><strong>7.5</strong></td><td><strong>8.5</strong></td><td><strong>8.0</strong></td><td><strong>6.5</strong></td><td><strong>8.5</strong></td></tr>
+          <tr><td><strong>定位</strong></td><td>桌面AI智能体</td><td>AI原生全员工作台</td><td>AI对话助手</td><td>AI对话+Agent</td><td>全能AI助手</td><td>新搜索助手</td><td>Agent搭建平台</td></tr>
+          <tr><td><strong>本地文件操控</strong></td><td>强(系统级)</td><td>中(云端沙箱)</td><td>弱</td><td>中(虚拟电脑)</td><td>弱</td><td>弱</td><td>弱</td></tr>
+          <tr><td><strong>Agent执行</strong></td><td>强</td><td>强</td><td>中</td><td>强(OK Computer)</td><td>弱</td><td>弱</td><td>强(需配置)</td></tr>
+          <tr><td><strong>MCP支持</strong></td><td>支持</td><td>支持</td><td>原生支持</td><td>有限</td><td>有限</td><td>有限</td><td>间接支持</td></tr>
+          <tr><td><strong>个人版</strong></td><td>免费+Credits</td><td><span class="price-tag">完全免费</span></td><td><span class="price-tag">完全免费</span></td><td>免费+付费</td><td><span class="price-tag">完全免费</span></td><td>免费</td><td><span class="price-tag">完全免费</span></td></tr>
+          <tr><td><strong>上手难度</strong></td><td>中低</td><td>低</td><td>低</td><td>低-中</td><td>极低</td><td>极低</td><td>中</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- International Agent detailed cards -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">国际 Agent 应用详评</h3>
+
+  <div class="reveal">
+    <div class="review-card">
+      <div class="rating-badge">综合评分 9.0/10</div>
+      <h3>ChatGPT（OpenAI）</h3>
+      <div class="sub">GPT-5.5（2026.4 全面开放）、ChatGPT Agent（融合 Operator + Deep Research + 对话）</div>
+      <div class="desc">核心能力：虚拟计算机架构、自主选择工具、Tasks 定时任务、Canvas 协作编辑、Codex 代码智能体、MCP 全面支持。Benchmark：WebArena 68.9% SOTA、BrowseComp 领先。优点：Agent 能力行业标杆、MCP 生态最成熟、工具生态最丰富。缺点：Pro $200+/月门槛高、Enterprise 按量计费成本不可控。</div>
+      <div class="mini-bar-row"><span class="mini-bar-label">Agent执行</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="95"></div></div><span class="mini-bar-val">9.5</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">工具生态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="100"></div></div><span class="mini-bar-val">10</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">MCP支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="100"></div></div><span class="mini-bar-val">10</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">多模态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="90"></div></div><span class="mini-bar-val">9.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">中文支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">性价比</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：通用 AI 助手、Agent 自主执行复杂任务 | 价格：Free / Plus $20 / Pro $200+</div>
+    </div>
+
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 8.5/10</div>
+      <h3>Claude（Anthropic）</h3>
+      <div class="sub">Opus 4.6（1M token）/ Sonnet 4.6（编程追平 Opus）/ Fable 5（综合智能最高）</div>
+      <div class="desc">核心能力：Computer Use（操控电脑屏幕）、Claude Cowork（企业协作 Agent）、Artifacts + MCP 连接器、Claude Code（Max 套餐专属）。优点：MCP 发起方（生态先驱）、Computer Use 创新交互、Cowork 企业协作领先。缺点：Claude Code 被移至 $100 Max 套餐、中文非专精。</div>
+      <div class="mini-bar-row"><span class="mini-bar-label">Agent执行</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="90"></div></div><span class="mini-bar-val">9.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">工具生态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="90"></div></div><span class="mini-bar-val">9.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">MCP支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="95"></div></div><span class="mini-bar-val">9.5</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">多模态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">中文支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="65"></div></div><span class="mini-bar-val">6.5</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">性价比</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="65"></div></div><span class="mini-bar-val">6.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：企业级协作、深度编程、需要 MCP 打通外部系统的场景 | 价格：Free / Pro $20 / Max $100</div>
+    </div>
+
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 8.0/10</div>
+      <h3>Gemini（Google）</h3>
+      <div class="sub">Gemini 3.5 Pro（2M 上下文）/ 3.5 Flash（性价比极高）</div>
+      <div class="desc">核心能力：Project Astra（实时多模态 Agent）、全模态理解、Gemini Enterprise Agent Platform、Google AI Studio 免费开发。优点：2M 超长上下文、Flash 免费可用、Project Astra 多模态交互创新、$19.99 性价比高。缺点：3.5 Pro 多次跳票、Coding Agent Index 仅 42.7、中文能力中等。</div>
+      <div class="mini-bar-row"><span class="mini-bar-label">Agent执行</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="80"></div></div><span class="mini-bar-val">8.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">工具生态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="80"></div></div><span class="mini-bar-val">8.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">MCP支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="80"></div></div><span class="mini-bar-val">8.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">多模态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="95"></div></div><span class="mini-bar-val">9.5</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">中文支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">性价比</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="85"></div></div><span class="mini-bar-val">8.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：长上下文场景、Google Workspace 用户、多模态 Agent | 价格：免费版 / Advanced $19.99</div>
+    </div>
+
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 7.5/10</div>
+      <h3>Microsoft Copilot（M365）</h3>
+      <div class="sub">M365 Copilot 免费版 + 付费版 / Copilot Studio 低代码 Agent 搭建</div>
+      <div class="desc">核心能力：M365 Copilot（分免费版--单文档交互 / 付费版--跨应用全域数据）、Copilot Studio 低代码搭建、Win11 自动预装、Azure AI MCP 支持。优点：M365 生态深度整合、Copilot Studio 低代码 Agent、企业级部署经验丰富。缺点：付费版 $30/用户/月较贵、免费版功能受限严重。</div>
+      <div class="mini-bar-row"><span class="mini-bar-label">Agent执行</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">工具生态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="90"></div></div><span class="mini-bar-val">9.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">MCP支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="80"></div></div><span class="mini-bar-val">8.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">多模态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">中文支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">性价比</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="65"></div></div><span class="mini-bar-val">6.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：低 | 适用：已使用 M365 的企业、需要低代码 Agent 的团队 | 价格：免费版 $0 / 付费版 ~$30/用户/月</div>
+    </div>
+
+    <div class="review-card reveal">
+      <div class="rating-badge">综合评分 7.5/10</div>
+      <h3>Hermes（Nous Research）</h3>
+      <div class="sub">开源 AI Agent 框架，MIT 许可证，2026.2 发布</div>
+      <div class="desc">核心能力：自主 AI Agent 框架，可集成多个模型、自动学习用户使用习惯、支持长期记忆和任务链。形态：开源框架，开发者可自由定制和部署。优点：完全开源免费、无厂商锁定、可接入任意 LLM、社区活跃。缺点：需要一定技术能力搭建、中文支持依赖底层模型。</div>
+      <div class="mini-bar-row"><span class="mini-bar-label">Agent执行</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="80"></div></div><span class="mini-bar-val">8.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">工具生态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">MCP支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="70"></div></div><span class="mini-bar-val">7.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">多模态</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="60"></div></div><span class="mini-bar-val">6.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">中文支持</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="60"></div></div><span class="mini-bar-val">6.0</span></div>
+      <div class="mini-bar-row"><span class="mini-bar-label">性价比</span><div class="mini-bar-track"><div class="mini-bar-fill" data-score="95"></div></div><span class="mini-bar-val">9.5</span></div>
+      <div style="margin-top:var(--space-sm);font-size:.85rem;color:var(--text-muted)">上手难度：中 | 适用：开源爱好者、需要高度定制 Agent 的技术团队、不愿被单一厂商绑定的企业</div>
+    </div>
+  </div>
+
+  <!-- Agent comprehensive comparison -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">国内外 AI Agent 应用综合对比</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>对比维度</th><th>国际工具（代表）</th><th>国内工具（代表）</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Agent 自主执行</strong></td><td><strong>领先</strong>。ChatGPT Agent 多步骤自主执行、Claude Cowork 企业协作、Microsoft Copilot 企业级</td><td><strong>快速追赶</strong>。WorkBuddy 办公 Agent 体验好；Coze 搭建平台成熟</td></tr>
+          <tr><td><strong>本地文件/系统操控</strong></td><td>中等。Claude Computer Use（研究预览）；ChatGPT 虚拟计算机</td><td><strong>优势明显</strong>。WorkBuddy 系统级操控、Kimi Work 本地文件管理</td></tr>
+          <tr><td><strong>MCP/插件生态</strong></td><td><strong>绝对领先</strong>。MCP 事实标准（SDK 月下载 9700 万次），全平台支持</td><td><strong>跟随</strong>。仅 Trae Work 等少数支持，Coze 自有连接器非 MCP</td></tr>
+          <tr><td><strong>多模态能力</strong></td><td><strong>领先</strong>。Gemini 全模态、Claude 截屏理解、GPT-5.5 多模态</td><td>中上。豆包/通义千问支持图文音视频，Agent 层面较弱</td></tr>
+          <tr><td><strong>中文支持</strong></td><td>可用但非原生优化</td><td><strong>原生优势</strong>，文化语境理解更深</td></tr>
+          <tr><td><strong>价格</strong></td><td>统一 $20/月（Plus），高端 $100-200/月</td><td>WorkBuddy 59 元/月，多数基础能力免费，<strong>约为国际 1/3 到 1/5</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Agent selection guide -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">AI Agent 应用选型建议</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table class="scene-table">
+        <thead><tr><th>用户类型</th><th>国内首选</th><th>国际首选</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>产品经理/运营</td><td>Trae Work（免费）</td><td>ChatGPT Plus $20</td><td>PRD/PPT/数据分析一键生成</td></tr>
+          <tr><td>全栈开发者</td><td>Trae Work + Coze</td><td>Claude Max $100（Claude Code）</td><td>编程 + Agent 搭建</td></tr>
+          <tr><td>企业团队（企微）</td><td>WorkBuddy</td><td>M365 Copilot ~$30</td><td>深度集成企业通讯工具</td></tr>
+          <tr><td>学术科研/深度调研</td><td>Kimi K3</td><td>ChatGPT Plus + Claude Pro</td><td>超长文本 + Deep Research</td></tr>
+          <tr><td>AI Agent 开发者</td><td>Coze 扣子</td><td>Claude Cowork + MCP</td><td>插件最丰富、生态成熟</td></tr>
+          <tr><td>通用 AI 助手</td><td>豆包 / 通义千问（免费）</td><td>ChatGPT Plus $20</td><td>免费 vs 能力最强</td></tr>
+          <tr><td>开源 Agent 框架</td><td>--</td><td>Hermes（Nous Research）</td><td>无厂商锁定、高度可定制</td></tr>
+          <tr><td>中文搜索创作</td><td>文小言（免费）</td><td>--</td><td>中文知识深耕</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHAPTER 5: ECOSYSTEM ========== -->
+<section class="section" id="ecosystem">
+  <div class="section-header reveal">
+    <h2>第五章 Skill 与 MCP 生态速览</h2>
+    <p>Skill 生态、MCP 协议对比与 2026 核心趋势</p>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-bottom:var(--space-lg)" class="reveal">Skill 生态对比</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>平台</th><th>Skill 名称</th><th>创建方式</th><th>典型示例</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Trae Work</strong></td><td>Skills</td><td>自然语言创建可复用技能包</td><td>报告撰写、数据分析、PPT 生成、代码审查</td></tr>
+          <tr><td><strong>WorkBuddy</strong></td><td>OpenClaw 技能</td><td>兼容 OpenClaw 开源技能市场</td><td>职场场景模板(20+)、数字专家角色</td></tr>
+          <tr><td><strong>Coze 扣子</strong></td><td>技能/插件</td><td>积木式搭建 + 10000+ 插件</td><td>行业技能包(365+)、自定义工作流</td></tr>
+          <tr><td><strong>通义千问</strong></td><td>开源生态插件</td><td>千帆平台 + Qwen Chat 桌面端</td><td>MCP 工具、图像生成、网页开发</td></tr>
+          <tr><td><strong>ChatGPT</strong></td><td>GPTs/Custom Agents</td><td>ChatGPT 内创建或 API</td><td>自定义 Agent、专用工具链</td></tr>
+          <tr><td><strong>Claude</strong></td><td>Claude Code/Cowork</td><td>MCP 连接器 + Artifacts</td><td>企业协作 Agent、代码审查</td></tr>
+          <tr><td><strong>OpenAI</strong></td><td>Codex</td><td>ChatGPT 内 / 桌面端 / CLI</td><td>端到端代码生成、多语言支持</td></tr>
+          <tr><td><strong>Nous Research</strong></td><td>Hermes</td><td>开源框架自由定制</td><td>多模型集成、长期记忆、任务链</td></tr>
+          <tr><td><strong>Cursor</strong></td><td>Rules/Patterns</td><td>.cursorrules 配置文件</td><td>项目级编码规范、AI 行为约束</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">MCP 生态对比</h3>
+  <div class="reveal">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>维度</th><th>国际</th><th>国内</th></tr></thead>
+        <tbody>
+          <tr><td><strong>发起方</strong></td><td>Anthropic</td><td>--</td></tr>
+          <tr><td><strong>SDK 月下载</strong></td><td><strong>9700 万次</strong></td><td>少量</td></tr>
+          <tr><td><strong>支持平台</strong></td><td>ChatGPT、Claude、Gemini、Copilot、Cursor、Windsurf</td><td>Trae Work、WorkBuddy、通义千问桌面版</td></tr>
+          <tr><td><strong>第三方 Server</strong></td><td>丰富（数据库、API、浏览器、文件系统等）</td><td>起步阶段</td></tr>
+          <tr><td><strong>国内特色适配</strong></td><td>有限</td><td>飞书、钉钉、企微等国内企业工具</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="reveal quote-block">
+    <strong>使用建议：</strong> 如果你主要使用 Trae Work 或 WorkBuddy，MCP 可以作为"进阶选项"在需要打通外部系统时按需配置。如果你使用 ChatGPT 或 Claude，MCP 已经是标配能力，建议积极利用。日常开发中，各平台内置的 Skill 已经能覆盖大部分需求。
+  </div>
+
+  <!-- Trend cards -->
+  <h3 style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-lg)" class="reveal">2026 年核心趋势总结</h3>
+  <div class="trend-grid">
+    <div class="trend-card reveal"><div class="num">01</div><p><strong>模型迭代加速</strong>：2026 年 H1，OpenAI GPT-5.4 到 5.6、Anthropic Opus 4.6 到 Fable 5、Google Gemini 3 到 3.5、DeepSeek V3 到 V4、Qwen 3.5 到 3.7，更新周期缩短至 1-2 个月。</p></div>
+    <div class="trend-card reveal"><div class="num">02</div><p><strong>价格战白热化</strong>：OpenAI GPT-5.6 Luna 以 1/10 价格逼近 Fable 5；DeepSeek V4 永久降价至原价 1/4；Cursor/Copilot 从固定改为按量计费引发用户不满；国际工具 $20/月成为"标配门槛"。</p></div>
+    <div class="trend-card reveal"><div class="num">03</div><p><strong>竞争重心转移</strong>：从"谁最聪明"转向"谁的性价比最高"和"谁能真正干活（Agent 能力）"。</p></div>
+    <div class="trend-card reveal"><div class="num">04</div><p><strong>Agent 成为标配</strong>：所有主流 AI 编程工具和 AI 应用均已具备 Agent 能力，从"你写 AI 补"进化到"你说 AI 干"。</p></div>
+    <div class="trend-card reveal"><div class="num">05</div><p><strong>MCP 成为事实标准</strong>：国际全平台采纳，国内跟随但差距明显。</p></div>
+    <div class="trend-card reveal"><div class="num">06</div><p><strong>国内差异化路径清晰</strong>：DeepSeek 走效率工程、GLM 走 Agent 工程+国产化、Qwen 走平台生态、豆包走中文原生+数学推理。</p></div>
+    <div class="trend-card reveal"><div class="num">07</div><p><strong>开源 vs 闭源</strong>：国内模型全部 Apache 2.0（许可证更友好），Meta 从纯开源转向"开源+闭源"双线。</p></div>
+    <div class="trend-card reveal"><div class="num">08</div><p><strong>计费模式变革</strong>：2026 年趋势是从固定月费转向按量计费（GitHub Copilot、Cursor、ChatGPT Enterprise），重度用户成本可能大幅上升。</p></div>
+  </div>
+</section>
+
+<footer>
+  <p>AI Landscape 2026 -- 核心概念与工具全景横评 | v1.0 | 数据截至 2026.7.20 | Created By 里维斯Leevis</p>
+</footer>
+</div>
+
+<button id="backToTop" aria-label="返回顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script>
+// Theme Toggle
+const themeToggle = document.getElementById('themeToggle');
+const moonIcon = document.getElementById('moonIcon');
+const sunIcon = document.getElementById('sunIcon');
+const html = document.documentElement;
+
+if (themeToggle && moonIcon && sunIcon) {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  html.setAttribute('data-theme', savedTheme);
+  updateThemeIcons(savedTheme);
+  themeToggle.addEventListener('click', function(){
+    var current = html.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateThemeIcons(next);
+  });
+}
+function updateThemeIcons(theme) {
+  if (theme === 'dark') { moonIcon.style.display = 'block'; sunIcon.style.display = 'none'; }
+  else { moonIcon.style.display = 'none'; sunIcon.style.display = 'block'; }
+}
+
+// Progress Bar
+const progressBar = document.getElementById('progressBar');
+if (progressBar) {
+  window.addEventListener('scroll', function(){
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = progress + '%';
+  });
+}
+
+// Scroll Reveal (IntersectionObserver)
+const revealObserver = new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Animate score bars
+      entry.target.querySelectorAll('.score-bar-fill, .score-mini-bar-fill, .mini-bar-fill').forEach(function(bar){
+        var score = bar.getAttribute('data-score');
+        if (score) {
+          bar.style.setProperty('--score-width', score + '%');
+          bar.classList.add('animated');
+        }
+      });
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(function(el){ revealObserver.observe(el); });
+
+// Back to Top
+const backToTop = document.getElementById('backToTop');
+if (backToTop) {
+  window.addEventListener('scroll', function(){
+    if (window.scrollY > 500) { backToTop.classList.add('visible'); }
+    else { backToTop.classList.remove('visible'); }
+  });
+  backToTop.addEventListener('click', function(){ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+}
+
+// Smooth Scroll for Nav Links
+document.querySelectorAll('.nav-links a[href^="#"]').forEach(function(anchor){
+  anchor.addEventListener('click', function(e){
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
+    }
+  });
+});
+
+// Table Row Hover Effect (left accent line)
+document.querySelectorAll('tbody tr').forEach(function(row){
+  row.addEventListener('mouseenter', function(){
+    row.style.borderLeft = '3px solid var(--accent-gold)';
+  });
+  row.addEventListener('mouseleave', function(){
+    row.style.borderLeft = '';
+  });
+});
+</script>
+</body>
+</html>
