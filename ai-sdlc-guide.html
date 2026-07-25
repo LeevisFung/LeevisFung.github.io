@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 深度嵌入软件开发全流程指南</title>
+<style>
+/* ========== RESET & BASE ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+/* ========== THEME VARIABLES ========== */
+:root{
+  --font-display:'Georgia','Noto Serif CJK SC','Source Han Serif SC','SimSun','STSong',serif;
+  --font-body:'Segoe UI','Microsoft YaHei','PingFang SC','WenQuanYi Micro Hei',sans-serif;
+  --space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px;--space-4xl:80px;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.2);--shadow-xl:0 16px 48px rgba(0,0,0,.25);
+  --transition-fast:0.2s ease;--transition-normal:0.3s ease;--transition-slow:0.5s ease;
+  --accent-gold:#e8a838;--accent-cyan:#38bdf8;
+}
+[data-theme="dark"]{
+  --bg-primary:#080c14;--bg-card:#111827;--bg-secondary:#1a2235;--bg-hover:#232d42;
+  --text-primary:#f0f2f5;--text-secondary:#9ca8bc;--text-muted:#6b7a94;
+  --border-color:#2a3448;--border-light:#334155;
+  --card-shadow:0 4px 24px rgba(0,0,0,.3);--card-shadow-hover:0 12px 40px rgba(0,0,0,.4);
+  --progress-from:#e8a838;--progress-to:#38bdf8;
+  --table-stripe:rgba(255,255,255,.02);--table-hover:rgba(232,168,56,.06);
+  --noise-opacity:.03;
+  --gradient-hero:linear-gradient(135deg,#e8a83808 0%,#38bdf808 50%,transparent 100%);
+  --gradient-card-top:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan));
+  --badge-bg:rgba(232,168,56,.12);--badge-border:rgba(232,168,56,.3);--badge-text:#e8a838;
+  --quote-bg:rgba(56,189,248,.06);--quote-border:#38bdf8;
+}
+[data-theme="light"]{
+  --bg-primary:#faf8f5;--bg-card:#ffffff;--bg-secondary:#f1ece6;--bg-hover:#e8e2da;
+  --text-primary:#1a1e2e;--text-secondary:#4a5568;--text-muted:#8896a8;
+  --border-color:#dcd5cc;--border-light:#e5dfd7;
+  --card-shadow:0 2px 12px rgba(0,0,0,.06);--card-shadow-hover:0 8px 30px rgba(0,0,0,.1);
+  --progress-from:#c98820;--progress-to:#0284c7;
+  --table-stripe:rgba(0,0,0,.02);--table-hover:rgba(232,168,56,.08);
+  --noise-opacity:.04;
+  --gradient-hero:linear-gradient(135deg,#e8a83810 0%,#38bdf810 50%,transparent 100%);
+  --gradient-card-top:linear-gradient(90deg,#c98820,#0284c7);
+  --badge-bg:rgba(201,136,32,.1);--badge-border:rgba(201,136,32,.25);--badge-text:#c98820;
+  --quote-bg:rgba(2,132,199,.05);--quote-border:#0284c7;
+}
+
+/* ========== BASE STYLES ========== */
+body{
+  font-family:var(--font-body);background:var(--bg-primary);color:var(--text-primary);
+  line-height:1.7;overflow-x:hidden;position:relative;min-height:100vh;
+  transition:background var(--transition-normal),color var(--transition-normal);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(var(--border-color) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border-color) 1px,transparent 1px);
+  background-size:60px 60px;opacity:.15;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
+  opacity:var(--noise-opacity);
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:256px 256px;
+}
+#app{position:relative;z-index:2}
+
+/* ========== PROGRESS BAR ========== */
+#progressBar{
+  position:fixed;top:0;left:0;height:3px;z-index:1001;
+  background:linear-gradient(90deg,var(--progress-from),var(--progress-to));
+  width:0%;transition:width .15s ease;
+}
+
+/* ========== NAV ========== */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:var(--bg-primary);border-bottom:1px solid var(--border-color);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:background var(--transition-normal);
+}
+.nav-inner{
+  max-width:1280px;margin:0 auto;padding:0 var(--space-xl);
+  display:flex;align-items:center;justify-content:space-between;height:64px;
+}
+.nav-brand{
+  font-family:var(--font-display);font-size:1.4rem;font-weight:700;
+  background:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;letter-spacing:.5px;
+}
+.nav-links{display:flex;gap:var(--space-sm);align-items:center;flex-wrap:wrap}
+.nav-links a{
+  color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;
+  padding:6px 12px;border-radius:var(--radius-sm);transition:all var(--transition-fast);
+  letter-spacing:.3px;
+}
+.nav-links a:hover{color:var(--text-primary);background:var(--bg-hover)}
+.nav-back{
+  display:inline-flex;align-items:center;gap:4px;
+  color:var(--text-secondary);text-decoration:none;font-size:.85rem;font-weight:500;
+  padding:6px 12px;border-radius:var(--radius-sm);transition:all var(--transition-fast);
+  white-space:nowrap;letter-spacing:.3px;
+}
+.nav-back:hover{color:var(--accent-gold);background:var(--bg-hover)}
+#themeToggle{
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--border-color);
+  background:var(--bg-card);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;transition:all var(--transition-fast);flex-shrink:0;
+  margin-left:var(--space-sm);color:var(--text-primary);
+}
+#themeToggle:hover{background:var(--bg-hover);border-color:var(--accent-gold)}
+#themeToggle svg{width:18px;height:18px}
+
+/* ========== HERO ========== */
+.hero{
+  padding:140px var(--space-xl) 80px;text-align:center;position:relative;
+  background:var(--gradient-hero);overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at 30% 50%,rgba(232,168,56,.04) 0%,transparent 50%),
+             radial-gradient(circle at 70% 50%,rgba(56,189,248,.04) 0%,transparent 50%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--badge-bg);border:1px solid var(--badge-border);
+  color:var(--badge-text);font-size:.8rem;font-weight:600;
+  padding:6px 16px;border-radius:20px;margin-bottom:var(--space-lg);
+  letter-spacing:.5px;
+}
+.hero h1{
+  font-family:var(--font-display);font-size:clamp(2.4rem,5vw,4rem);
+  font-weight:700;line-height:1.15;margin-bottom:var(--space-lg);
+  background:linear-gradient(135deg,var(--text-primary) 30%,var(--accent-gold) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero p{
+  font-size:clamp(1rem,2vw,1.2rem);color:var(--text-secondary);
+  max-width:720px;margin:0 auto;
+}
+
+/* ========== SECTION ========== */
+.section{padding:var(--space-4xl) var(--space-xl);max-width:1280px;margin:0 auto}
+.section-header{
+  text-align:center;margin-bottom:var(--space-3xl);
+  font-family:var(--font-display);
+}
+.section-header h2{
+  font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;
+  margin-bottom:var(--space-md);position:relative;display:inline-block;
+}
+.section-header h2::after{
+  content:'';display:block;width:60px;height:3px;
+  background:linear-gradient(90deg,var(--accent-gold),var(--accent-cyan));
+  margin:var(--space-md) auto 0;border-radius:2px;
+}
+.section-header p{color:var(--text-secondary);font-size:1rem;font-family:var(--font-body);max-width:600px;margin:0 auto}
+
+/* ========== TABLES ========== */
+.table-wrap{
+  overflow-x:auto;margin-bottom:var(--space-xl);
+  border:1px solid var(--border-color);border-radius:var(--radius-lg);background:var(--bg-card);
+}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead{background:var(--bg-secondary)}
+th{
+  padding:var(--space-md) var(--space-lg);text-align:center;font-weight:600;
+  color:var(--text-secondary);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;
+  white-space:nowrap;border-bottom:1px solid var(--border-color);
+}
+td{
+  padding:var(--space-md) var(--space-lg);border-bottom:1px solid var(--border-color);
+  color:var(--text-secondary);vertical-align:middle;text-align:center;
+}
+tbody tr{transition:all var(--transition-fast);border-left:3px solid transparent}
+tbody tr:nth-child(even){background:var(--table-stripe)}
+tbody tr:hover{background:var(--table-hover);border-left-color:var(--accent-gold)}
+td strong{color:var(--text-primary);font-weight:600}
+
+/* ========== TOOL PILL (推荐工具 row) ========== */
+.tool-pill{
+  margin-bottom:var(--space-lg) !important;
+}
+.tool-pill code{
+  font-size:1.05rem !important;font-weight:700 !important;padding:6px 14px !important;
+  display:inline-block;margin:3px 2px;
+}
+
+/* ========== QUOTE ========== */
+.quote-block{
+  background:var(--quote-bg);border-left:3px solid var(--quote-border);
+  padding:var(--space-lg) var(--space-xl);border-radius:0 var(--radius-md) var(--radius-md) 0;
+  margin:var(--space-lg) 0;font-size:.92rem;color:var(--text-secondary);line-height:1.7;
+}
+
+/* ========== FOOTER ========== */
+footer{
+  text-align:center;padding:var(--space-2xl) var(--space-xl);
+  border-top:1px solid var(--border-color);color:var(--text-muted);
+  font-size:.85rem;
+}
+
+/* ========== BACK TO TOP ========== */
+#backToTop{
+  position:fixed;bottom:32px;right:32px;z-index:999;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--bg-card);border:1px solid var(--border-color);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:translateY(20px);pointer-events:none;
+  transition:all var(--transition-normal);color:var(--text-secondary);
+  box-shadow:var(--shadow-md);
+}
+#backToTop.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+#backToTop:hover{background:var(--bg-hover);border-color:var(--accent-gold);color:var(--accent-gold)}
+#backToTop svg{width:20px;height:20px}
+
+/* ========== REVEAL ========== */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:640px){
+  .nav-links a{font-size:.78rem;padding:4px 8px}
+  .nav-inner{padding:0 var(--space-md)}
+  .section{padding:var(--space-2xl) var(--space-md)}
+  .hero{padding:120px var(--space-md) 60px}
+  .table-wrap{font-size:.8rem}
+  th,td{padding:var(--space-sm) var(--space-md)}
+}
+</style>
+</head>
+<body>
+<div id="progressBar"></div>
+<nav>
+  <div class="nav-inner">
+    <a href="https://leevisfung.github.io/" class="nav-back" aria-label="回到主页">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span>主页</span>
+    </a>
+    <div class="nav-brand">AI-SDLC Workflow</div>
+    <div class="nav-links">
+      <a href="#strategy">全局策略</a>
+      <a href="#phase1">需求</a>
+      <a href="#phase2">文档</a>
+      <a href="#phase3">原型</a>
+      <a href="#phase4">开发</a>
+      <a href="#phase5">测试</a>
+      <a href="#phase6">版本</a>
+      <a href="#phase7">审查</a>
+      <a href="#phase8">手册</a>
+      <a href="#phase9">部署</a>
+      <a href="#phase10">反馈</a>
+      <a href="#phase11">优化</a>
+      <a href="#matrix">矩阵</a>
+      <button id="themeToggle" aria-label="切换主题">
+        <svg id="moonIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="sunIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div id="app">
+<div class="hero">
+  <div class="hero-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    AI 嵌入软件开发全流程
+  </div>
+  <h1>AI 深度嵌入软件开发全流程指南</h1>
+  <p>覆盖需求调研、开发文档、原型设计、系统开发、测试优化等 11 个环节的 AI 软件开发全流程指南</p>
+</div>
+
+<section class="section">
+<h1 style="font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);font-weight:700;margin-bottom:var(--space-lg);line-height:1.2;">软件开发全流程 AI 深度嵌入方案</h1>
+<div class="quote-block"><strong>宇宙级免责声明：本指南纯属编者个人的经验总结与流程偏好，仅供内部经验交流。
+</br>AI技术日新月异，今日的好方法明日或已成旧识，因此建议读者以批判眼光吸纳，取精华去糟粕，灵活变通。
+</br>鼓励大家多尝试其他工具与技术，自己摸索出的路往往更适合自己——若有独到见解，非常期待与您对谈。</strong></div>
+<h2 id="strategy" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">全局工具策略</h2>
+<div class="quote-block">为避免工具碎片化，推荐全流程核心工具栈：<br><strong>DeepSeek</strong>（通用推理+编程） + <strong>Trae</strong>（主力 IDE） + <strong>WorkBuddy</strong>（文档/Skill/MCP 集成） + <strong>MasterGo</strong>（原型） + <strong>Dify/Coze</strong>（Agent 编排）。<br>特定环节可按需补充专项工具。</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase1" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 1：业务需求调研与文档整理</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">本环节将「需求调研」与「文档整理」合为一体——通过持续的 AI 对话进行需求澄清，最终输出一份经过多方评审的、格式标准的结构化需求文档（PRD）。</p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">核心原则</h3>
+<div class="quote-block"><strong>业务工程师/产品经理/项目负责人必须对整体业务逻辑有完整的理解。</strong> 需求阶段是整个项目的根基，AI 可以帮助梳理、追问、格式化，但业务判断的最终责任在人。花足够的时间在这个环节反复打磨，后续开发才能少走弯路。</div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">推荐工具</h3>
+<p class="tool-pill"><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">通义千问·听悟</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Kimi</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>阶段 A：需求收集与澄清</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">使用<strong>通义千问·听悟</strong>或飞书妙记将需求访谈/会议录音转为文字纪要</li>
+<li style="margin-bottom:6px;">将转写文本 + 已有调研资料（问卷、竞品分析）输入 <strong>WorkBuddy/Kimi</strong></li>
+<li style="margin-bottom:6px;"><strong>通过多轮 AI 对话进行需求澄清</strong>——这是关键步骤，不是一次性的 prompt：</li>
+</ol>
+<div class="quote-block">第一轮：「审查以下需求调研材料，识别：①模糊表述 ②缺失的错误处理需求 ③未覆盖的边缘情况 ④隐含的用户行为假设 ⑤缺失的非功能需求（性能、安全、可用性）⑥需求之间的矛盾」<br>第二轮：「针对上一轮识别的每个问题，展开追问，帮我补全具体的业务规则」<br>第三轮：「从实际用户使用视角，模拟 3 个最常见的操作场景，验证需求覆盖度」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">项目负责人逐项确认 AI 标注的模糊项和矛盾项，与业务方沟通确认后进入下一轮对话</li>
+<li style="margin-bottom:6px;">直到需求清单中没有高优先级未决项为止</li>
+</ol>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>阶段 B：结构化文档输出</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">将最终确认的需求澄清清单输入 AI，生成结构化 PRD（格式自定）：</li>
+</ol>
+<div class="quote-block">「基于以上需求调研结果，生成一份标准 PRD，包含：①项目背景与目标 ②用户角色定义 ③功能需求列表（含优先级 MoSCoW）④用户故事与验收标准（Given/When/Then 格式）⑤数据字典初稿 ⑥非功能需求（性能/安全/兼容性）⑦里程碑计划建议」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">AI 自动提取并标注实体关系（为后续数据库设计做准备）</li>
+<li style="margin-bottom:6px;"><strong>输出格式选择：</strong></li>
+</ol>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>用途</th><th>推荐格式</th><th>原因</th></tr>
+</thead>
+<tbody>
+<tr><td>给 AI 阅读（后续开发文档/代码生成）</td><td><strong>Markdown（.md）</strong></td><td>AI 解析速度快，消耗 Token 少</td></tr>
+<tr><td>给用户/业务方评审交付</td><td><strong>HTML</strong></td><td>视觉体验优秀，支持导航、表格、折叠等交互</td></tr>
+</tbody>
+</table></div></div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>多方评审：</strong> 将输出的文档交由相关用户（业务方、技术负责人、测试负责人）评审确认，修改定稿后方可进入开发文档阶段</li>
+</ol>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase2" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 2：开发文档输出</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">将环节1输出的结构化 PRD 作为输入，让 AI 撰写完整的开发文档。<strong>需求文档和开发文档是系统开发的两大基石</strong>——AI 编程时代，编码效率已大幅提升，开发不再是项目周期的瓶颈，真正的瓶颈在后续的测试与优化。因此建议花足够的时间打磨好这两份文档，对齐用户需求、做好测试样例，后续能大幅减少返工和测试优化的时间。</p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">核心要求</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">开发文档必须基于<strong>自身团队的实际技术栈</strong>撰写，涵盖以下模块：</p>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>模块</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>前端技术栈</strong></td><td>框架（React/Vue/小程序等）、UI 组件库、状态管理、构建工具</td></tr>
+<tr><td><strong>后端技术栈</strong></td><td>语言/框架（Java Spring/Node.js/Python 等）、ORM、缓存策略</td></tr>
+<tr><td><strong>接口设计</strong></td><td>RESTful API / GraphQL 定义、请求/响应格式、错误码规范</td></tr>
+<tr><td><strong>数据库设计</strong></td><td>ER 图、DDL 建表语句、索引策略、数据迁移方案</td></tr>
+<tr><td><strong>概要设计</strong></td><td>系统架构图（Mermaid）、模块划分、关键业务流程时序图</td></tr>
+<tr><td><strong>测试用例</strong></td><td>基于 PRD 验收标准扩展的测试矩阵（单元/集成/E2E）</td></tr>
+<tr><td><strong>安全与权限管理</strong></td><td>认证方案（JWT/OAuth2）、RBAC 权限模型、数据加密、审计日志</td></tr>
+</tbody>
+</table></div></div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">推荐工具</h3>
+<p class="tool-pill"><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Trae</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">通义千问</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">将环节1输出的 <strong>PRD（Markdown 格式）</strong> 作为输入给 AI</li>
+<li style="margin-bottom:6px;">首先描述团队技术栈，让 AI 基于实际环境生成：</li>
+</ol>
+<div class="quote-block">「我们的技术栈：前端 Vue3 + Element Plus + Vite，后端 Java Spring Boot 2.7 + MyBatis Plus + MySQL，部署在内网服务器。请根据以下 PRD 生成开发文档，优先输出 Markdown 格式。」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">分模块生成（建议逐个模块对话，而非一次性生成全部，是否一次性生成取决于 LLM 的能力和上下文长度）：</li>
+</ol>
+<div class="quote-block">第一轮：架构设计与技术选型<br>第二轮：数据库设计与 DDL<br>第三轮：API 接口定义（含 JSON Schema）<br>第四轮：安全与权限设计<br>第五轮：测试用例矩阵<br>第 N 轮：......</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">技术负责人逐模块审核，确保技术方案符合团队实际能力</li>
+<li style="margin-bottom:6px;"><strong>输出格式：优先 Markdown</strong>，便于后续 AI 编程工具（Trae/ZCode/Claude）直接作为上下文引用</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">关于 MVP（最小可行产品）</h3>
+<div class="quote-block">如果项目时间紧迫，可以先针对核心功能做出一版 <strong>MVP（最小可行产品）</strong>——从 PRD 中选出优先级最高的 20% 功能，快速完成需求文档→开发文档→原型→开发→测试→交付的完整闭环，便于紧急项目快速验证。但 MVP 不是终点，后续必须持续进行更新迭代，逐步补全剩余功能。</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase3" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 3：原型设计</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">将 PRD 中的功能描述转化为可视化产物。原型设计有两条路线——可根据团队能力和项目阶段灵活选择。</p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">方向一：原型文件（设计工具路线）</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">使用集成了 AI 功能的设计工具，通过自然语言描述或 PRD 文档快速生成可编辑的 UI 设计稿。输出为设计源文件（可交互原型），后续由开发者手动还原为代码。</p>
+<p class="tool-pill"><strong>推荐工具：</strong></p>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>工具</th><th>定位</th><th>AI 能力</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>MasterGo AI</strong></td><td>国产 Figma 替代，企业级 UI 设计平台</td><td>AI 快搭（文/图生原型）+ AI 设计助手（Agent/Chat 双模式）+ D2C 代码生成 + MCP Server 已开源</td></tr>
+<tr><td><strong>墨刀 AI</strong></td><td>产品经理友好，低保真到高保真交互原型</td><td>AI 生成页面 + 自动交互连线</td></tr>
+<tr><td><strong>Pixso</strong></td><td>国产全链路协作设计工具</td><td>AI 生图 + 组件库</td></tr>
+<tr><td><strong>WorkBuddy 设计</strong></td><td>通用 AI 助手的 Skill 能力</td><td>通过内置 Skill 生成 UI 设计稿</td></tr>
+<tr><td><strong>Trae Design</strong></td><td>Trae IDE 内置设计功能</td><td>自然语言描述生成界面</td></tr>
+</tbody>
+</table></div></div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">方向二：前端代码直出（编程 IDE + 设计 Skill 路线）</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">使用 AI 编程 IDE 配合专业设计 Skill，根据开发文档直接输出可运行的前端界面代码。相当于跳过设计稿阶段，直接交付可用的前端模块。</p>
+<p class="tool-pill"><strong>推荐工具组合：</strong></p>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>组件</th><th>工具</th><th>作用</th></tr>
+</thead>
+<tbody>
+<tr><td>编程 IDE</td><td>Trae / Claude Code / ZCode</td><td>作为运行环境和 Agent 调度器</td></tr>
+<tr><td>设计 Skill</td><td><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">ui-ux-pro-max</code> / <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">frontend-design</code> 等</td><td>提供专业的设计知识库（50+ 风格、161 配色、57 字体配对、UX 规范）</td></tr>
+<tr><td>大模型</td><td>DeepSeek / GLM</td><td>代码生成和设计推理</td></tr>
+</tbody>
+</table></div></div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">两个方向的对比</h3>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>对比维度</th><th>方向一：原型文件</th><th>方向二：前端代码直出</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>输出产物</strong></td><td>可交互设计稿（矢量文件）</td><td>可直接运行的前端代码（HTML/CSS/React/Vue）</td></tr>
+<tr><td><strong>优点</strong></td><td>① 修改成本低，拖拽调整直观 <br>② 非技术人员也能参与评审 <br>③ 支持复杂交互原型演示 <br>④ 企业设计系统可约束 AI 产出</td><td>① 跳过设计→开发的翻译损耗 <br>② 输出即可用，开发效率最高 <br>③ 代码可直接进入版本管理</td></tr>
+<tr><td><strong>缺点</strong></td><td>① 需要人工将设计还原为代码 <br>② 设计稿与最终实现可能有偏差 <br>③ 多一道交付环节</td><td>① 有技术门槛（需选定技术栈、配置项目架构） <br>② 修改成本高——调整 UI 需重新生成代码 <br>③ 设计和代码紧耦合，难以单独评审 UI</td></tr>
+<tr><td><strong>技术门槛</strong></td><td>★☆☆☆☆ 低（产品经理可独立完成）</td><td>★★★★☆ 高（需前端开发基础）</td></tr>
+<tr><td><strong>何时使用</strong></td><td>① 需求尚未完全确定，需要频繁调整 UI <br>② 需要跨部门评审（业务方、设计、开发） <br>③ 企业有成熟的设计系统需要 AI 遵循 <br>④ 复杂交互流程需要可视化演示</td><td>① 需求已明确且稳定 <br>② 快速构建 MVP 或内部工具 <br>③ 全栈开发者独立项目 <br>④ 前端风格已有明确参考且变化不大</td></tr>
+<tr><td><strong>使用人群</strong></td><td>产品经理、UI/UX 设计师、业务方</td><td>全栈开发者、前端工程师、技术型 PM</td></tr>
+</tbody>
+</table></div></div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">典型操作流程</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>方向一流程：</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">从环节1的 PRD 中提取页面清单和交互描述</li>
+<li style="margin-bottom:6px;">使用 MasterGo AI 快搭：输入自然语言描述生成可编辑矢量设计稿</li>
+<li style="margin-bottom:6px;">MasterGo AI 支持「AI + 设计系统」融合，可引入企业 Team Library 确保规范一致</li>
+<li style="margin-bottom:6px;">如需复杂交互原型，使用墨刀添加页面跳转和微交互</li>
+<li style="margin-bottom:6px;">评审通过后，设计稿交付开发（可通过 MasterGo MCP 让 Trae 直接读取 DSL 辅助转代码）</li>
+</ol>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>方向二流程：</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">确保环节2的开发文档已明确定义前端技术栈和 UI 风格</li>
+<li style="margin-bottom:6px;">在 Trae/Claude Code 中加载 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">frontend-design</code> 或 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">ui-ux-pro-max</code> Skill</li>
+<li style="margin-bottom:6px;">将开发文档中的页面描述喂给 AI，指定技术栈和设计风格：</li>
+</ol>
+<div class="quote-block">「基于以下页面需求，使用 React + Tailwind CSS 生成一个压缩机巡检系统移动端首页，包含顶部搜索栏、待办巡检任务卡片列表、底部导航栏。风格参考工业 4.0 暗色主题。」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">AI 输出可直接运行的前端代码，将代码放入项目目录</li>
+<li style="margin-bottom:6px;">在浏览器中预览效果，通过对话进行 UI 微调</li>
+</ol>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase4" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 4：系统开发</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">编码实现阶段——AI 价值最大化的环节。但在动手写代码之前，首先理解「为什么要用 AI 编程工具」，以及不同工具带来的本质性变化。</p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">为什么要用 AI 编程工具？</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">很多人认为 AI 编程 = 传统 IDE + 接个 LLM 做代码补全。但 2026 年的 AI 编程工具已经远远超越了这个范畴，其核心差异体现在四个层面：</p>
+<h4 class="reveal" style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-top:var(--space-xl);margin-bottom:var(--space-sm);color:var(--text-primary);">传统开发 vs AI 原生开发对比</h4>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>维度</th><th>传统 IDE（VS Code / JetBrains）</th><th>传统 IDE + LLM 插件</th><th><strong>AI 原生编程工具</strong></th></tr>
+</thead>
+<tbody>
+<tr><td><strong>代码生成</strong></td><td>无</td><td>单次对话补全，需手动复制粘贴</td><td>多文件协同生成，在项目上下文中自动定位和修改</td></tr>
+<tr><td><strong>任务执行</strong></td><td>全手动</td><td>手动描述每步操作</td><td>Agent 自主拆解任务 → 编码 → 调试 → 验证，全流程自动</td></tr>
+<tr><td><strong>上下文</strong></td><td>仅当前文件</td><td>当前文件 + 粘贴的代码</td><td>整个项目仓库 + 开发文档.md + MCP 连接的外部系统</td></tr>
+<tr><td><strong>验证闭环</strong></td><td>人工运行测试</td><td>人工运行测试</td><td>写完后自动生成测试、自动运行、自动修复</td></tr>
+<tr><td><strong>工具生态</strong></td><td>插件市场（手动配置）</td><td>插件市场 + 手动 API 对接</td><td>MCP 协议即插即用，AI 自主调用 GitHub/Jira/Figma/数据库/Skill生态</td></tr>
+<tr><td><strong>学习成本</strong></td><td>中（学 IDE 功能）</td><td>高（学 IDE + Prompt 工程 + API 配置）</td><td>低（自然语言驱动，工具自己理解意图）</td></tr>
+</tbody>
+</table></div></div>
+<h4 class="reveal" style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-top:var(--space-xl);margin-bottom:var(--space-sm);color:var(--text-primary);">四个推荐工具的核心差异化能力</h4>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>工具</th><th>核心定位</th><th>独特能力</th><th>最适合场景</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Trae</strong></td><td>AI 原生 IDE（字节跳动）</td><td>① <strong>SOLO 模式</strong>：自然语言→可运行全栈项目，AI 自闭环 <br>② <strong>CUE 智能预测</strong>：预判下一步修改意图，Tab 即应用 <br>③ <strong>Builder 模式</strong>：对话式搭建项目架构 <br>④ <strong>多模型自由切换</strong>（Claude/GPT/DeepSeek）<br>⑤ 中文适配 9.8 分</td><td>全栈项目从零搭建；中文场景；前后端分离开发</td></tr>
+<tr><td><strong>ZCode</strong></td><td>自研 Agent 内核 IDE（智谱）</td><td>① <strong>自研 Agent 内核</strong>：不依赖第三方 Agent <br>② <strong>1M 超长上下文</strong>：整个大型项目作为上下文 <br>③ <strong>深度 GLM-5.2 适配</strong>：原生模型协同最优 <br>④ <strong>修改后自校验</strong>：每次修改/新增/优化代码后，Agent 自动写测试样例并验证</td><td>大型工程；长程推理任务；需要 Agent 高度自主</td></tr>
+<tr><td><strong>Claude Code</strong></td><td>终端式 AI Agent（Anthropic）</td><td>① <strong>推理天花板</strong>：代码质量 9.8 分，业界最高 <br>② <strong>终端原生</strong>：直接在命令行中完成完整开发流程 <br>③ <strong>跨文件编辑能力最强</strong>：Agent 9.8 分 <br>④ <strong>Skills 生态</strong>：SKILL.md 自定义工作流</td><td>复杂算法/架构；需要最高推理质量；英文项目</td></tr>
+<tr><td><strong>DeepSeek（模型）</strong></td><td>开源模型（深度求索）</td><td>① <strong>代码能力开源最强</strong> <br>② <strong>100万 Token 上下文</strong> <br>③ <strong>API 价格极低</strong>（永久降价约 75%）<br>④ 数学推理顶尖</td><td>作为上述 IDE 的底层模型；高性价比 API 调用；对数据安全有自托管需求</td></tr>
+</tbody>
+</table></div></div>
+<div class="quote-block"><strong>核心差异一句话：</strong> 传统 IDE + LLM 是「你问一句，AI 答一段，你复制粘贴到编辑器」；AI 原生工具是「你告诉它目标，它自己在项目里改代码、跑测试、修 Bug、循环验证，你只做审核决策」。</div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">开发前置条件</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">无论使用哪种 AI 编程工具，开发环节必须有以下输入：</p>
+<ul style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>开发文档.md</strong>（环节2输出）——定义技术栈、架构、API、数据库</li>
+<li style="margin-bottom:6px;"><strong>原型来源</strong>（环节3输出）——方向一（设计稿文件）或方向二（前端代码）</li>
+<li style="margin-bottom:6px;"><strong>项目编码规范</strong>（.cursorrules / CLAUDE.md）——定义团队的代码风格和命名约定</li>
+</ul>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">开发策略：前后端分离</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">项目采用前后端分离架构，根据环节3原型来源的不同，采用不同的开发策略：</p>
+<h4 class="reveal" style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-top:var(--space-xl);margin-bottom:var(--space-sm);color:var(--text-primary);">策略 A：原型来自方向一（设计稿文件）</h4>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">后端先行的「设计稿→代码」模式：</p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>后端先行：</strong> 将 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 中的 API 定义和数据库 DDL 喂给 AI 编程工具，先完成所有后端接口和数据库搭建</li>
+<li style="margin-bottom:6px;"><strong>设计稿转前端代码：</strong> 通过 MasterGo MCP，让 Trae 直接读取设计文件 DSL，生成前端页面框架，或者将原型文件上传/截图给AI IDE进行解析</li>
+<li style="margin-bottom:6px;"><strong>前后端联调：</strong> 前端代码对接后端 API，AI 辅助完成接口联调和数据流对接</li>
+<li style="margin-bottom:6px;"><strong>逐模块完善：</strong> 按 PRD 模块优先级，逐个完成→联调→验证</li>
+</ol>
+<h4 class="reveal" style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-top:var(--space-xl);margin-bottom:var(--space-sm);color:var(--text-primary);">策略 B：原型来自方向二（前端代码直出）</h4>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">前后端并行的「快速搭建」模式：</p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>双线并行：</strong> 前端已有方向二输出的代码，后端根据 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 同步搭建</li>
+<li style="margin-bottom:6px;"><strong>接口对齐：</strong> 前后端以 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 中的 API 定义为「合约」，各自开发后自动联调验证</li>
+<li style="margin-bottom:6px;"><strong>快速集成：</strong> AI 辅助将前端代码与后端 API 对接，修正接口不匹配处</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">在 AI 编程工具中打开项目，将 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 作为核心上下文导入</li>
+<li style="margin-bottom:6px;"><strong>基础架构搭建：</strong> 用自然语言描述项目结构，AI 自动生成目录、配置、依赖和基础代码框架</li>
+<li style="margin-bottom:6px;"><strong>后端开发：</strong> 将 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 中的 DDL 和 API 定义作为上下文，AI 生成数据模型、接口实现、业务逻辑</li>
+<li style="margin-bottom:6px;"><strong>前端开发：</strong></li>
+</ol>
+<ul style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">策略 A：通过 MasterGo MCP 读取设计稿 DSL/原型文件上传/截图 → 生成前端组件</li>
+<li style="margin-bottom:6px;">策略 B：将环节3已产出的前端代码直接集成，AI 辅助对接后端 API</li>
+</ul>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>复杂功能：</strong> 使用工具的 Agent 模式，描述完整功能需求，AI 自主完成编码→调试→验证全过程</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">最佳实践</h3>
+<div class="quote-block">① 始终将 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 保持为 AI 的活跃上下文——它是开发的「唯一真相来源」<br>② 复杂需求拆分为小步迭代，不要让 AI 一次性生成整个功能<br>③ 始终审查 AI 生成代码的边界条件和错误处理<br>④ 利用各工具的智能预测/补全能力提升日常编码效率</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase5" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 5：系统测试优化</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">AI 编程工具已经将这两个环节融为了一体。在 AI 原生开发模式下，测试和优化不再是两个独立步骤，而是一个持续的「生成→测试→修复→优化→再测试」的自循环。</p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">核心理念</h3>
+<div class="quote-block"><strong>AI 自己写代码，自己写测试，自己跑测试，自己修 Bug。</strong> 测试不再是「开发完再做」的独立阶段，而是嵌入在每一次代码变更中的自动化验证。</div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">推荐工具</h3>
+<p class="tool-pill"><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Trae</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">ZCode</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Claude Code</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">skill</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">各工具的测试优化策略</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">不同 AI 编程工具的测试优化策略有本质差异：</p>
+<h4 class="reveal" style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-top:var(--space-xl);margin-bottom:var(--space-sm);color:var(--text-primary);">Trae：IDE 内闭环测试</h4>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">在 Trae 中选中目标函数，自然语言描述测试需求：</li>
+</ol>
+<div class="quote-block">「为这个函数生成全面的单元测试，覆盖正常路径、边界条件、异常输入、并发场景」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">Trae 自动生成测试代码 → 运行测试 → 分析失败原因 → 修改源码 → 重新测试，直到通过</li>
+<li style="margin-bottom:6px;">按 PRD 验收标准逐条验证，生成测试通过报告</li>
+</ol>
+<h4 class="reveal" style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-top:var(--space-xl);margin-bottom:var(--space-sm);color:var(--text-primary);">ZCode：修改后自校验</h4>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">ZCode 的核心差异化策略——每次代码变更后自动触发校验链：</p>
+<div class="quote-block">ZCode Agent 在完成任何代码修改（新增/优化/修复）之后，会<strong>自动写一个测试样例进行校验</strong>，验证修改的正确性。这意味着：<br><br>- 新增功能 → 自动生成对应的测试用例并验证<br>- 优化重构 → 自动跑回归测试确保不破坏现有功能<br>- Debug 修复 → 先写一个能复现 Bug 的测试，修复后验证 Bug 已消除<br><br>这种「改代码必写测试」的策略从机制上保证了代码质量和测试覆盖率。</div>
+<h4 class="reveal" style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-top:var(--space-xl);margin-bottom:var(--space-sm);color:var(--text-primary);">Claude Code：终端深度推理测试</h4>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">自然语言描述测试场景，Claude Code 生成测试代码并直接在终端执行</li>
+<li style="margin-bottom:6px;">强大的推理能力使它能设计出更复杂的边界测试用例（竞态条件、内存泄漏、安全注入等）</li>
+<li style="margin-bottom:6px;">通过 SKILL.md 自定义测试策略：「每次提交前跑 full test suite，通过后才能 commit」</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">优化方向</h3>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>优化类型</th><th>操作方式</th><th>工具</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>性能优化</strong></td><td>将性能日志/监控数据 + 相关代码输入 AI，分析瓶颈；AI 生成优化方案→修改→自动跑 Benchmark 验证</td><td>DeepSeek + Trae/ZCode</td></tr>
+<tr><td><strong>SQL 优化</strong></td><td>将慢查询日志 + 表结构输入 AI，获取索引建议和 SQL 重写方案</td><td>DeepSeek</td></tr>
+<tr><td><strong>架构优化</strong></td><td>将现有架构描述输入 AI，从可扩展性、可靠性、可维护性、可运维性四个维度审查并给出改进方案</td><td>DeepSeek / Claude Code</td></tr>
+<tr><td><strong>代码重构</strong></td><td>选中目标代码，自然语言描述重构目标，AI 执行重构后自动运行测试确保行为不变</td><td>Trae / ZCode</td></tr>
+</tbody>
+</table></div></div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">注意事项</h3>
+<div class="quote-block">① AI 默认生成「快乐路径」测试——需显式要求边界情况和异常场景<br>② 生产数据严禁用于测试<br>③ 复杂的集成测试和 E2E 测试建议用 Playwright 等专业框架补充<br>④ 每次优化后必须跑完整的回归测试</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase6" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 6：代码备份与版本管理</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">代码备份与版本管理是保障代码资产安全、可追溯的基础设施。主要使用 <strong>GitHub / GitLab</strong> 作为代码托管平台；<strong>内网环境下</strong>可直接连接内网部署的 <strong>GitLab / Gitea</strong> 仓库进行代码的更新、上传和部署。借助 AI 编程工具 + Git 实现自动化备份与版本管理。</p>
+<p class="tool-pill"><strong>推荐工具：</strong> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Trae</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">ZCode</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Claude Code</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy（Git MCP）</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">各 AI 编程 IDE 的备份与版本管理策略对比</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">不同 AI 编程工具在代码备份和版本管理方面各有特点：</p>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>对比维度</th><th><strong>Trae</strong></th><th><strong>ZCode</strong></th><th><strong>Claude Code</strong></th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Git 集成方式</strong></td><td>IDE 内置 Git 面板 + AI 辅助</td><td>IDE 内置 Git + Agent 内核自动化</td><td>终端原生 git 命令 + AI 推理</td></tr>
+<tr><td><strong>Commit 辅助</strong></td><td>AI 分析 diff 自动生成 Conventional Commits 消息</td><td>Agent 修改代码后自动生成 commit 描述，含变更原因和影响范围</td><td>AI 深度分析变更语义，生成高质量 commit message</td></tr>
+<tr><td><strong>PR/MR 自动化</strong></td><td>支持在 IDE 内创建 PR，AI 生成 PR 描述</td><td>Agent 自主完成 commit→push→创建 MR 全流程</td><td>终端中 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">gh</code> CLI 创建 PR，AI 生成描述</td></tr>
+<tr><td><strong>代码备份策略</strong></td><td>手动/定时推送，依赖团队规范</td><td>Agent 可配置自动提交策略（修改后自动 commit + push）</td><td>依赖开发者手动 commit，但 AI 可生成完整的备份脚本</td></tr>
+<tr><td><strong>CHANGELOG</strong></td><td>AI 根据 commit 历史生成</td><td>Agent 自动追踪变更记录，生成结构化 CHANGELOG</td><td>AI 分析 git log 生成 CHANGELOG</td></tr>
+<tr><td><strong>内网仓库支持</strong></td><td>配置内网 Git remote 即可</td><td>配置内网 Git remote，Agent 自动推送</td><td>终端 git remote 配置，原生支持</td></tr>
+<tr><td><strong>差异化优势</strong></td><td>IDE 集成体验最好，Git 操作可视化</td><td><strong>改后自动 commit</strong> 策略保障代码不丢失，适合长时间开发</td><td>推理质量最高，commit message 最规范</td></tr>
+<tr><td><strong>适用场景</strong></td><td>日常开发 + Git 操作</td><td>大型项目长时间开发，需要自动备份保障</td><td>需要高质量 commit message + 复杂分支策略</td></tr>
+</tbody>
+</table></div></div>
+<div class="quote-block"><strong>核心差异一句话：</strong> Trae 是「可视化 Git + AI 辅助」；ZCode 是「Agent 自动 commit 保障不丢代码」；Claude Code 是「终端原生 + 最高质量 commit」；WorkBuddy 是「多仓库批量管理 + MCP 自动化」。</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">各 AI IDE 的快照/Checkpoint 回退能力对比</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">除了常规的 Git 版本管理，现代 AI 编程 IDE 普遍内置了<strong>比 Git 颗粒度更细的"快照回退"机制</strong>——每次 AI 对话/工具调用自动留存代码状态，可以精确回退到任意一次改动之前，不受 Git commit 粒度限制。这是 AI 原生 IDE 相比传统 IDE 的核心安全优势之一。</p>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>对比维度</th><th><strong>Trae</strong></th><th><strong>ZCode</strong></th><th><strong>Claude Code</strong></th><th><strong>Cursor</strong></th></tr>
+</thead>
+<tbody>
+<tr><td><strong>功能名称</strong></td><td>Snapshot 快照回退</td><td>对话式版本管理 / Checkpoint</td><td>Checkpointing</td><td>Checkpoints</td></tr>
+<tr><td><strong>触发机制</strong></td><td>每次 AI 工具调用（Write/Edit）自动创建快照</td><td>每轮对话完成后自动创建 Checkpoint</td><td>每个用户提示前自动创建 Checkpoint</td><td>Agent 进行重大更改前自动创建 + 用户可手动创建命名快照</td></tr>
+<tr><td><strong>存储方式</strong></td><td>隐藏 Git 仓库（每会话一个独立仓库）</td><td>会话级持久化存储，按项目自动隔离</td><td>会话级持久化存储，保存最近 100 个 checkpoint 文件快照</td><td>本地独立存储（独立于 Git）</td></tr>
+<tr><td><strong>回退粒度</strong></td><td>精确到每次 AI 操作（toolcall 级别），比 Git 细</td><td>精确到每轮对话，可回退到任意节点</td><td>精确到每个用户提示</td><td>精确到每次 Agent 修改</td></tr>
+<tr><td><strong>回退操作</strong></td><td>① 对话气泡"回退"按钮（最近10轮）<br>② 文件右键"打开时间线"</td><td>① 点击历史消息 → 一键回退 <br>② 编辑历史消息 → 自动回滚 + 从该点重新执行（分支）<br>③ Review Changes 可视化 Diff</td><td>① <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">/rewind</code> 命令 <br>② 双 Esc 打开回退菜单：恢复代码/对话/两者</td><td>① 对话时间线点击 checkpoint → 恢复 <br>② Restore Checkpoint 按钮</td></tr>
+<tr><td><strong>独特能力</strong></td><td>Work 模式多文件联动修改完整复原；隐藏 Snapshot 仓库可手动 git 恢复</td><td><strong>非线性历史重写：</strong> 编辑历史消息 → 自动回滚 → 新指令重新执行 → 保留后续为分支（类 Git 分支管理能力）</td><td>恢复粒度三选一（仅代码/仅对话/两者）；支持 Summarize 压缩历史</td><td>用户可自定义命名快照；支持跨快照全局 Diff 对比</td></tr>
+<tr><td><strong>持久化</strong></td><td>会话持久化，快照在 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">%APPDATA%\Trae CN\ModularData\ai-agent\snapshot\</code></td><td>会话持久化，所有历史记录按项目隔离保存</td><td>跨会话持久化（恢复的会话仍可 /rewind），30 天后自动清理</td><td>不跨 IDE 重启持久化（会话级），推荐配合 Git 双备份</td></tr>
+<tr><td><strong>局限性</strong></td><td>snapshot 仓库较大时可能占用磁盘空间</td><td>重写历史仅影响当前会话，不影响 Git 远程仓库</td><td>Bash 命令修改不追踪；非 Git 替代（官方标注「本地 Undo」）</td><td>不追踪终端副作用；跨重启不持久</td></tr>
+<tr><td><strong>定位</strong></td><td>IDE 内置开发级安全网，操作最便捷</td><td>最强大的会话级版本控制——类 Git 分支，非 Git 命令</td><td>终端场景下的安全网，灵活但需手动操作</td><td>探索性开发的安全网，最佳配合 Git 双备份使用</td></tr>
+</tbody>
+</table></div></div>
+<div class="quote-block"><strong>一句话总结：</strong> Trae 是「最便捷的本地快照」——点按钮就能回退，零学习成本；ZCode 是「最强大的对话级版本控制」——不仅回退，还能从历史任意节点分叉重来；Claude Code 是「终端场景的安全网」——灵活但需手动；Cursor 是「探索性开发的安全网」——适合试错和临时备份。<br><strong>重要提醒：</strong> 以上所有快照/Checkpoint 机制都是 <strong>Git 的补充而非替代</strong>。快照用于开发过程中的「误操作秒级回退」；Git 用于永久版本历史、团队协作和代码审计。两者配合使用形成「双层安全网」。</div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>备份策略：</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">向 DeepSeek 描述项目结构和技术栈，获取备份策略建议（全量/增量、频率、保留周期）</li>
+<li style="margin-bottom:6px;">AI 生成自动化备份脚本（Shell/Python），含错误处理和告警</li>
+<li style="margin-bottom:6px;">使用 WorkBuddy FileBatchProcessor Skill 批量压缩和归档历史项目文件</li>
+<li style="margin-bottom:6px;">AI 定期分析备份日志，验证备份完整性</li>
+</ol>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>版本管理（外网环境——GitHub/GitLab）：</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">在 Trae / ZCode / Claude Code 中提交代码时，AI 自动分析 diff 内容生成规范的 commit message（Conventional Commits 格式）</li>
+<li style="margin-bottom:6px;">推送到 GitHub/GitLab 远程仓库</li>
+<li style="margin-bottom:6px;">使用 WorkBuddy MCP 连接 GitHub/GitLab，自动创建 PR/MR，AI 生成 PR 描述和变更摘要</li>
+<li style="margin-bottom:6px;">AI 根据 commit 历史自动生成 CHANGELOG.md</li>
+<li style="margin-bottom:6px;">版本发布时，AI 自动打 Tag 并生成 Release Notes</li>
+</ol>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>版本管理（内网环境——内网 GitLab / Gitea）：</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">在内网服务器部署 GitLab 或 Gitea（Gitea 更轻量，适合资源有限的环境）</li>
+<li style="margin-bottom:6px;">在 AI 编程工具中配置内网 Git remote</li>
+<li style="margin-bottom:6px;">AI 编程工具直接通过内网地址进行 commit / push / pull 操作，无需外网访问</li>
+<li style="margin-bottom:6px;">配置内网 CI/CD 流水线（GitLab CI / Gitea Actions），代码推送后自动触发构建 → 测试 → 部署</li>
+<li style="margin-bottom:6px;">备份策略：定时全量备份 GitLab/Gitea 数据目录（含仓库数据 + 数据库），AI 生成备份脚本并验证完整性</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">输出示例（Commit Message）</h3>
+<div class="reveal"><div class="table-wrap" style="margin-bottom:var(--space-xl);"><pre style="padding:var(--space-lg);overflow-x:auto;font-size:.85rem;line-height:1.6;color:var(--text-secondary);background:transparent;"><code>feat(inspection): add offline sync support for inspection reports
+
+- Add IndexedDB storage for offline form data
+- Implement sync queue with retry mechanism (max 3 retries)
+- Add network status detection and auto-sync on reconnect
+
+Closes #142</code></pre></div></div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase7" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 7：项目代码审查（简单介绍）</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">放在备份与版本管理之后——代码经过版本管理入库后，再进行结构化审查，确保入库代码的质量底线。AI 代码审查作为人工审查的「第一道防线」，自动发现常见问题。</p>
+<p class="tool-pill"><strong>推荐工具：</strong> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Trae</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">通义灵码</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">代码审查skill</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">将待审查代码 + 项目编码规范（.cursorrules）+ <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 一并输入 AI</li>
+<li style="margin-bottom:6px;">执行结构化审查：</li>
+</ol>
+<div class="quote-block">"对照《开发文档.md》的技术规范，从①逻辑正确性 ②安全漏洞 ③性能问题 ④边界条件处理 ⑤代码风格一致性 ⑥可维护性 六个维度评估，输出问题列表+严重级别+修复建议"</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">AI 标注每个问题的影响范围和修复方案</li>
+<li style="margin-bottom:6px;">开发者修复后，人工审查专注于架构决策和业务逻辑正确性</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">实践效果</h3>
+<div class="quote-block">AI 做第一轮审查可捕获 60-70% 的低级错误（空指针、未关闭资源、SQL 注入、硬编码密钥等），让人工审查聚焦于高层次问题。AI 辅助审查使缺陷发现率提升约 30%。</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase8" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 8：系统操作手册编写</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">系统上线前，需要为最终用户准备一份清晰、可操作的使用手册。本环节对比不同文档格式的优劣，并给出技术人员和非技术人员分别如何利用 AI 快速生成一份专业的 HTML 操作手册。</p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">文档格式对比：为什么选 HTML？</h3>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>对比维度</th><th><strong>HTML</strong></th><th>Word (.docx)</th><th>PDF</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>视觉表现力</strong></td><td>★★★★★ 极强（CSS 控制一切：导航栏、卡片、折叠、暗色模式、动效）</td><td>★★★★☆ 强（样式丰富但排版易变形）</td><td>★★★☆☆ 中（固定页面，无交互）</td></tr>
+<tr><td><strong>交互性</strong></td><td>★★★★★ 极强（页面内锚点跳转、折叠展开、搜索过滤、Tab 切换、视频嵌入）</td><td>★☆☆☆☆ 极弱（仅目录超链接）</td><td>☆☆☆☆☆ 无交互</td></tr>
+<tr><td><strong>跨平台兼容</strong></td><td>★★★★★ 浏览器无处不在，无需安装任何软件</td><td>★★★☆☆ 需 Office/WPS，版本间格式兼容差</td><td>★★★★★ 查看器免费通用</td></tr>
+<tr><td><strong>内容更新</strong></td><td>★★★★☆ 方便（单文件覆盖替换，即时生效）</td><td>★★★☆☆ 一般（需重新导出/另存）</td><td>★★☆☆☆ 麻烦（修改源文件后重新导出）</td></tr>
+<tr><td><strong>文件体积</strong></td><td>★★★★☆ 小（纯文本+CSS，通常几十 KB）</td><td>★★★☆☆ 较大（含媒体资源时可达几十 MB）</td><td>★★☆☆☆ 大（固化全部资源）</td></tr>
+<tr><td><strong>打印友好</strong></td><td>★★★☆☆ 一般（需专门写 @media print 样式）</td><td>★★★★★ 优秀（原生打印支持）</td><td>★★★★★ 完美（打印是原生场景）</td></tr>
+<tr><td><strong>AI 生成难度</strong></td><td>★★★★☆ 容易（纯文本格式，AI 原生支持，一次输出完整文件）</td><td>★★★☆☆ 中等（需借助 python-pptx/docx 库或专门 Skill）</td><td>★★★☆☆ 中等（同样需转换工具）</td></tr>
+<tr><td><strong>适合场景</strong></td><td>在线帮助中心、内部知识库、交付给用户的操作指南</td><td>需要打印签字的正式文档、需要多人批注的协作文档</td><td>正式交付物、合同、标书、需要防止篡改的文档</td></tr>
+</tbody>
+</table></div></div>
+<div class="quote-block"><strong>结论：HTML 是操作手册的最佳格式。</strong> 用户打开浏览器即可使用，支持导航、搜索、折叠，视觉效果远超传统文档。AI 生成 HTML 是原生能力——不像 Word/PDF 需要中间转换库，AI 直接输出文本格式的 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">.html</code> 文件即可。</div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">方式一：技术人员实操（在项目代码中直接生成）</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">这是当前推荐的方式——开发者在 AI 编程工具中，利用已有的项目代码作为上下文，让 AI 生成操作手册。</p>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>适用场景：</strong> 有项目代码访问权限的开发者</p>
+<p class="tool-pill"><strong>推荐工具：</strong> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Trae</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">ZCode</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Claude Code</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code></p>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>操作步骤：</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">在 AI 编程工具中打开项目，将以下内容作为上下文喂给 AI：</li>
+</ol>
+<ul style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code>（环节2输出）——系统架构和功能全貌</li>
+<li style="margin-bottom:6px;">PRD 需求文档.md（环节1输出）——用户角色和业务场景</li>
+<li style="margin-bottom:6px;">关键前端页面代码（路由文件、页面组件）——实际界面结构</li>
+</ul>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">向 AI 描述手册要求：</li>
+</ol>
+<div class="quote-block">「基于当前项目的代码和开发文档，生成一份面向最终用户的系统操作手册（HTML 格式）。要求：<br>① 包含顶部导航栏，按用户角色（巡检员/管理员）分类<br>② 每个功能模块包含：操作入口、操作步骤（编号）、操作截图占位区域、注意事项<br>③ 支持页面内锚点跳转（目录）<br>④ 添加一个 FAQ 折叠区域<br>⑤ 移动端响应式适配<br>⑥ 风格简洁专业，参考 Ant Design 设计规范」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">AI 输出完整 HTML 文件（单文件，内含 CSS），直接在浏览器中打开预览</li>
+<li style="margin-bottom:6px;">根据实际界面截图，补充截图引用路径（或让 AI 预留占位）</li>
+<li style="margin-bottom:6px;">交付前人工检查：操作步骤是否与实际系统一致、术语是否准确</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">方式二：纯业务人员 / 产品经理实操</h3>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">业务人员或产品经理通常没有项目代码访问权限，但同样可以利用 AI 写出一份专业的 HTML 操作手册——关键在于\<em>\</em>准备足够的"素材"\<em>\</em>来弥补无法直接读代码的差距。</p>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>适用场景：</strong> 没有代码权限的 PM、业务分析师、实施顾问</p>
+<p class="tool-pill"><strong>推荐工具：</strong> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Kimi</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">通义千问</code></p>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>核心策略：用"素材包"替代"代码上下文"</strong></p>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">技术人员喂给 AI 的是代码，业务人员喂给 AI 的应该是以下素材：</p>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>素材类型</th><th>说明</th><th>示例</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>系统截图</strong></td><td>每个页面的完整截图（PNG/JPG）</td><td>巡检列表页、表单填写页、报告查看页</td></tr>
+<tr><td><strong>PRD 文档</strong></td><td>环节1输出的需求文档（Markdown 格式）</td><td>用户故事、功能列表、业务规则</td></tr>
+<tr><td><strong>菜单位置说明</strong></td><td>文字描述每个功能从哪里进入</td><td>「左侧导航栏 → 设备管理 → 巡检任务 → 点击『新建巡检』按钮」</td></tr>
+<tr><td><strong>角色说明</strong></td><td>哪些角色使用哪些功能</td><td>「巡检员：扫码、填表、提交；管理员：创建任务、审核报告、导出数据」</td></tr>
+</tbody>
+</table></div></div>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>操作步骤（以 WorkBuddy 为例）：</strong></p>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>准备素材包：</strong></li>
+</ol>
+<ul style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">将系统截图放入一个文件夹（命名规范：<code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">01-登录页面.png</code>、<code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">02-巡检列表.png</code>……）</li>
+<li style="margin-bottom:6px;">将 PRD 需求文档准备好（如果有环节1的 Markdown 版本，直接用）</li>
+<li style="margin-bottom:6px;">新建一个文本文件，列出所有菜单结构和操作入口</li>
+</ul>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>将素材喂给 AI：</strong></li>
+</ol>
+<div class="quote-block">「我正在为一个压缩机巡检系统编写操作手册。以下是我的素材：<br>① PRD 文档内容如下：\[粘贴 Markdown 内容]<br>② 系统包含以下页面和入口：\[粘贴菜单结构]<br>③ 系统角色：巡检员（扫码→填表→提交），管理员（创建任务→审核→导出报告）<br><br>请根据以上信息，生成一份完整的 HTML 操作手册，要求：<br>① 顶部导航栏，按巡检员/管理员两个角色分 Tab<br>② 每个操作流程用编号步骤描述（如『1. 点击左侧菜单【设备管理】→ 2. 点击【巡检任务】』）<br>③ 每个页面对应一个截图占位区域（用占位文字标注截图文件名，后续我替换为实际截图）<br>④ 包含常见问题（FAQ）折叠区域<br>⑤ 风格简洁专业」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>AI 输出 HTML 后：</strong></li>
+</ol>
+<ul style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">在浏览器中打开预览</li>
+<li style="margin-bottom:6px;">将截图文件与 HTML 放在同一目录，按 AI 预留的文件名重命名截图</li>
+<li style="margin-bottom:6px;">如果 AI 用的是占位文字而非截图，再对话一轮：「把截图占位文字替换为对应的截图」</li>
+</ul>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>迭代优化：</strong></li>
+</ol>
+<ul style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">逐页检查操作步骤与实际系统是否一致</li>
+<li style="margin-bottom:6px;">缺失的细节通过对话补充：「第 3 步『填写巡检表单』需要补充说明：温度值必须在 -50 到 200 之间，超出会标红提示」</li>
+</ul>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">两种方式对比</h3>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>对比维度</th><th>方式一：开发者（代码驱动）</th><th>方式二：业务人员（素材驱动）</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>上游输入</strong></td><td>项目代码 + 开发文档.md</td><td>系统截图 + PRD + 菜单文字描述</td></tr>
+<tr><td><strong>优势</strong></td><td>内容自动精准（直接读取代码中的路由、字段、校验规则）</td><td>无需代码权限，PM 可独立完成</td></tr>
+<tr><td><strong>劣势</strong></td><td>需要代码访问权限</td><td>需手动准备截图素材，操作步骤可能因缺少代码细节而不够精确</td></tr>
+<tr><td><strong>精确度</strong></td><td>★★★★★（代码即真相）</td><td>★★★☆☆（取决于素材完整度，需人工校对）</td></tr>
+<tr><td><strong>推荐人群</strong></td><td>开发者、技术 PM</td><td>纯业务 PM、实施顾问、运营人员</td></tr>
+</tbody>
+</table></div></div>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">最佳实践</h3>
+<div class="quote-block">① HTML 文件名命名规范：<code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">系统名称-操作手册-v版本号.html</code>（如 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">压缩机巡检系统-操作手册-v1.0.html</code>）<br>② 将 HTML通过邮件发送或者内嵌在系统内部，用户通过浏览器访问或在系统内访问即可，重大更新要覆盖旧版文件文件。<br>③ 操作手册和系统同步迭代——每次系统发版时同步更新手册</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase9" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 9：系统部署上线（简单介绍）</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">AI 生成 CI/CD 配置、Dockerfile、K8s 清单，辅助部署故障排查。</p>
+<p class="tool-pill"><strong>推荐工具：</strong> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Trae</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">通义千问</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">将环节2的 <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">开发文档.md</code> 中的部署需求输入 AI，生成完整的部署配置</li>
+<li style="margin-bottom:6px;"><strong>容器化：</strong> AI 生成 Dockerfile + docker-compose.yml（含健康检查、资源限制、日志配置）</li>
+<li style="margin-bottom:6px;"><strong>CI/CD：</strong> AI 生成 GitHub Actions / GitLab CI 流水线配置（构建→测试→部署）</li>
+<li style="margin-bottom:6px;"><strong>K8s：</strong> 如需容器编排，AI 生成 Deployment + Service + Ingress + ConfigMap 清单</li>
+<li style="margin-bottom:6px;"><strong>部署验证：</strong> AI 生成冒烟测试脚本，部署后自动执行关键路径验证</li>
+</ol>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase10" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 10：用户反馈收集（简单介绍）</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">AI 自动化收集、分类、分析用户反馈，将非结构化反馈转化为可执行的需求。</p>
+<p class="tool-pill"><strong>推荐工具：</strong> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Kimi</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Coze / Dify</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">通过 MCP 连接企业微信/钉钉/飞书，自动收集用户反馈消息</li>
+<li style="margin-bottom:6px;">使用 Coze Agent 搭建反馈处理流水线：</li>
+</ol>
+<div class="quote-block">消息接入 → 意图分类（Bug/需求/咨询/投诉）→ 情绪分析 → 优先级评估 → 自动回复或创建工单</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">定期将反馈汇总输入 DeepSeek/Kimi 分析，提取 Top 10 改进方向</li>
+<li style="margin-bottom:6px;">将分析结果录入下一轮需求文档更新</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">输出示例（反馈分析）</h3>
+<ul style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;"><strong>【P0】</strong> 离线同步失败（23条）：巡检员在压缩机房信号弱时提交失败</li>
+<li style="margin-bottom:6px;">→ 关联环节1：已识别为高优，但未覆盖「重试+手动补传」流程</li>
+<li style="margin-bottom:6px;"><strong>【P1】</strong> 扫码识别慢（17条）：部分设备二维码磨损后识别率 < 60%</li>
+<li style="margin-bottom:6px;">→ 建议：增加手动输入设备编号的备用方案</li>
+<li style="margin-bottom:6px;"><strong>【P2】</strong> 报告模板固定（12条）：管理人员希望自定义报告字段</li>
+<li style="margin-bottom:6px;">→ 进入环节11系统再优化</li>
+</ul>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="phase11" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">环节 11：系统再优化（简单介绍）</h2>
+<div class="quote-block"><strong>注意：本环节 ≠ 系统运维。</strong> 环节11是<strong>研发闭环</strong>的终点——将用户反馈和运行数据转化为下一轮 PRD，重新进入开发迭代。</br><strong>系统运维</strong>（监控告警、日志管理、备份恢复、安全巡检、故障处理）是部署上线后的一条<strong>平行保障线</strong>，7x24 小时持续运行，不在本报告的研发主流程范围内。</br>两者的关系：运维保障系统"活着"，环节11驱动系统"变好"；运维发现的问题可输入环节10（用户反馈收集），进入优化闭环。</div>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);">基于用户反馈和运行数据，AI 辅助进行数据驱动的持续优化——形成研发闭环。</p>
+<p class="tool-pill"><strong>推荐工具：</strong> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">DeepSeek</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Trae</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">Coze / Dify</code> <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;font-size:.85em;color:var(--accent-gold);">WorkBuddy</code></p>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">操作步骤</h3>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">将环节10的反馈分析报告 + 系统运行数据（性能指标、错误率、用户行为）输入 AI</li>
+<li style="margin-bottom:6px;">AI 综合分析：</li>
+</ol>
+<div class="quote-block">「按 ROI 排序优化建议：①P0 缺陷修复 ②性能优化 ③体验优化 ④新功能开发。每项给出预估工作量和技术方案」</div>
+<ol style="padding-left:var(--space-xl);margin-bottom:var(--space-lg);color:var(--text-secondary);line-height:1.8;">
+<li style="margin-bottom:6px;">将确认的优化项按优先级录入下一轮 PRD，回到环节1开始新一轮迭代</li>
+</ol>
+<h3 class="reveal" style="font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.6rem);font-weight:700;margin-top:var(--space-2xl);margin-bottom:var(--space-md);color:var(--accent-gold);">闭环总结</h3>
+<div class="quote-block">环节10→11→1→2→... 形成完整的 AI 增强研发闭环。所有环节产出的文档均可被下一环节直接使用。核心工具栈不超过 5-6 个，确保团队不需要在工具间反复切换。</div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="matrix" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">全流程工具矩阵速览</h2>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>序号</th><th>环节</th><th>核心工具</th><th>流向</th></tr>
+</thead>
+<tbody>
+<tr><td>01</td><td>业务需求调研与文档整理</td><td>DeepSeek + 通义听悟 + Kimi + WorkBuddy</td><td>PRD → 环节2/3</td></tr>
+<tr><td>02</td><td>开发文档输出</td><td>DeepSeek + Trae + WorkBuddy</td><td>开发文档.md → 环节4/5/7/8</td></tr>
+<tr><td>03</td><td>原型设计</td><td>MasterGo AI / 墨刀 AI / Trae+Skill</td><td>设计稿/前端代码 → 环节4</td></tr>
+<tr><td>04</td><td>系统开发</td><td>Trae / ZCode / Claude Code + DeepSeek</td><td>源代码 → 环节5/6</td></tr>
+<tr><td>05</td><td>系统测试优化</td><td>Trae / ZCode / Claude + DeepSeek</td><td>测试报告 + 优化代码 → 环节6</td></tr>
+<tr><td>06</td><td>代码备份与版本管理</td><td>Trae / ZCode / Claude Code + WorkBuddy（Git MCP）</td><td>归档 + CHANGELOG → 环节7</td></tr>
+<tr><td>07</td><td>项目代码审查</td><td>Trae + DeepSeek + 通义灵码</td><td>审查报告 → 修复 → 环节8</td></tr>
+<tr><td>08</td><td>系统操作手册编写</td><td>Trae + WorkBuddy / DeepSeek + Kimi</td><td>HTML 手册 → 环节9</td></tr>
+<tr><td>09</td><td>系统部署上线</td><td>DeepSeek + Trae + 通义千问</td><td>CI/CD + K8s + 冒烟验证</td></tr>
+<tr><td>10</td><td>用户反馈收集</td><td>DeepSeek + Kimi + Coze/Dify</td><td>分析报告 → 环节11</td></tr>
+<tr><td>11</td><td>系统再优化</td><td>DeepSeek + Coze/Dify</td><td>优化清单 → 回到环节1</td></tr>
+</tbody>
+</table></div></div>
+<hr style="border:none;border-top:1px solid var(--border-color);margin:var(--space-3xl) 0;">
+<h2 id="stack" style="font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;margin-top:var(--space-3xl);margin-bottom:var(--space-lg);position:relative;padding-bottom:var(--space-sm);border-bottom:2px solid var(--border-color);">推荐全流程核心工具栈</h2>
+<p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-md);"><strong>5 个工具覆盖 11 个环节：</strong></p>
+<div class="reveal"><div class="table-wrap"><table>
+<thead>
+<tr><th>序号</th><th>工具</th><th>覆盖环节</th><th>定位</th></tr>
+</thead>
+<tbody>
+<tr><td>①</td><td><strong>DeepSeek</strong></td><td>1/2/4/5/6/7/8/9/10/11</td><td>通用推理 / 编程 / 文档生成 / 分析</td></tr>
+<tr><td><br>②</td><td><strong>Trae</strong></td><td>2/3/4/5/6/7/8/9</td><td>主力 IDE + 多模型切换</td></tr>
+<tr><td><br>③</td><td><strong>WorkBuddy</strong></td><td>1/2/6/7/8/9/10</td><td>文档 Skill + MCP 多系统集成 + 文件批处理</td></tr>
+<tr><td><br>④</td><td><strong>MasterGo AI</strong></td><td>3（输出到4）</td><td>原型设计 + 设计稿转代码</td></tr>
+<tr><td><br>⑤</td><td><strong>Coze / Dify</strong></td><td>10/11</td><td>Agent 编排 + 监控自动化</td></tr>
+</tbody>
+</table></div></div>
+<div class="quote-block">这 5 个工具形成了从需求 → 设计 → 开发 → 测试 → 部署 → 反馈 → 优化的完整闭环，避免工具碎片化。</div>
+</section>
+
+<footer>
+  <p>AI 深度嵌入软件开发全流程指南 | Designed By ui-ux-pro-max&frontend-design | Created By 里维斯Leevis</p>
+</footer>
+</div>
+
+<button id="backToTop" aria-label="返回顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script>
+// Theme Toggle
+const themeToggle = document.getElementById('themeToggle');
+const moonIcon = document.getElementById('moonIcon');
+const sunIcon = document.getElementById('sunIcon');
+const html = document.documentElement;
+
+if (themeToggle && moonIcon && sunIcon) {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  html.setAttribute('data-theme', savedTheme);
+  updateThemeIcons(savedTheme);
+  themeToggle.addEventListener('click', function(){
+    var current = html.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateThemeIcons(next);
+  });
+}
+function updateThemeIcons(theme) {
+  if (theme === 'dark') { moonIcon.style.display = 'block'; sunIcon.style.display = 'none'; }
+  else { moonIcon.style.display = 'none'; sunIcon.style.display = 'block'; }
+}
+
+// Progress Bar
+const progressBar = document.getElementById('progressBar');
+if (progressBar) {
+  window.addEventListener('scroll', function(){
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = progress + '%';
+  });
+}
+
+// Scroll Reveal
+const revealObserver = new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(function(el){ revealObserver.observe(el); });
+
+// Back to Top
+const backToTop = document.getElementById('backToTop');
+if (backToTop) {
+  window.addEventListener('scroll', function(){
+    if (window.scrollY > 500) { backToTop.classList.add('visible'); }
+    else { backToTop.classList.remove('visible'); }
+  });
+  backToTop.addEventListener('click', function(){ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+}
+
+// Smooth Scroll for Nav Links
+document.querySelectorAll('.nav-links a[href^="#"]').forEach(function(anchor){
+  anchor.addEventListener('click', function(e){
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
+    }
+  });
+});
+</script>
+</body>
+</html>
