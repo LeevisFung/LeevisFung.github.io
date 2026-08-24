@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flick — 无限画布速记工具</title>
+  <meta name="description" content="Flick 是一个轻量 Windows 无限画布速记工具，用快捷键随手截图、粘贴灵感、快速整理。">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/style.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/flick/icon.png">
+
+  <style>
+    /* ===== Flick 品牌色 ===== */
+    :root {
+      --accent: #d95d39;
+      --accent-warm: #f0784f;
+      --accent-subtle: rgba(217, 93, 57, 0.10);
+      --brand-red: #d95d39;
+    }
+
+    [data-theme="dark"] {
+      --accent: #f0784f;
+      --accent-warm: #ff936c;
+      --accent-subtle: rgba(240, 120, 79, 0.14);
+    }
+
+    /* ===== Flick 落地页专属样式 ===== */
+    .flick-main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 88px 24px 48px;
+    }
+
+    .flick-hero {
+      text-align: center;
+      padding: 40px 0 16px;
+    }
+
+    .flick-logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      overflow: hidden;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 28px rgba(217, 93, 57, 0.25);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .flick-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .flick-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-subtle);
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+
+    .flick-hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    .flick-tagline {
+      max-width: 680px;
+      margin: 0 auto;
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .flick-cta {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 32px;
+    }
+
+    .flick-main .btn-primary {
+      background: var(--accent);
+    }
+
+    .flick-main .btn-primary:hover {
+      box-shadow: 0 4px 16px rgba(217, 93, 57, 0.3);
+    }
+
+    .flick-section {
+      padding: 56px 0 8px;
+    }
+
+    .flick-section-title {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .flick-section-sub {
+      text-align: center;
+      color: var(--text-tertiary);
+      margin-bottom: 32px;
+    }
+
+    /* Demo */
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .demo-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .demo-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    .demo-frame {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      background: linear-gradient(135deg, var(--accent-subtle), transparent);
+    }
+
+    .demo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .demo-missing {
+      display: none;
+      position: absolute;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      text-align: center;
+      padding: 16px;
+    }
+
+    .demo-frame img.is-missing {
+      display: none;
+    }
+
+    .demo-frame img.is-missing + .demo-missing {
+      display: flex;
+    }
+
+    .demo-body {
+      padding: 16px 20px 20px;
+    }
+
+    .demo-body h3 {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .demo-body p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Download */
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .download-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .download-recommend {
+      position: absolute;
+      top: -10px;
+      right: 16px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .download-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .download-card h3 {
+      font-size: 18px;
+    }
+
+    .download-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .download-meta {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .download-card .btn {
+      width: 100%;
+      min-width: 0;
+      margin-top: 4px;
+      height: 44px;
+    }
+
+    /* Shortcuts */
+    .shortcut-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      max-width: 840px;
+      margin: 0 auto;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+    }
+
+    .shortcut-item span {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    kbd {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--surface-primary);
+      border: 1px solid var(--border-subtle);
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .shortcut-note {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: 16px;
+    }
+
+    /* Feedback */
+    .feedback-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feedback-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .feedback-card .stars {
+      color: #FFB800;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .feedback-card blockquote {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .feedback-author {
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+
+    .feedback-cta {
+      text-align: center;
+      margin-top: 28px;
+    }
+
+    .feedback-cta .btn {
+      min-width: 200px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .demo-grid,
+      .download-grid,
+      .feedback-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shortcut-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .flick-main {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .flick-cta .btn {
+        width: 100%;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Skip Link -->
+<a href="#main" class="skip-link">跳到主要内容</a>
+
+<!-- Nav Bar -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      里维斯 Leevis
+    </a>
+    <div class="nav-actions">
+      <a href="#download" class="nav-link">下载</a>
+      <a href="#demo" class="nav-link">演示</a>
+      <a href="#shortcuts" class="nav-link">快捷键</a>
+      <a href="#feedback" class="nav-link">反馈</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换深色/浅色模式">
+        <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="flick-main">
+
+  <!-- Hero: 一句话定位 -->
+  <section class="flick-hero">
+    <div class="flick-logo">
+      <img src="assets/flick/icon.png" alt="Flick 图标" width="72" height="72">
+    </div>
+    <span class="flick-badge">Flick · Windows 无限画布</span>
+    <h1>灵感，随手记在无限画布上</h1>
+    <p class="flick-tagline">一句话定位：Flick 是一个轻量 Windows 无限画布速记工具，用快捷键随手截图、粘贴灵感、快速整理。</p>
+    <div class="flick-cta">
+      <a href="assets/flick/Flick-Setup-1.0.3.exe" class="btn btn-primary">⬇ 下载 Windows 安装包</a>
+      <a href="#demo" class="btn btn-secondary">看演示</a>
+    </div>
+  </section>
+
+  <!-- 3 张 GIF 演示 -->
+  <section class="flick-section" id="demo">
+    <h2 class="flick-section-title">3 张 GIF 演示</h2>
+    <p class="flick-section-sub">三秒看懂 Flick 怎么用</p>
+    <div class="demo-grid">
+
+      <article class="demo-card">
+        <div class="demo-frame">
+          <img src="assets/flick/demo-1.gif" alt="Flick 无限画布演示" loading="lazy" onerror="this.classList.add('is-missing')">
+          <div class="demo-missing"><strong>demo-1.gif</strong><span>请把 GIF 放到 assets/flick/</span></div>
+        </div>
+        <div class="demo-body">
+          <h3>无限画布</h3>
+          <p>双击随手记录，文字、图片、截图都在同一块画布。</p>
+        </div>
+      </article>
+
+      <article class="demo-card">
+        <div class="demo-frame">
+          <img src="assets/flick/demo-2.gif" alt="Flick 截图速记演示" loading="lazy" onerror="this.classList.add('is-missing')">
+          <div class="demo-missing"><strong>demo-2.gif</strong><span>请把 GIF 放到 assets/flick/</span></div>
+        </div>
+        <div class="demo-body">
+          <h3>截图速记</h3>
+          <p>Ctrl+Shift+A 截图，自动贴到画布，不用切来切去。</p>
+        </div>
+      </article>
+
+      <article class="demo-card">
+        <div class="demo-frame">
+          <img src="assets/flick/demo-3.gif" alt="Flick 一键整理演示" loading="lazy" onerror="this.classList.add('is-missing')">
+          <div class="demo-missing"><strong>demo-3.gif</strong><span>请把 GIF 放到 assets/flick/</span></div>
+        </div>
+        <div class="demo-body">
+          <h3>一键整理</h3>
+          <p>选中多个节点，Shift+O / Shift+P 快速对齐排版。</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 下载 -->
+  <section class="flick-section" id="download">
+    <h2 class="flick-section-title">下载 Flick</h2>
+    <p class="flick-section-sub">v1.0.3 · Windows 10 / 11 · x64</p>
+    <div class="download-grid">
+
+      <article class="download-card">
+        <span class="download-recommend">推荐</span>
+        <div class="download-icon">📦</div>
+        <h3>Windows 安装包</h3>
+        <p>标准安装，可设置开机自启，适合日常主力机。</p>
+        <span class="download-meta">Flick-Setup-1.0.3.exe · ~4.1 MB</span>
+        <a href="assets/flick/Flick-Setup-1.0.3.exe" class="btn btn-primary">下载安装包</a>
+      </article>
+
+      <article class="download-card">
+        <div class="download-icon">🗂️</div>
+        <h3>绿色版</h3>
+        <p>免安装，解压即用，适合放 U 盘或临时电脑。</p>
+        <span class="download-meta">Flick-Portable-1.0.3.zip · ~5.0 MB</span>
+        <a href="assets/flick/Flick-Portable-1.0.3.zip" class="btn btn-secondary">下载绿色版</a>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 快捷键一览 -->
+  <section class="flick-section" id="shortcuts">
+    <h2 class="flick-section-title">快捷键一览</h2>
+    <p class="flick-section-sub">默认快捷键，可在设置中修改</p>
+    <div class="shortcut-list">
+
+      <div class="shortcut-item">
+        <span>显示 / 隐藏窗口</span>
+        <span><kbd>Ctrl</kbd> + <kbd>Space</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>截图速记</span>
+        <span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>选择工具</span>
+        <span><kbd>V</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>矩形 / 横线 / 箭头 / 文字</span>
+        <span><kbd>R</kbd> <kbd>L</kbd> <kbd>A</kbd> <kbd>T</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>粘贴图片 / 文字</span>
+        <span><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>保存</span>
+        <span><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>导出</span>
+        <span><kbd>Ctrl</kbd> + <kbd>E</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>撤销 / 重做</span>
+        <span><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>删除选中</span>
+        <span><kbd>Delete</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>抓手 / 平移</span>
+        <span><kbd>Space</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>水平居中 / 垂直居中</span>
+        <span><kbd>Shift</kbd> + <kbd>O</kbd> / <kbd>Shift</kbd> + <kbd>P</kbd></span>
+      </div>
+
+      <div class="shortcut-item">
+        <span>快捷键面板</span>
+        <span><kbd>?</kbd></span>
+      </div>
+
+    </div>
+    <p class="shortcut-note">* 快捷键为 Flick v1.0.3 默认设置，可在“快捷键”面板中修改。</p>
+  </section>
+
+  <!-- 用户反馈 -->
+  <section class="flick-section" id="feedback">
+    <h2 class="flick-section-title">用户反馈</h2>
+    <p class="flick-section-sub">来自第一批内测用户</p>
+    <div class="feedback-grid">
+
+      <figure class="feedback-card">
+        <div class="stars">★★★★★</div>
+        <blockquote>“开会时随手截图贴到画布，比聊天记录好用多了。”</blockquote>
+        <figcaption class="feedback-author">阿哲 · 产品经理</figcaption>
+      </figure>
+
+      <figure class="feedback-card">
+        <div class="stars">★★★★★</div>
+        <blockquote>“无限画布很适合头脑风暴，不用来回开文档。”</blockquote>
+        <figcaption class="feedback-author">Momo · 运营</figcaption>
+      </figure>
+
+      <figure class="feedback-card">
+        <div class="stars">★★★★☆</div>
+        <blockquote>“快捷键很跟手，Ctrl+Space 呼出已经成肌肉记忆了。”</blockquote>
+        <figcaption class="feedback-author">Kevin · 开发</figcaption>
+      </figure>
+
+    </div>
+    <div class="feedback-cta">
+      <a href="mailto:908065114@qq.com?subject=Flick%20反馈" class="btn btn-secondary">📮 提交你的反馈</a>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p>© 2026 里维斯 · Flick v1.0.3</p>
+    <p>由 GitHub Pages 托管</p>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var html = document.documentElement;
+  var toggle = document.getElementById('themeToggle');
+  var sunIcon = document.getElementById('themeIconSun');
+  var moonIcon = document.getElementById('themeIconMoon');
+  var nav = document.getElementById('nav');
+
+  function getTheme() { return html.getAttribute('data-theme'); }
+
+  function setTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    } else {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    }
+    try { localStorage.setItem('leevis-theme', theme); } catch(e) {}
+  }
+
+  var saved;
+  try { saved = localStorage.getItem('leevis-theme'); } catch(e) {}
+  if (saved) {
+    setTheme(saved);
+  } else {
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+  }
+
+  toggle.addEventListener('click', function() {
+    setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  });
+
+  // Nav scroll effect
+  var ticking = false;
+  function updateNav() {
+    if (window.scrollY > 10) { nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+    ticking = false;
+  }
+  window.addEventListener('scroll', function() {
+    if (!ticking) { requestAnimationFrame(updateNav); ticking = true; }
+  }, { passive: true });
+  updateNav();
+})();
+</script>
+</body>
+</html>
