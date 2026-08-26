@@ -376,7 +376,7 @@
 <body>
 
 <!-- Skip Link -->
-<a href="#main" class="skip-link">跳到主要内容</a>
+<a href="#main" class="skip-link" data-i18n="skip">跳到主要内容</a>
 
 <!-- Nav Bar -->
 <header class="nav" id="nav">
@@ -386,10 +386,11 @@
       里维斯 Leevis
     </a>
     <div class="nav-actions">
-      <a href="#download" class="nav-link">下载</a>
-      <a href="#demo" class="nav-link">演示</a>
-      <a href="#shortcuts" class="nav-link">快捷键</a>
-      <a href="#feedback" class="nav-link">反馈</a>
+      <a href="#download" class="nav-link" data-i18n="nav_download">下载</a>
+      <a href="#demo" class="nav-link" data-i18n="nav_demo">演示</a>
+      <a href="#shortcuts" class="nav-link" data-i18n="nav_shortcuts">快捷键</a>
+      <a href="#feedback" class="nav-link" data-i18n="nav_feedback">反馈</a>
+      <button class="theme-toggle" id="langToggle" aria-label="Switch language" title="Switch language">EN</button>
       <button class="theme-toggle" id="themeToggle" aria-label="切换深色/浅色模式">
         <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
@@ -407,53 +408,53 @@
   <!-- Hero: 一句话定位 -->
   <section class="flick-hero">
     <div class="flick-logo">
-      <img src="assets/flick/icon.png" alt="Flick 图标" width="72" height="72">
+      <img src="assets/flick/icon.png" alt="Flick 图标" width="72" height="72" data-i18n-alt="logo_alt">
     </div>
-    <span class="flick-badge">Flick · Windows 无限画布</span>
-    <h1>灵感，随手记在无限画布上</h1>
-    <p class="flick-tagline">一句话定位：Flick 是一个轻量 Windows 无限画布速记工具，用快捷键随手截图、粘贴灵感、快速整理。</p>
+    <span class="flick-badge" data-i18n="badge">Flick · Windows 无限画布</span>
+    <h1 data-i18n="hero_title">灵感，随手记在无限画布上</h1>
+    <p class="flick-tagline" data-i18n="hero_tagline">一句话定位：Flick 是一个轻量 Windows 无限画布速记工具，用快捷键随手截图、粘贴灵感、快速整理。</p>
     <div class="flick-cta">
-      <a href="assets/flick/Flick-Setup-1.1.0.exe" class="btn btn-primary">⬇ 下载 Windows 安装包</a>
-      <a href="#demo" class="btn btn-secondary">看演示</a>
+      <a href="assets/flick/Flick-Setup-1.0.4.exe" class="btn btn-primary" data-i18n="cta_download">⬇ 下载 Windows 安装包</a>
+      <a href="#demo" class="btn btn-secondary" data-i18n="cta_demo">看演示</a>
     </div>
   </section>
 
   <!-- 3 张 GIF 演示 -->
   <section class="flick-section" id="demo">
-    <h2 class="flick-section-title">3 张 GIF 演示</h2>
-    <p class="flick-section-sub">三秒看懂 Flick 怎么用</p>
+    <h2 class="flick-section-title" data-i18n="demo_title">3 张 GIF 演示</h2>
+    <p class="flick-section-sub" data-i18n="demo_sub">三秒看懂 Flick 怎么用</p>
     <div class="demo-grid">
 
       <article class="demo-card">
         <div class="demo-frame">
-          <img src="assets/flick/demo-1.gif" alt="Flick 无限画布演示" loading="lazy" onerror="this.classList.add('is-missing')">
-          <div class="demo-missing"><strong>demo-1.gif</strong><span>请把 GIF 放到 assets/flick/</span></div>
+          <img src="assets/flick/demo-1.gif" alt="Flick 无限画布演示" loading="lazy" onerror="this.classList.add('is-missing')" data-i18n-alt="demo1_alt">
+          <div class="demo-missing"><strong>demo-1.gif</strong><span data-i18n="demo_missing">请把 GIF 放到 assets/flick/</span></div>
         </div>
         <div class="demo-body">
-          <h3>无限画布</h3>
-          <p>双击随手记录，文字、图片、截图都在同一块画布。</p>
+          <h3 data-i18n="demo1_title">无限画布</h3>
+          <p data-i18n="demo1_desc">双击随手记录，文字、图片、截图都在同一块画布。</p>
         </div>
       </article>
 
       <article class="demo-card">
         <div class="demo-frame">
-          <img src="assets/flick/demo-2.gif" alt="Flick 截图速记演示" loading="lazy" onerror="this.classList.add('is-missing')">
-          <div class="demo-missing"><strong>demo-2.gif</strong><span>请把 GIF 放到 assets/flick/</span></div>
+          <img src="assets/flick/demo-2.gif" alt="Flick 截图速记演示" loading="lazy" onerror="this.classList.add('is-missing')" data-i18n-alt="demo2_alt">
+          <div class="demo-missing"><strong>demo-2.gif</strong><span data-i18n="demo_missing">请把 GIF 放到 assets/flick/</span></div>
         </div>
         <div class="demo-body">
-          <h3>截图速记</h3>
-          <p>Ctrl+Shift+A 截图，自动贴到画布，不用切来切去。</p>
+          <h3 data-i18n="demo2_title">截图速记</h3>
+          <p data-i18n="demo2_desc">Ctrl+Shift+A 截图，自动贴到画布，不用切来切去。</p>
         </div>
       </article>
 
       <article class="demo-card">
         <div class="demo-frame">
-          <img src="assets/flick/demo-3.gif" alt="Flick 一键整理演示" loading="lazy" onerror="this.classList.add('is-missing')">
-          <div class="demo-missing"><strong>demo-3.gif</strong><span>请把 GIF 放到 assets/flick/</span></div>
+          <img src="assets/flick/demo-3.gif" alt="Flick 一键整理演示" loading="lazy" onerror="this.classList.add('is-missing')" data-i18n-alt="demo3_alt">
+          <div class="demo-missing"><strong>demo-3.gif</strong><span data-i18n="demo_missing">请把 GIF 放到 assets/flick/</span></div>
         </div>
         <div class="demo-body">
-          <h3>一键整理</h3>
-          <p>选中多个节点，Shift+O / Shift+P 快速对齐排版。</p>
+          <h3 data-i18n="demo3_title">一键整理</h3>
+          <p data-i18n="demo3_desc">选中多个节点，Shift+O / Shift+P 快速对齐排版。</p>
         </div>
       </article>
 
@@ -462,17 +463,17 @@
 
   <!-- 下载 -->
   <section class="flick-section" id="download">
-    <h2 class="flick-section-title">下载 Flick</h2>
-    <p class="flick-section-sub">v1.1.0 · Windows 10 / 11 · x64</p>
+    <h2 class="flick-section-title" data-i18n="download_title">下载 Flick</h2>
+    <p class="flick-section-sub" data-i18n="download_sub">v1.0.4 · Windows 10 / 11 · x64</p>
     <div class="download-grid">
 
       <article class="download-card">
-        <span class="download-recommend">推荐</span>
+        <span class="download-recommend" data-i18n="download_recommend">推荐</span>
         <div class="download-icon">📦</div>
-        <h3>Windows 安装包</h3>
-        <p>标准安装，可设置开机自启，适合日常主力机。</p>
-        <span class="download-meta">Flick-Setup-1.1.0.exe · ~4.2 MB</span>
-        <a href="assets/flick/Flick-Setup-1.1.0.exe" class="btn btn-primary">下载安装包</a>
+        <h3 data-i18n="download_installer">Windows 安装包</h3>
+        <p data-i18n="download_installer_desc">标准安装，可设置开机自启，适合日常主力机。</p>
+        <span class="download-meta">Flick-Setup-1.0.4.exe · ~4.2 MB</span>
+        <a href="assets/flick/Flick-Setup-1.0.4.exe" class="btn btn-primary" data-i18n="download_btn">下载安装包</a>
       </article>
 
     </div>
@@ -480,101 +481,101 @@
 
   <!-- 快捷键一览 -->
   <section class="flick-section" id="shortcuts">
-    <h2 class="flick-section-title">快捷键一览</h2>
-    <p class="flick-section-sub">默认快捷键，可在设置中修改</p>
+    <h2 class="flick-section-title" data-i18n="shortcuts_title">快捷键一览</h2>
+    <p class="flick-section-sub" data-i18n="shortcuts_sub">默认快捷键，可在设置中修改</p>
     <div class="shortcut-list">
 
       <div class="shortcut-item">
-        <span>显示 / 隐藏窗口</span>
+        <span data-i18n="sc_toggle">显示 / 隐藏窗口</span>
         <span><kbd>Ctrl</kbd> + <kbd>Space</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>截图速记</span>
+        <span data-i18n="sc_capture">截图速记</span>
         <span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>选择工具</span>
+        <span data-i18n="sc_select">选择工具</span>
         <span><kbd>V</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>矩形 / 横线 / 箭头 / 文字</span>
+        <span data-i18n="sc_shapes">矩形 / 横线 / 箭头 / 文字</span>
         <span><kbd>R</kbd> <kbd>L</kbd> <kbd>A</kbd> <kbd>T</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>粘贴图片 / 文字</span>
+        <span data-i18n="sc_paste">粘贴图片 / 文字</span>
         <span><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>保存</span>
+        <span data-i18n="sc_save">保存</span>
         <span><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>导出</span>
+        <span data-i18n="sc_export">导出</span>
         <span><kbd>Ctrl</kbd> + <kbd>E</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>撤销 / 重做</span>
+        <span data-i18n="sc_undo">撤销 / 重做</span>
         <span><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>删除选中</span>
+        <span data-i18n="sc_delete">删除选中</span>
         <span><kbd>Delete</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>抓手 / 平移</span>
+        <span data-i18n="sc_pan">抓手 / 平移</span>
         <span><kbd>Space</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>水平居中 / 垂直居中</span>
+        <span data-i18n="sc_align">水平居中 / 垂直居中</span>
         <span><kbd>Shift</kbd> + <kbd>O</kbd> / <kbd>Shift</kbd> + <kbd>P</kbd></span>
       </div>
 
       <div class="shortcut-item">
-        <span>快捷键面板</span>
+        <span data-i18n="sc_panel">快捷键面板</span>
         <span><kbd>?</kbd></span>
       </div>
 
     </div>
-    <p class="shortcut-note">* 快捷键为 Flick v1.1.0 默认设置，可在“快捷键”面板中修改。</p>
+    <p class="shortcut-note" data-i18n="shortcuts_note">* 快捷键为 Flick v1.0.4 默认设置，可在“快捷键”面板中修改。</p>
   </section>
 
   <!-- 用户反馈 -->
   <section class="flick-section" id="feedback">
-    <h2 class="flick-section-title">用户反馈</h2>
-    <p class="flick-section-sub">来自第一批内测用户</p>
+    <h2 class="flick-section-title" data-i18n="feedback_title">用户反馈</h2>
+    <p class="flick-section-sub" data-i18n="feedback_sub">来自第一批内测用户</p>
     <div class="feedback-grid">
 
       <figure class="feedback-card">
         <div class="stars">★★★★★</div>
-        <blockquote>“开会时随手截图贴到画布，比聊天记录好用多了。”</blockquote>
-        <figcaption class="feedback-author">阿哲 · 产品经理</figcaption>
+        <blockquote data-i18n="feedback1_quote">“开会时随手截图贴到画布，比聊天记录好用多了。”</blockquote>
+        <figcaption class="feedback-author" data-i18n="feedback1_author">阿哲 · 产品经理</figcaption>
       </figure>
 
       <figure class="feedback-card">
         <div class="stars">★★★★★</div>
-        <blockquote>“无限画布很适合头脑风暴，不用来回开文档。”</blockquote>
-        <figcaption class="feedback-author">Momo · 运营</figcaption>
+        <blockquote data-i18n="feedback2_quote">“无限画布很适合头脑风暴，不用来回开文档。”</blockquote>
+        <figcaption class="feedback-author" data-i18n="feedback2_author">Momo · 运营</figcaption>
       </figure>
 
       <figure class="feedback-card">
         <div class="stars">★★★★☆</div>
-        <blockquote>“快捷键很跟手，Ctrl+Space 呼出已经成肌肉记忆了。”</blockquote>
-        <figcaption class="feedback-author">Kevin · 开发</figcaption>
+        <blockquote data-i18n="feedback3_quote">“快捷键很跟手，Ctrl+Space 呼出已经成肌肉记忆了。”</blockquote>
+        <figcaption class="feedback-author" data-i18n="feedback3_author">Kevin · 开发</figcaption>
       </figure>
 
     </div>
     <div class="feedback-cta">
-      <a href="mailto:908065114@qq.com?subject=Flick%20反馈" class="btn btn-secondary">📮 提交你的反馈</a>
+      <a href="mailto:908065114@qq.com?subject=Flick%20Feedback" class="btn btn-secondary" data-i18n="feedback_cta">📮 提交你的反馈</a>
     </div>
   </section>
 
@@ -583,8 +584,8 @@
 <!-- Footer -->
 <footer class="footer">
   <div class="container">
-    <p>© 2026 里维斯 · Flick v1.1.0</p>
-    <p>由 GitHub Pages 托管</p>
+    <p data-i18n="footer_copyright">© 2026 里维斯 · Flick v1.0.4</p>
+    <p data-i18n="footer_hosted">由 GitHub Pages 托管</p>
   </div>
 </footer>
 
@@ -622,6 +623,155 @@
   toggle.addEventListener('click', function() {
     setTheme(getTheme() === 'dark' ? 'light' : 'dark');
   });
+
+  // ===== Flick landing page i18n =====
+  var I18N = {
+    zh: {
+      skip: '跳到主要内容',
+      nav_download: '下载',
+      nav_demo: '演示',
+      nav_shortcuts: '快捷键',
+      nav_feedback: '反馈',
+      logo_alt: 'Flick 图标',
+      badge: 'Flick · Windows 无限画布',
+      hero_title: '灵感，随手记在无限画布上',
+      hero_tagline: '一句话定位：Flick 是一个轻量 Windows 无限画布速记工具，用快捷键随手截图、粘贴灵感、快速整理。',
+      cta_download: '⬇ 下载 Windows 安装包',
+      cta_demo: '看演示',
+      demo_title: '3 张 GIF 演示',
+      demo_sub: '三秒看懂 Flick 怎么用',
+      demo_missing: '请把 GIF 放到 assets/flick/',
+      demo1_alt: 'Flick 无限画布演示',
+      demo1_title: '无限画布',
+      demo1_desc: '双击随手记录，文字、图片、截图都在同一块画布。',
+      demo2_alt: 'Flick 截图速记演示',
+      demo2_title: '截图速记',
+      demo2_desc: 'Ctrl+Shift+A 截图，自动贴到画布，不用切来切去。',
+      demo3_alt: 'Flick 一键整理演示',
+      demo3_title: '一键整理',
+      demo3_desc: '选中多个节点，Shift+O / Shift+P 快速对齐排版。',
+      download_title: '下载 Flick',
+      download_sub: 'v1.0.4 · Windows 10 / 11 · x64',
+      download_recommend: '推荐',
+      download_installer: 'Windows 安装包',
+      download_installer_desc: '标准安装，可设置开机自启，适合日常主力机。',
+      download_btn: '下载安装包',
+      shortcuts_title: '快捷键一览',
+      shortcuts_sub: '默认快捷键，可在设置中修改',
+      sc_toggle: '显示 / 隐藏窗口',
+      sc_capture: '截图速记',
+      sc_select: '选择工具',
+      sc_shapes: '矩形 / 横线 / 箭头 / 文字',
+      sc_paste: '粘贴图片 / 文字',
+      sc_save: '保存',
+      sc_export: '导出',
+      sc_undo: '撤销 / 重做',
+      sc_delete: '删除选中',
+      sc_pan: '抓手 / 平移',
+      sc_align: '水平居中 / 垂直居中',
+      sc_panel: '快捷键面板',
+      shortcuts_note: '* 快捷键为 Flick v1.0.4 默认设置，可在“快捷键”面板中修改。',
+      feedback_title: '用户反馈',
+      feedback_sub: '来自第一批内测用户',
+      feedback1_quote: '“开会时随手截图贴到画布，比聊天记录好用多了。”',
+      feedback1_author: '阿哲 · 产品经理',
+      feedback2_quote: '“无限画布很适合头脑风暴，不用来回开文档。”',
+      feedback2_author: 'Momo · 运营',
+      feedback3_quote: '“快捷键很跟手，Ctrl+Space 呼出已经成肌肉记忆了。”',
+      feedback3_author: 'Kevin · 开发',
+      feedback_cta: '📮 提交你的反馈',
+      footer_copyright: '© 2026 里维斯 · Flick v1.0.4',
+      footer_hosted: '由 GitHub Pages 托管'
+    },
+    en: {
+      skip: 'Skip to main content',
+      nav_download: 'Download',
+      nav_demo: 'Demo',
+      nav_shortcuts: 'Shortcuts',
+      nav_feedback: 'Feedback',
+      logo_alt: 'Flick icon',
+      badge: 'Flick · Infinite canvas for Windows',
+      hero_title: 'Capture ideas on an infinite canvas',
+      hero_tagline: 'Flick is a lightweight Windows infinite-canvas note-taking tool: capture screenshots, paste ideas, and organize them quickly with shortcuts.',
+      cta_download: '⬇ Download for Windows',
+      cta_demo: 'See demo',
+      demo_title: '3 GIF demos',
+      demo_sub: 'See how Flick works in seconds',
+      demo_missing: 'Place the GIF in assets/flick/',
+      demo1_alt: 'Flick infinite canvas demo',
+      demo1_title: 'Infinite canvas',
+      demo1_desc: 'Double-click to jot down anything — text, images, and screenshots live on one canvas.',
+      demo2_alt: 'Flick screenshot capture demo',
+      demo2_title: 'Screenshot notes',
+      demo2_desc: 'Press Ctrl+Shift+A to capture and paste it straight onto the canvas.',
+      demo3_alt: 'Flick one-click organize demo',
+      demo3_title: 'One-click organize',
+      demo3_desc: 'Select multiple nodes and press Shift+O / Shift+P to align them quickly.',
+      download_title: 'Download Flick',
+      download_sub: 'v1.0.4 · Windows 10 / 11 · x64',
+      download_recommend: 'Recommended',
+      download_installer: 'Windows Installer',
+      download_installer_desc: 'Standard installer with optional auto-start; ideal for daily use.',
+      download_btn: 'Download installer',
+      shortcuts_title: 'Shortcuts',
+      shortcuts_sub: 'Default shortcuts, editable in Settings',
+      sc_toggle: 'Show / hide window',
+      sc_capture: 'Capture note',
+      sc_select: 'Select tool',
+      sc_shapes: 'Rect / Line / Arrow / Text',
+      sc_paste: 'Paste image / text',
+      sc_save: 'Save',
+      sc_export: 'Export',
+      sc_undo: 'Undo / Redo',
+      sc_delete: 'Delete selected',
+      sc_pan: 'Pan / move',
+      sc_align: 'Align horizontally / vertically',
+      sc_panel: 'Shortcut panel',
+      shortcuts_note: '* Shortcuts are Flick v1.0.4 defaults; edit them in the Shortcuts panel.',
+      feedback_title: 'User feedback',
+      feedback_sub: 'From our first beta users',
+      feedback1_quote: '“I screenshot during meetings and drop it onto the canvas — much better than chat logs.”',
+      feedback1_author: 'A-Zhe · Product Manager',
+      feedback2_quote: '“The infinite canvas is great for brainstorming without switching documents.”',
+      feedback2_author: 'Momo · Operations',
+      feedback3_quote: '“Shortcuts feel snappy; Ctrl+Space is already muscle memory.”',
+      feedback3_author: 'Kevin · Developer',
+      feedback_cta: '📮 Send your feedback',
+      footer_copyright: '© 2026 Leevis · Flick v1.0.4',
+      footer_hosted: 'Hosted on GitHub Pages'
+    }
+  };
+
+  var lang = 'zh';
+  try {
+    var savedLang = localStorage.getItem('leevis-flick-lang');
+    if (savedLang === 'en' || savedLang === 'zh') lang = savedLang;
+    else if ((navigator.language || '').toLowerCase().startsWith('en')) lang = 'en';
+  } catch(e) {}
+
+  function applyLang() {
+    html.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (I18N[lang][key]) el.textContent = I18N[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-alt]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-alt');
+      if (I18N[lang][key]) el.setAttribute('alt', I18N[lang][key]);
+    });
+    var langBtn = document.getElementById('langToggle');
+    if (langBtn) langBtn.textContent = lang === 'en' ? '中' : 'EN';
+  }
+
+  var langToggle = document.getElementById('langToggle');
+  if (langToggle) {
+    langToggle.addEventListener('click', function() {
+      lang = lang === 'zh' ? 'en' : 'zh';
+      try { localStorage.setItem('leevis-flick-lang', lang); } catch(e) {}
+      applyLang();
+    });
+  }
+  applyLang();
 
   // Nav scroll effect
   var ticking = false;
