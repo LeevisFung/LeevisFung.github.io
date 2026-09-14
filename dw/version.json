@@ -1,0 +1,11 @@
+{
+  "schema": "dw/version@1",
+  "at": "2026-09-12T00:00:00Z",
+  "latest": "6.0.0",
+  "minSupported": "6.0.0",
+  "title": "初始版本",
+  "changes": [],
+  "howToGet": "凭你的激活码去闲鱼找我，免费拿新版",
+  "url": "",
+  "note": "latest 是当前最新版本号；minSupported 以下版本会提示必须升级。发新版时改这两行 + title + changes 即可。"
+}
