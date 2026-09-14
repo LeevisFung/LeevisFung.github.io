@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>CORS 探测</title>
+<style>body{font:13px/1.7 monospace;background:#111;color:#ddd;padding:20px}pre{white-space:pre-wrap}</style>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script>
+/* 从 https://leevisfung.github.io 这个 origin 出发，探测各家模型 API 的 CORS。
+   用假 key：只看 fetch 是否被浏览器拦。
+   - resolve（任意状态码）→ CORS 通过 ✅
+   - reject TypeError  → 被 CORS 拦 ❌ */
+const TARGETS = [
+  ['DeepSeek',      'https://api.deepseek.com/chat/completions'],
+  ['Kimi/Moonshot', 'https://api.moonshot.cn/v1/chat/completions'],
+  ['智谱 BigModel',  'https://open.bigmodel.cn/api/paas/v4/chat/completions'],
+  ['通义 DashScope', 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'],
+  ['硅基流动',       'https://api.siliconflow.cn/v1/chat/completions'],
+  ['OpenRouter',    'https://openrouter.ai/api/v1/chat/completions'],
+  ['火山方舟',       'https://ark.cn-beijing.volces.com/api/v3/chat/completions'],
+  ['MiniMax',       'https://api.minimax.chat/v1/text/chatcompletion_v2'],
+  ['Groq',          'https://api.groq.com/openai/v1/chat/completions'],
+  ['Anthropic',     'https://api.anthropic.com/v1/messages'],
+  ['OpenAI',        'https://api.openai.com/v1/chat/completions']
+];
+const body = JSON.stringify({model:'probe', messages:[{role:'user',content:'hi'}], max_tokens:1});
+(async () => {
+  const lines = ['origin = ' + location.origin, ''];
+  for (const [name, url] of TARGETS) {
+    let line;
+    const t0 = performance.now();
+    try {
+      const r = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer sk-probe-not-a-real-key'},
+        body
+      });
+      const ms = Math.round(performance.now() - t0);
+      line = `✅ ${name.padEnd(16)} HTTP ${r.status}  (${ms}ms)  ← CORS 通过`;
+    } catch (e) {
+      const ms = Math.round(performance.now() - t0);
+      line = `❌ ${name.padEnd(16)} ${String(e.message||e).slice(0,42)}  (${ms}ms)  ← 被拦或不可达`;
+    }
+    lines.push(line);
+    document.getElementById('out').textContent = lines.join('\n');
+  }
+  lines.push('', 'DONE');
+  document.getElementById('out').textContent = lines.join('\n');
+  window.__RESULT__ = lines.join('\n');
+})();
+</script>
+</body></html>
