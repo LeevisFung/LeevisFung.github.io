@@ -734,6 +734,11 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 .dlg-q .ql{font-size:11px;color:var(--txt-4);margin-top:4px}
 .dlg-pt{margin-top:8px;padding:8px 11px;border-radius:7px;background:var(--surface-2);cursor:pointer}
 .dlg-pt:hover{background:var(--surface-3)}
+/* 版本更新弹窗 */
+.updkicker{font-size:10.5px;letter-spacing:.12em;color:var(--accent);margin-bottom:6px}
+.updsub{font-size:12.5px;color:var(--txt-3);line-height:1.7;margin-bottom:12px}
+.updlist{margin:0;padding-left:18px;font-size:12.8px;line-height:1.95;color:var(--txt-2);max-height:min(42vh,320px);overflow:auto}
+.updlist li{margin-bottom:1px}
 .tgtbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:11px 14px;
   border-radius:9px;background:var(--accent-bg);border:1px solid var(--accent-line);font-size:13px;color:var(--txt-2)}
 .tgtbar b{color:var(--accent);font-weight:600}
@@ -3031,7 +3036,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.0';
+const APP_VER = '6.1.1';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 const Updater = {
   info: null, checked: false,
@@ -3043,7 +3048,7 @@ const Updater = {
       this.info = j; this.checked = true;
       const newer = this.cmp(j.latest, APP_VER) > 0;
       const tooOld = j.minSupported && this.cmp(APP_VER, j.minSupported) < 0;
-      if (newer) this.banner(j, tooOld);
+      if (newer) { this.banner(j, tooOld); this.popup(j); }
       else if (!quiet) toast('已是最新版 v' + APP_VER, 3000);
       this.renderSettings();
       return { ok: true, latest: j.latest, newer };
@@ -3068,6 +3073,42 @@ const Updater = {
     b.onclick = () => { go('settings'); setTimeout(() => { const c = $('#updCard'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 200); };
     el.parentElement.appendChild(b);
   },
+  /* 有新版本时弹一次 —— 每个版本只弹一次（记在 localStorage），
+     之后再想知道更新了什么，点顶栏那个 chip 去设置页看。 */
+  popup(j) {
+    if (!j || !j.latest) return;
+    let seen = '';
+    try { seen = localStorage.getItem('dw.updSeen') || ''; } catch (e) { }
+    if (seen === j.latest) return;
+    if (document.querySelector('.updModal')) return;
+
+    const mark = () => { try { localStorage.setItem('dw.updSeen', j.latest); } catch (e) { } };
+    const el = document.createElement('div');
+    el.className = 'dlgLayer updModal';
+    el.innerHTML = `<div class="dlg" style="max-width:520px;text-align:left">
+      <div class="updkicker">版本更新</div>
+      <h4 style="margin-bottom:6px">更新到 v${esc(j.latest)}</h4>
+      ${j.title ? `<div class="updsub">${esc(j.title)}</div>` : ''}
+      ${(j.changes || []).length ? `<ul class="updlist">${j.changes.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      <div class="updp" style="margin-top:12px">${esc(j.howToGet || '下载后直接打开就行 —— 你的书、原文、知识包和激活码都还在，不用重新配。')}</div>
+      <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px">
+        <button class="btn pri" data-get>下载新版</button>
+        <button class="btn" data-later>以后再说</button>
+      </div>
+    </div>`;
+    document.body.appendChild(el);
+    const done = () => { mark(); el.remove(); };
+    el.onclick = e => { if (e.target === el) done(); };
+    el.querySelector('[data-later]').onclick = done;
+    el.querySelector('[data-get]').onclick = () => {
+      mark();
+      const u = j.url || (DW_BASE + encodeURIComponent('知识蒸馏工作台_v' + (j.latest || APP_VER) + '.html'));
+      window.open(u, '_blank');
+      el.remove();
+      toast('已在新标签页打开下载 —— 下载完双击打开就行', 5200);
+    };
+  },
+
   renderSettings() {
     const box = $('#updCard'); if (!box) return;
     const j = this.info;
