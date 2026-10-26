@@ -702,6 +702,15 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 /* 「+N 本」的来源清单弹层 */
 /* 详情面板标题行：标题 + 右侧小操作 */
 /* 书架：已作废清单 */
+/* 合并知识包弹窗 */
+.dgplist{display:flex;flex-direction:column;gap:5px;max-height:min(46vh,340px);overflow:auto}
+.dgprow{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;
+  border:1px solid var(--line-2);background:var(--surface-2);cursor:pointer;font-size:12.8px}
+.dgprow:hover{border-color:var(--accent-line)}
+.dgprow.on{border-color:var(--accent-line);background:var(--accent-bg)}
+.dgprow input{flex:0 0 auto;margin:0}
+.dgprow .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
+.dgprow .meta{flex:0 0 auto;font-size:11px;color:var(--txt-4)}
 .depcard{margin:0 0 4px;border:1px solid var(--line-2);border-radius:var(--r-lg);background:var(--surface-2);padding:13px 16px}
 .dephead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:9px}
 .dephead b{font-size:13px;color:var(--txt-2)}
@@ -3036,7 +3045,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.1';
+const APP_VER = '6.1.2';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 const Updater = {
   info: null, checked: false,
@@ -4996,6 +5005,7 @@ const Views = {
         <div class="asum"><b>${T.fused}</b><span>融合技能</span></div>
         <div style="margin-left:auto" class="inline">
           <span class="micro" style="margin-right:2px">导出 → 书卡右边的 ⋯</span>
+          ${packs.length > 1 ? `<button class="btn sm" id="mergeBtn2" title="把两个以上的知识包去重合并成一个新包">合并知识包…</button>` : ''}
           <button class="btn sm" id="impBtn2" title="导入一个知识包 JSON（全局，不属于哪本书）">导入知识包</button>
         </div>
       </div>
@@ -5019,6 +5029,7 @@ const Views = {
       <input type="file" id="impFile2" accept=".json" style="display:none">
     </div>`;
 
+    if ($('#mergeBtn2')) $('#mergeBtn2').onclick = () => Dialog.mergePacks();
     el.querySelectorAll('[data-restore]').forEach(b => b.onclick = async () => {
       const [pkId, id, kind] = b.dataset.restore.split('|');
       const pk = (State.packs || []).find(x => x.id === pkId); if (!pk) return;
@@ -6214,6 +6225,60 @@ const Dialog = {
       document.addEventListener('keydown', onKey);
       setTimeout(() => { const y = el.querySelector('[data-yes]'); if (y) y.focus(); }, 30);
     });
+  },
+  /* 合并知识包：勾选两个以上 → 去重合并成一个新包（原包保留） */
+  mergePacks() {
+    const packs = (State.packs || []).filter(Boolean);
+    if (packs.length < 2) return toast('只有一个知识包，没有可合并的', 3200);
+    const pick = new Set();
+    const el = document.createElement('div');
+    el.className = 'dlgLayer';
+    el.innerHTML = `<div class="dlg" style="max-width:520px;text-align:left">
+      <h4 style="margin-bottom:6px">合并知识包</h4>
+      <div class="updp" style="margin-bottom:12px">勾选两个以上。同名知识点会去重，关系自动重连，合并成<b>一个新的包</b>；原来的包都保留，可以自己删。</div>
+      <div class="dgplist"></div>
+      <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px">
+        <button class="btn pri" data-ok disabled>合并</button>
+        <button class="btn" data-cancel>取消</button>
+      </div>
+    </div>`;
+    const listBox = el.querySelector('.dgplist');
+    const okBtn = el.querySelector('[data-ok]');
+    const sync = () => {
+      const n = pick.size;
+      okBtn.disabled = n < 2;
+      okBtn.textContent = n ? '合并选中的 ' + n + ' 个' : '合并';
+    };
+    packs.forEach(pk => {
+      const n = (pk.sources || []).length, np = (pk.points || []).length;
+      const row = document.createElement('label');
+      row.className = 'dgprow';
+      row.innerHTML = `<input type="checkbox"><span class="nm">${esc((pk.meta && pk.meta.name) || pk.id)}</span>
+        <span class="meta">${n} 本 · ${np} 知识点</span>`;
+      row.querySelector('input').onchange = e => {
+        e.target.checked ? pick.add(pk.id) : pick.delete(pk.id);
+        row.classList.toggle('on', e.target.checked); sync();
+      };
+      listBox.appendChild(row);
+    });
+    sync();
+    document.body.appendChild(el);
+    const close = () => el.remove();
+    el.onclick = e => { if (e.target === el) close(); };
+    el.querySelector('[data-cancel]').onclick = close;
+    okBtn.onclick = async () => {
+      const chosen = packs.filter(p => pick.has(p.id));
+      if (chosen.length < 2) return;
+      const merged = mergePacks(chosen);
+      if (!merged) { toast('合并失败', 3000); return; }
+      merged.id = 'pk-' + Date.now();
+      await DB.put(merged);
+      await loadPacks();
+      close();
+      go('shelf');
+      toast('合并完成：' + merged.points.length + ' 知识点 / ' + merged.skills.length
+        + ' 技能 / ' + merged.relations.length + ' 关系（原包都还在）', 5200);
+    };
   },
   /* 点引用/依据 → 弹出这条知识点（或技能）的内容 + 原文引文 */
   node(id) {
