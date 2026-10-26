@@ -3065,7 +3065,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.4';
+const APP_VER = '6.1.5';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -3980,6 +3980,12 @@ ${skills}
     const grow = $('#optGrow') ? $('#optGrow').checked : true;
     /* 断点续传：上一轮已经蒸好的片段直接复用，只补失败的 */
     const resume = $('#optResume') ? $('#optResume').checked : true;
+    /* 深思模式：默认关。实测两者单条质量一致（引文 100%、结构 100%），
+       深思只是条数多约 20%，代价是慢 3 倍、贵 3.5 倍、大材料更容易空返回。 */
+    const deep = $('#optDeep') ? $('#optDeep').checked : false;
+    Settings.d.distill.deep = deep;
+    Settings.save();
+    if (deep) logs('深思模式：模型会先想一会儿再答 —— 更全面，但慢约 3 倍');
     Settings.d.distill.goal = (($('#pickGoal') || {}).value || '').trim();
     const ck = (Settings.d.distill.chunk | 0) || 1;      // 分块由 autoChunkFor 决定
     const strategyChanged = false;
@@ -4035,13 +4041,13 @@ ${skills}
                   try {
                     raw = await this.callStream(this.promptFor(d, j.ck),
                       (delta, n) => { j.recv = n; scheduleJobs(); },
-                      { onThink: n => { j.thinking = n; scheduleJobs(); } });
+                      { noThink: !deep, onThink: n => { j.thinking = n; scheduleJobs(); } });
                   } catch (e) {
                     lastErr = e;
                     // 流式不被支持 → 退回一次性调用（不重试）
                     if (/不支持|stream|400|415/i.test(String(e.message || e))) {
                       j.msg = '该模型不支持流式，改用一次性返回';
-                      try { raw = await this.call(this.promptFor(d, j.ck)); } catch (e2) { lastErr = e2; }
+                      try { raw = await this.call(this.promptFor(d, j.ck), { noThink: !deep }); } catch (e2) { lastErr = e2; }
                       break;
                     }
                   }
@@ -4296,7 +4302,9 @@ function triageCard(d) {
    ══════════════════════════════════════════════════════════ */
 function chunkKey(d, ck) {
   const goal = (Settings.d.distill.goal || '').trim().slice(0, 40);
-  return 'ck:' + docHash(d) + ':' + ck.i + ':' + Settings.active().model + ':' + goal;
+  /* 深思 / 浅思的结果不一样，键里必须带上，否则深思时会直接复用到浅思的旧结果 */
+  const deep = Settings.d.distill.deep ? 'deep' : 'fast';
+  return 'ck:' + docHash(d) + ':' + ck.i + ':' + Settings.active().model + ':' + deep + ':' + goal;
 }
 async function chunkCacheGet(d, ck) {
   try { return await DB.kvGet(chunkKey(d, ck)); } catch (e) { return null; }
@@ -5245,6 +5253,10 @@ const Views = {
           <button class="btn ghost" id="clearBtn">清空材料</button>
           <label class="switch" style="flex:0 0 auto;margin-left:4px" title="失败后重跑时，已经蒸好的片段直接复用，只补失败的那几份">
             <input type="checkbox" id="optResume" checked><span class="tr"></span>跳过已蒸好的片段
+          </label>
+          <label class="switch" style="flex:0 0 auto;margin-left:4px" title="默认关：把材料拆成知识点，不需要长思考，关掉更快更省、也不会出现“想太久最后什么都没写”。
+勾上：让模型多想一会儿，条数通常多 20% 左右（实测引文准确率和结构完整度两者一样），但慢约 3 倍、更贵，超大材料也更容易失败。">
+            <input type="checkbox" id="optDeep"${(Settings.d.distill.deep ? ' checked' : '')}><span class="tr"></span>深思模式（更全面，慢 3 倍）
           </label>
           <span id="runHint" style="font-size:12px;color:var(--txt-3)"></span>
         </div>
