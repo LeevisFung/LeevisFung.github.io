@@ -3106,13 +3106,13 @@ const Updater = {
     const ug = $('#updGet');
     if (ug) ug.onclick = () => {
       /* 优先用 version.json 给的 url；没给就用约定路径（和本站同目录） */
-      const u = (this.info && this.info.url) ? this.info.url : (DW_BASE + encodeURIComponent('知识蒸馏工作台.html'));
+      const u = (this.info && this.info.url) ? this.info.url : (DW_BASE + encodeURIComponent('知识蒸馏工作台_v' + ((this.info && this.info.latest) || APP_VER) + '.html'));
       window.open(u, '_blank');
       toast('已在新标签页打开下载 —— 下载完双击打开就行', 5200);
     };
     const up = $('#updPath');
     if (up) {
-      const u = (this.info && this.info.url) ? this.info.url : (DW_BASE + encodeURIComponent('知识蒸馏工作台.html'));
+      const u = (this.info && this.info.url) ? this.info.url : (DW_BASE + encodeURIComponent('知识蒸馏工作台_v' + ((this.info && this.info.latest) || APP_VER) + '.html'));
       try { up.textContent = new URL(u).host; } catch (e) { up.textContent = ''; }
     }
     const lc = $('#licChange');
