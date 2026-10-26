@@ -3065,7 +3065,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.5';
+const APP_VER = '6.1.6';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -4736,7 +4736,13 @@ function dl(text, name, mime) {
   toast('已导出 ' + name, 2600);
 }
 const safeName = s => String(s || '知识包').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 60);
-function exportJSON(p) { dl(JSON.stringify(p, null, 2), safeName(p.meta.name) + '.json', 'application/json'); }
+/* 单包导出也带原文 —— 否则"导出 JSON 再导入"之后，点原文什么都看不到 */
+async function exportJSON(p) {
+  const texts = (typeof Store !== 'undefined' && Store.textsFor) ? await Store.textsFor([p]) : [];
+  const payload = Object.assign({}, p);
+  if (texts.length) payload.texts = texts;
+  dl(JSON.stringify(payload, null, 2), safeName(p.meta.name) + '.json', 'application/json');
+}
 function buildBoardHtml(p) {
   const tpl = document.getElementById('board-tpl').textContent.split('@@ES@@').join('<' + '/script');
   const pack = JSON.stringify(p).replace(/</g, '\\u003c');
@@ -4971,19 +4977,68 @@ const Store = {
     }
     return n;
   },
+  /* 只捞被引用的原文 —— 库里有孤儿也不用带 */
+  async textsFor(packs) {
+    const need = new Set();
+    (packs || []).forEach(p => (p.sources || []).forEach(x => { if (x.textId) need.add(x.textId); }));
+    const out = [];
+    for (const id of need) {
+      try { const t = await DB.getText(id); if (t) out.push(t); } catch (e) { }
+    }
+    return out;
+  },
   async exportAll() {
     const packs = await DB.all();
-    return JSON.stringify({ app: '知识蒸馏工作台', version: 'v2', at: new Date().toISOString(), packs }, null, 2);
+    /* v3：从这一版起带上原文。之前只导 packs，换台电脑/换浏览器恢复出来
+       知识包是全的，但"点原文"什么都看不到 —— 备份等于没有。 */
+    const texts = await this.textsFor(packs);
+    return JSON.stringify({ app: '知识蒸馏工作台', version: 'v3', at: new Date().toISOString(), packs, texts }, null, 2);
+  },
+  /* 把一个原文对象放进库。同 id 但内容不同 → 换新 id，并返回最终用的 id。
+     —— 不这么做的话，两次备份里的同名 doc-xxx 会互相覆盖，
+        知识包 A 的来源会读到知识包 B 的原文（用户报的"原文错乱"）。 */
+  async adoptText(t) {
+    if (!t || !t.id) return null;
+    try {
+      const old = await DB.getText(t.id);
+      if (!old) { await DB.putText(t); return t.id; }
+      if (String(old.text || '') === String(t.text || '')) return t.id;   // 同一份，直接用
+      const nid = t.id + '-i' + Math.random().toString(36).slice(2, 6);
+      await DB.putText(Object.assign({}, t, { id: nid }));
+      return nid;
+    } catch (e) { return null; }
   },
   async importAll(text) {
     const d = JSON.parse(text);
-    const packs = Array.isArray(d) ? d : (d.packs || []);
+    /* 认三种文件：数组 / {packs:[...]} / 裸的单包 */
+    const packs = Array.isArray(d) ? d : (Array.isArray(d.packs) ? d.packs : (d.sources && d.points ? [d] : []));
+    const texts = Array.isArray(d.texts) ? d.texts : [];
+    if (!packs.length) return { packs: 0, texts: 0, why: '这个文件里没有知识包' };
+
+    /* 先恢复原文，建 id 映射（源包里的 textId → 实际落库的 id） */
+    const tmap = {};
+    let nt = 0;
+    for (const t of texts) {
+      const got = await this.adoptText(t);
+      if (got) { tmap[t.id] = got; nt++; }
+    }
+
     let n = 0;
+    const taken = new Set((await DB.all()).map(x => x.id));
     for (const p of packs) {
       if (!p.sources || !p.points || !p.skills) continue;
-      await DB.put(p); n++;
+      const clean = JSON.parse(JSON.stringify(p));
+      clean.sources.forEach(src => {
+        if (src.textId && tmap[src.textId]) src.textId = tmap[src.textId];
+      });
+      clean.id = (clean.id || ('pk-' + Date.now())) + '';
+      /* 同一个 id 已经存在就换个新 id，别把用户现有包覆盖掉 */
+      if (taken.has(clean.id)) clean.id = 'pk-' + Date.now() + '-' + n;
+      taken.add(clean.id);
+      await DB.put(clean); n++;
     }
-    return n;
+    try { State.textIds = new Set(await DB.textIds()); } catch (e) { }
+    return { packs: n, texts: nt, why: '' };
   }
 };
 /* 实时显示浏览器配额与"按当前平均包大小还能装多少个"——不写死任何数字 */
@@ -5197,11 +5252,17 @@ const Views = {
     if (imp) imp.onchange = async () => {
       const f = imp.files[0]; if (!f) return;
       try {
-        const d = JSON.parse(await f.text());
-        d.id = d.id || ('pk-' + Date.now());
-        await saveVersioned(d); await loadPacks(); selectPack(d.id);
-        toast('已导入「' + ((d.meta && d.meta.name) || '知识包') + '」', 3200); Views.shelf();
-      } catch (e) { toast('导入失败：' + e.message, 4200); }
+        /* 走 Store.importAll：单包、{packs:[...]}、「导出全部」三种文件都能吃。
+           原来是直接 saveVersioned(整个文件) —— 拿「导出全部」的文件进来时
+           会把外层包装对象当成一个知识包存进库（没有 sources），
+           选中它整页就空了。 */
+        const res = await Store.importAll(await f.text());
+        if (!res.packs) throw new Error(res.why || '文件格式不对');
+        await loadPacks();
+        if (State.packs.length) selectPack(State.packs[State.packs.length - 1].id);
+        toast('已导入 ' + res.packs + ' 个知识包' + (res.texts ? ' · ' + res.texts + ' 份原文' : ''), 3600);
+        Views.shelf();
+      } catch (e) { toast('导入失败：' + e.message, 4600); }
       imp.value = '';
     };
   },
@@ -5777,7 +5838,13 @@ const Views = {
       const f = e.target.files[0]; if (!f) return;
       const r = new FileReader();
       r.onload = async () => {
-        try { const n = await Store.importAll(r.result); await loadPacks(); Views.settings(); toast(`已导入 ${n} 个知识包`); }
+        try {
+          const res = await Store.importAll(r.result);
+          await loadPacks(); Views.settings();
+          toast(res.packs
+            ? `已导入 ${res.packs} 个知识包${res.texts ? ' · ' + res.texts + ' 份原文' : ''}`
+            : ('没导入任何东西 —— ' + (res.why || '文件格式不对')), 5200);
+        }
         catch (err) { toast('导入失败：' + err.message, 4400); }
       };
       r.readAsText(f, 'utf-8');
@@ -5963,6 +6030,32 @@ function buildRuler() {
 }
 async function loadPacks() {
   State.packs = await DB.all();
+  /* 自愈：早期版本可能把「导出全部」的外层包装当成知识包存进了库
+     （那种对象的 packs 是数组、sources 没有）。这里自动展开成真包并删掉坏记录，
+     不让它留在库里把默认包占住导致整页空白。 */
+  try {
+    const bad = State.packs.filter(p => !Array.isArray(p.sources) && Array.isArray(p.packs));
+    if (bad.length) {
+      let fixed = 0;
+      const taken = new Set(State.packs.map(x => x.id));
+      for (const b of bad) {
+        for (const inner of b.packs) {
+          if (!inner || !Array.isArray(inner.sources)) continue;
+          const c = JSON.parse(JSON.stringify(inner));
+          c.id = c.id || ('pk-' + Date.now() + '-' + fixed);
+          if (taken.has(c.id)) c.id = 'pk-' + Date.now() + '-' + fixed;
+          taken.add(c.id);
+          await DB.put(c); fixed++;
+        }
+        await DB.del(b.id);
+      }
+      State.packs = await DB.all();
+      setTimeout(() => toast('修复了 ' + bad.length + ' 条损坏的记录（已还原出 ' + fixed + ' 个知识包）', 6200), 900);
+    }
+    /* 剩下的、连 packs 都没有的垃圾记录直接不参与渲染（不删，避免误删） */
+    State.packs = State.packs.filter(p => Array.isArray(p.sources));
+  } catch (e) { }
+
   if (!State.packs.length) { State.pack = null; Graph.build(); Graph.draw(); panel(); gauges(); renderGbar(); renderLegend(); }
   else { State.pack = State.packs.find(p => p.id === (State.pack && State.pack.id)) || State.packs[0]; Graph.build(); panel(); gauges(); renderGbar(); renderLegend(); }
   renderPacks();
