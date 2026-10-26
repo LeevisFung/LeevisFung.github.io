@@ -1769,6 +1769,20 @@ const DB = {
       const tx = db.transaction('kv', 'readwrite').objectStore('kv').put(v, k);
       tx.onsuccess = () => res(true); tx.onerror = () => res(false);
     });
+  },
+  async kvDel(k) {
+    const db = await this.open();
+    return new Promise(res => {
+      const tx = db.transaction('kv', 'readwrite').objectStore('kv').delete(k);
+      tx.onsuccess = () => res(true); tx.onerror = () => res(false);
+    });
+  },
+  async kvKeys() {
+    const db = await this.open();
+    return new Promise(res => {
+      const r = db.transaction('kv', 'readonly').objectStore('kv').getAllKeys();
+      r.onsuccess = () => res(r.result || []); r.onerror = () => res([]);
+    });
   }
 };
 
@@ -3051,7 +3065,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.3';
+const APP_VER = '6.1.4';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -3644,11 +3658,29 @@ const Engine = {
     const base = (a.base || '').replace(/\/+$/, '');
     if (!base || !a.model) throw new Error('没有配置模型');
     const temp = (opts.temperature != null) ? opts.temperature : Settings.d.distill.temperature;
-    const r = await fetch(base + '/chat/completions', {
+    /* 思考模式：DeepSeek 默认打开、effort=high（官方文档）。蒸馏是结构化抽取，
+       不需要长思考 —— 开着的话一半输出预算花在 reasoning 上，大材料容易把正文挤没
+       （真实事故：23,678 字的材料挂了 19 分钟，最后"模型返回为空"）。
+       非 DeepSeek 的服务商可能不认这个参数 → 400 时自动去掉重试。 */
+    const noThink = (opts.noThink !== false) && (a.id === 'deepseek');
+    const mkBody = (withNoThink) => {
+      const body = { model: a.model, messages, temperature: temp, stream: true, stream_options: { include_usage: true } };
+      if (withNoThink) body.thinking = { type: 'disabled' };
+      return JSON.stringify(body);
+    };
+    const ctrl = new AbortController();
+    let r = await fetch(base + '/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-      body: JSON.stringify({ model: a.model, messages, temperature: temp, stream: true, stream_options: { include_usage: true } })
+      body: mkBody(noThink), signal: ctrl.signal
     });
+    if (!r.ok && noThink && r.status === 400) {
+      r = await fetch(base + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
+        body: mkBody(false)
+      });
+    }
     if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 160));
     const ct = (r.headers.get('content-type') || '').toLowerCase();
     if (!r.body || ct.includes('application/json')) {
@@ -3662,8 +3694,19 @@ const Engine = {
     const reader = r.body.getReader();
     const dec = new TextDecoder('utf-8');
     let buf = '', full = '';
+    /* 90 秒收不到任何数据就中止 —— 原来是死等，实测挂过 19 分钟。
+       思考模式下模型会先吐一大段 reasoning_content，那也算"有数据"，所以不会误杀。 */
+    const idleMs = opts.idleMs || 90000;
+    let thinkN = 0;
+    const readOrTimeout = () => new Promise((resolve, reject) => {
+      const t = setTimeout(() => {
+        try { ctrl.abort(); } catch (e) { }
+        reject(new Error('超过 ' + Math.round(idleMs / 1000) + ' 秒没有收到任何数据（模型或网络卡住了），已中止。可以重试这一份。'));
+      }, idleMs);
+      reader.read().then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+    });
     for (; ;) {
-      const { done, value } = await reader.read();
+      const { done, value } = await readOrTimeout();
       if (done) break;
       buf += dec.decode(value, { stream: true });
       const lines = buf.split('\n');
@@ -3676,7 +3719,10 @@ const Engine = {
         try {
           const j = JSON.parse(d);
           if (j.usage) countUsage(j.usage);
-          const delta = (j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content) || '';
+          const dlt = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+          // 思维链单独计数（不拼进正文）—— 至少让界面显示"模型在想"，别让人以为卡死
+          if (dlt.reasoning_content) { thinkN += String(dlt.reasoning_content).length; if (opts.onThink) opts.onThink(thinkN); }
+          const delta = dlt.content || '';
           if (delta) { full += delta; if (onDelta) onDelta(delta, full.length); }
         } catch (e) { }
       }
@@ -3697,17 +3743,21 @@ const Engine = {
     if (!base || !a.model) throw new Error('没有配置模型');
     const wantJson = opts.json !== false;
     const temp = (opts.temperature != null) ? opts.temperature : Settings.d.distill.temperature;
-    const mk = (jsonMode) => {
+    /* 同样关掉思考模式（见 callStream 里的说明） */
+    const noThink = (opts.noThink !== false) && (a.id === 'deepseek');
+    const mk = (jsonMode, withNoThink) => {
       const body = { model: a.model, messages, temperature: temp };
       if (jsonMode) body.response_format = { type: 'json_object' };
+      if (withNoThink) body.thinking = { type: 'disabled' };
       return {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
         body: JSON.stringify(body)
       };
     };
-    let r = await fetch(base + '/chat/completions', mk(wantJson));
-    if (wantJson && r.status === 400) r = await fetch(base + '/chat/completions', mk(false));
+    let r = await fetch(base + '/chat/completions', mk(wantJson, noThink));
+    if (r.status === 400 && noThink) r = await fetch(base + '/chat/completions', mk(wantJson, false));
+    if (wantJson && r.status === 400) r = await fetch(base + '/chat/completions', mk(false, false));
     if (!r.ok) {
       const t = (await r.text()).slice(0, 200);
       throw new Error(`${r.status} ${t}`);
@@ -3928,6 +3978,8 @@ ${skills}
     $('#card4').style.display = 'none';
     // 一键蒸馏：目标与跨来源开关都在拖拽区那一行，不再有单独的"策略"卡片
     const grow = $('#optGrow') ? $('#optGrow').checked : true;
+    /* 断点续传：上一轮已经蒸好的片段直接复用，只补失败的 */
+    const resume = $('#optResume') ? $('#optResume').checked : true;
     Settings.d.distill.goal = (($('#pickGoal') || {}).value || '').trim();
     const ck = (Settings.d.distill.chunk | 0) || 1;      // 分块由 autoChunkFor 决定
     const strategyChanged = false;
@@ -3963,17 +4015,40 @@ ${skills}
             renderJobs();
             try {
               if (!key) throw new Error('未配置模型：先去「模型与设置」把模型配好，再回来蒸馏');
+              /* ① 先看缓存：这一块上一轮蒸成功过就直接复用 */
+              let cached = null;
+              if (resume) cached = await chunkCacheGet(d, j.ck);
+              if (cached && cached.points) {
+                parts[j.ck.i] = cached;
+                j.ms = 0;
+                j.st = 'ok';
+                j.msg = '已蒸好 · 直接复用';
+                logs(`第 ${j.ck.i + 1} 块 · 上一轮已蒸好，跳过`);
+                renderJobs(); setBar(++done / total);
+                continue;
+              }
+              /* ② 没有缓存才真调；空返回自动重试一次 */
               {
-                let raw = '';
-                try {
-                  raw = await this.callStream(this.promptFor(d, j.ck), (delta, n) => { j.recv = n; scheduleJobs(); });
-                } catch (e) {
-                  // 流式不被支持时退回一次性调用，不让功能因此失效
-                  j.msg = '该模型不支持流式，改用一次性返回';
-                  raw = await this.call(this.promptFor(d, j.ck));
+                let raw = '', lastErr = null;
+                for (let attempt = 0; attempt < 2 && !raw; attempt++) {
+                  if (attempt) { j.msg = '返回为空，重试中…'; logs(`第 ${j.ck.i + 1} 块返回为空，重试一次`); renderJobs(); await new Promise(r => setTimeout(r, 1200)); }
+                  try {
+                    raw = await this.callStream(this.promptFor(d, j.ck),
+                      (delta, n) => { j.recv = n; scheduleJobs(); },
+                      { onThink: n => { j.thinking = n; scheduleJobs(); } });
+                  } catch (e) {
+                    lastErr = e;
+                    // 流式不被支持 → 退回一次性调用（不重试）
+                    if (/不支持|stream|400|415/i.test(String(e.message || e))) {
+                      j.msg = '该模型不支持流式，改用一次性返回';
+                      try { raw = await this.call(this.promptFor(d, j.ck)); } catch (e2) { lastErr = e2; }
+                      break;
+                    }
+                  }
                 }
-                if (!raw) throw new Error('模型返回为空');
+                if (!raw) throw (lastErr || new Error('模型返回为空'));
                 parts[j.ck.i] = extractJSON(raw);
+                if (parts[j.ck.i] && parts[j.ck.i].points) await chunkCachePut(d, j.ck, parts[j.ck.i]);
               }
               j.ms = Date.now() - j.t0;
               const np = (parts[j.ck.i].points || []).length, ns = (parts[j.ck.i].skills || []).length;
@@ -3989,12 +4064,23 @@ ${skills}
         };
         await Promise.all(Array.from({ length: concurrency }, worker));
         const ok = parts.filter(Boolean);
-        if (!ok.length) throw new Error(`《${d.name}》全部片段都失败了，看看上面的报错`);
+        /* 一份失败不再把整轮打断 —— 已经蒸好的几份要能存下来。
+           失败的那份下次重跑会自动复用成功的片段（断点续传）。 */
+        if (!ok.length) {
+          D.failedDocs = D.failedDocs || [];
+          D.failedDocs.push(d.name);
+          logs(`《${d.name}》全部片段都失败了 —— 已跳过，其余材料继续`, 'err');
+          continue;
+        }
         folded[d.id] = this.foldChunks(d, ok);
         logs(`《${d.name}》合并完成：${folded[d.id].points.length} 知识点 / ${folded[d.id].skills.length} 技能`);
       }
+      if (!Object.keys(folded).filter(k => k !== '__rel').length) {
+        throw new Error('所有材料都失败了，一份都没蒸出来 —— 看看上面的报错');
+      }
       D.phase = '正在合成知识包…'; renderJobs();
-      let pack = this.finalize(D.docs, folded, grow);
+      const okDocs = D.docs.filter(d => folded[d.id]);
+      let pack = this.finalize(okDocs, folded, grow);
       /* 指定了「蒸到哪个包」→ 先把新材料并进去，再统一跑跨来源生长
          （这样才能算出新材料与旧材料之间的呼应/对立，而不是只在新材料内部找） */
       const tgt = D.targetPack ? (State.packs || []).find(x => x.id === D.targetPack) : null;
@@ -4204,6 +4290,29 @@ function triageCard(d) {
 }
 /* 书的身份 = 正文哈希。同一本书不管蒸几次、从哪个文件来，哈希都一致。
    归一化：去掉所有空白 + 取前 40000 字 —— 避免同书不同排版被判成两本。 */
+/* ══════════════════════════════════════════════════════════
+   断点续传：每个片段蒸成功就落一条缓存，重跑时直接复用。
+   键包含 模型 + 目标，换了任何一个都不复用（结果本来就不同）。
+   ══════════════════════════════════════════════════════════ */
+function chunkKey(d, ck) {
+  const goal = (Settings.d.distill.goal || '').trim().slice(0, 40);
+  return 'ck:' + docHash(d) + ':' + ck.i + ':' + Settings.active().model + ':' + goal;
+}
+async function chunkCacheGet(d, ck) {
+  try { return await DB.kvGet(chunkKey(d, ck)); } catch (e) { return null; }
+}
+async function chunkCachePut(d, ck, val) {
+  try { await DB.kvSet(chunkKey(d, ck), val); } catch (e) { }
+}
+async function clearChunkCache() {
+  try {
+    const ids = (DB.kvKeys ? DB.kvKeys() : []) || [];
+    let n = 0;
+    for (const k of ids) { if (String(k).startsWith('ck:')) { await DB.kvDel(k); n++; } }
+    return n;
+  } catch (e) { return 0; }
+}
+
 function docHash(d) {
   if (d && d._h) return d._h;
   const t = String((d && d.text) || '').replace(/\s+/g, '').slice(0, 40000);
@@ -5134,6 +5243,9 @@ const Views = {
         <div class="inline">
           <button class="btn" id="runBtn" ${ready ? '' : 'disabled'}>重新蒸一次</button>
           <button class="btn ghost" id="clearBtn">清空材料</button>
+          <label class="switch" style="flex:0 0 auto;margin-left:4px" title="失败后重跑时，已经蒸好的片段直接复用，只补失败的那几份">
+            <input type="checkbox" id="optResume" checked><span class="tr"></span>跳过已蒸好的片段
+          </label>
           <span id="runHint" style="font-size:12px;color:var(--txt-3)"></span>
         </div>
         <div class="bar-hold" id="runBarWrap" style="display:none"><i id="runBar"></i></div>
@@ -5197,7 +5309,10 @@ const Views = {
     dz.addEventListener('drop', e => addFiles([...e.dataTransfer.files]));
     fi.addEventListener('change', () => addFiles([...fi.files]));
     $('#runBtn').addEventListener('click', () => Engine.run());
-    $('#clearBtn').addEventListener('click', () => { D.docs = []; D.jobs = []; D.pack = null; Views.distill(); });
+    $('#clearBtn').addEventListener('click', async () => {
+      try { await clearChunkCache(); } catch (e) { }
+      D.docs = []; D.jobs = []; D.pack = null; Views.distill();
+    });
     $('#saveBtn').addEventListener('click', async () => {
       if (!D.pack) return;
       D.pack.id = D.pack.id || 'pk-' + Date.now();
