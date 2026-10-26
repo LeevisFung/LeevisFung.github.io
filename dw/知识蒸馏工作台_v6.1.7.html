@@ -3065,7 +3065,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.6';
+const APP_VER = '6.1.7';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -4470,7 +4470,10 @@ async function attachText(sourceId) {
     try {
       const parsed = await Engine.parse(f);
       if (!parsed.text || parsed.text.length < 20) throw new Error('没提取到文字（可能是扫描版，先用视觉识读）');
-      const id = 'txt-' + sourceId;
+      /* 原文 id 必须带上知识包 —— 每个包的来源都叫 src-001，
+         只用 'txt-' + sourceId 的话，两个包会共用一个原文键，
+         后补的把先补的盖掉（"原文错乱"就是这么来的）。 */
+      const id = 'txt-' + p.id + '-' + sourceId;
       const chapters = Engine.chapters(parsed.text);
       await DB.putText({ id, name: f.name, ext: parsed.ext, chars: parsed.text.length, pages: parsed.pages || null, chapters, text: parsed.text, addedAt: Date.now() });
       State.textIds.add(id);
