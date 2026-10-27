@@ -722,6 +722,7 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 .deprow .dt.skill{background:var(--n-skill)}
 .deprow .dn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt-3);text-decoration:line-through}
 .deprow .dmeta{flex:0 0 auto;font-size:11px;color:var(--txt-4)}
+.epTa{width:100%;font-size:13px;line-height:1.8;resize:vertical;min-height:74px}
 .phtitle{display:flex;align-items:flex-start;gap:10px}
 .phtitle h3{flex:1 1 auto;margin:0;min-width:0}
 .depbtn{flex:0 0 auto;margin-top:4px;font-size:11.5px;padding:3px 9px;border-radius:6px;
@@ -1176,8 +1177,7 @@ kbd{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line-2);bord
       <section class="view" id="v-shelf"></section>
       <section class="view" id="v-distill"></section>
       <section class="view" id="v-chat"></section>
-      <section class="view" id="v-library"></section>
-      <section class="view" id="v-settings"></section>
+            <section class="view" id="v-settings"></section>
     </div>
 
     <footer class="status">
@@ -1924,6 +1924,19 @@ function runInfer(quiet, pack) {
   }
   return n;
 }
+/* 把一批原文里"已经没有任何知识包引用"的删掉。
+   —— 删书/删包时调用；不这么做的话，删一次就留一堆孤儿（真实事故：102 份 / 112MB）。 */
+async function dropOrphanTexts(ids) {
+  const still = new Set();
+  (State.packs || []).forEach(p => (p.sources || []).forEach(x => { if (x.textId) still.add(x.textId); }));
+  let n = 0;
+  for (const id of (ids || [])) {
+    if (!id || still.has(id)) continue;
+    try { await DB.delText(id); State.textIds.delete(id); n++; } catch (e) { }
+  }
+  return n;
+}
+
 async function persistPack() { const p = State.pack; if (p && p.id) { await DB.put(p); State.packs = await DB.all(); } }
 function rejectRel(r) { r.status = 'rejected'; }
 
@@ -1940,7 +1953,7 @@ const Retriever = {
     const docs = [];
     (pack.points || []).filter(p => p.status !== 'deprecated').forEach(p => docs.push({
       id: p.id, kind: 'point', title: p.title || '', tags: p.tags || [], src: p.sourceId, ref: p,
-      text: (p.summary || '') + ' ' + ((p.evidence || []).map(e => e.locator || '').join(' '))
+      text: (p.summary || '') + ' ' + ((p.evidence || []).map(e => e.locator || '').join(' ')) + ' ' + (p.userNote || '')
     }));
     (pack.skills || []).filter(s => s.status !== 'deprecated').forEach(s => docs.push({
       id: s.id, kind: 'skill', title: s.title || '', tags: [], src: (s.sourceIds || [])[0], ref: s,
@@ -2065,7 +2078,8 @@ function ctxFor(h, pack, idx) {
   const n = idx == null ? 1 : idx + 1;
   if (h.kind === 'point') {
     const ev = (h.ref.evidence || []).map(e => e.locator).filter(Boolean).join('；');
-    return `[${n}] 知识点「${h.title}」${from}\n  说明：${h.ref.summary || ''}${ev ? '\n  出处：' + ev : ''}`;
+    const un = h.ref.userNote ? '\n  用户备注（提问的人自己标注的，遇到冲突以它为准）：' + h.ref.userNote : '';
+    return `[${n}] 知识点「${h.title}」${from}\n  说明：${h.ref.summary || ''}${un}${ev ? '\n  出处：' + ev : ''}`;
   }
   const st = (h.ref.steps || []).map((x, i) => `${i + 1}) ${x}`).join('  ');
   return `[${n}] 技能「${h.title}」${from}\n  什么时候用：${h.ref.when || ''}\n  步骤：${st}${(h.ref.pitfalls || []).length ? '\n  常见误用：' + h.ref.pitfalls.join('；') : ''}`;
@@ -2822,8 +2836,33 @@ function panel() {
       </div>
       <div class="sec"><h4>本包来源</h4><div style="font-size:12.5px;line-height:2">
         ${p.sources.map(s => { const [lb, cl] = LIC[s.license] || ['未知', 'err']; return `· ${esc(s.title)} <span class="badge ${cl}">${lb}</span>`; }).join('<br>')}
-      </div></div>`;
+      </div></div>
+      <div class="sec"><h4>管理</h4>
+        ${(p._history || []).length ? `<div style="font-size:12px;color:var(--txt-3);margin-bottom:8px;line-height:1.7">
+          上一次保存（${esc(p._history[0].at)}）之前的版本还留着 —— 改错了可以退回来。</div>
+        <button class="btn sm" id="rollbackBtn" style="margin-right:6px">恢复上一版</button>` : ''}
+        <button class="btn sm ghost" id="delPackBtn" style="color:var(--err);border-color:color-mix(in srgb,var(--err) 35%,transparent)">删除这个知识包</button>
+      </div>`;
     // 注意：这条分支提前 return，绑定必须放在 return 之前，否则按钮点不动
+    const _rb = $('#rollbackBtn');
+    if (_rb) _rb.onclick = async () => {
+      await rollbackPack(p.id, 0);
+      await loadPacks();
+      try { panel(); Graph.tick = 0; Graph.draw(); } catch (e) { }
+      toast('已恢复到上一版', 3600);
+    };
+    const _dp = $('#delPackBtn');
+    if (_dp) _dp.onclick = async () => {
+      const nm = (p.meta && p.meta.name) || p.id;
+      if (!(await Dialog.confirm('删除「' + nm + '」？\n这个知识包和里面的书、知识点都会永久删除，不能撤销。\n它的原文也会一起清掉。', { title: '删除知识包', ok: '删除', danger: true }))) return;
+      const tids = (p.sources || []).map(x => x.textId).filter(Boolean);
+      try { await DB.del(p.id); } catch (e) { }
+      State.packs = (State.packs || []).filter(x => x.id !== p.id);
+      State.pack = State.packs[0] || null;
+      const freed = await dropOrphanTexts(tids);
+      await loadPacks(); renderNav(); go('shelf');
+      toast('已删除知识包' + (freed ? '，顺带清掉 ' + freed + ' 份原文' : ''), 4200);
+    };
     el.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => go(b.dataset.goto)));
   el.querySelectorAll('[data-attach]').forEach(b => b.addEventListener('click', () => attachText(b.dataset.attach)));
   el.querySelectorAll('[data-read]').forEach(b => b.addEventListener('click', () => { State.readSrc = b.dataset.read; State.readTextId = null; go('read'); }));
@@ -2834,6 +2873,7 @@ function panel() {
   let html = `<div class="kick">${kindName}${n.kind !== 'source' ? ` · ${esc((p.sources.find(s => s.id === (n.kind === 'point' ? n.ref.sourceId : (n.ref.sourceIds || [])[0])) || {}).title || '')}` : ''}</div>
     <div class="phtitle">
       <h3>${esc(n.ref.title)}</h3>
+      ${n.kind === 'point' ? `<button class="depbtn" data-editpt="${n.id}" title="改说明 / 加我的备注。引文是从材料原样抄的，不能改">改</button>` : ''}
       ${n.kind !== 'source' ? `<button class="depbtn${isDep ? ' on' : ''}" data-dep="${n.id}"
         title="${isDep ? '恢复为有效 —— 重新参与检索、回到图谱' : '标记为作废 —— 不再参与检索、不出现在回答依据里，图上收起；内容留着，随时能恢复'}">${isDep ? '恢复' : '标记作废'}</button>` : ''}
     </div>`;
@@ -2864,6 +2904,7 @@ function panel() {
       ${pt.verify === 'needed' ? '<span class="badge warn">需核实时效</span>' : ''}
       <span class="badge">可信度 ${({ high: '高', medium: '中', low: '低' })[pt.confidence] || '—'}</span></div>
       <div class="sec"><h4>它在说什么</h4><p>${esc(pt.summary)}</p>${pt.detail ? `<p style="margin-top:7px">${esc(pt.detail)}</p>` : ''}</div>
+      ${pt.userNote ? `<div class="sec"><h4>我的备注</h4><p style="color:var(--txt)">${esc(pt.userNote)}</p></div>` : ''}
       <div class="sec"><h4>证据出处</h4>${(() => {
         const src = p.sources.find(s => s.id === pt.sourceId) || {};
         const mine = (src.license === 'self-authored' || src.license === 'unknown');
@@ -2907,6 +2948,10 @@ function panel() {
   el.innerHTML = html;
   el.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => {
     const t = Graph.idx[b.dataset.jump]; if (t) { State.sel = t; Graph.draw(); Graph.centerOn(t); panel(); }
+  }));
+  el.querySelectorAll('[data-editpt]').forEach(b => b.addEventListener('click', () => {
+    const pt = (State.pack.points || []).find(x => x.id === b.dataset.editpt);
+    if (pt) Dialog.editPoint(State.pack, pt);
   }));
   el.querySelectorAll('[data-dep]').forEach(b => b.addEventListener('click', async () => {
     const id = b.dataset.dep;
@@ -3065,7 +3110,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.7';
+const APP_VER = '6.1.8';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -3160,7 +3205,6 @@ const Updater = {
         当前版本 <b>v${APP_VER}</b>　·　授权状态 ${licLine}
         ${j ? `<br>线上最新 <b>v${esc(j.latest)}</b>${j.title ? ' · ' + esc(j.title) : ''}` : (this.checked ? '<br>线上版本：检查失败（离线或不稳定）' : '')}
       </div>
-      ${j && (j.changes || []).length ? `<div class="desc" style="margin-bottom:11px">本次更新：<br>${j.changes.map(x => '· ' + esc(x)).join('<br>')}</div>` : ''}
       ${j && this.cmp(j.latest, APP_VER) > 0 ? `<div class="updbox">
         <div class="updh">有新版本 v${esc(j.latest)} 可用</div>
         <div class="updp">${esc(j.howToGet || '下载后直接打开就行 —— 你的书、原文、知识包和激活码都还在，不用重新配。')}</div>
@@ -3175,11 +3219,25 @@ const Updater = {
       ${L.state === 'ok' ? `<div class="desc" style="margin-bottom:11px;font-size:12px;color:var(--txt-3)">
         签发日期 ${esc(L.info.at)}${L.info.exp ? ' · 到期 ' + esc(L.info.exp) : ' · 永久有效'}</div>` : ''}
       <div class="inline"><button class="btn" id="chkUpd">检查更新</button>
+        ${j && (j.changes || []).length ? `<button class="btn" id="chgBtn">这次更新了什么</button>` : ''}
         <button class="btn" id="licChange">${L.state === 'ok' ? '换一个激活码' : '输入激活码'}</button></div>
       <div class="desc" style="font-size:12px;color:var(--txt-3);margin-top:11px;line-height:1.85">
         有新版本时会在这里提示，凭你的激活码可以免费获取新版。
       </div>`;
     const b = $('#chkUpd'); if (b) b.onclick = () => this.check(false);
+    const cb = $('#chgBtn');
+    if (cb) cb.onclick = () => {
+      const d = document.createElement('div');
+      d.className = 'dlgLayer';
+      d.innerHTML = `<div class="dlg" style="max-width:540px;text-align:left">
+        <h4 style="margin-bottom:10px">v${esc(j.latest)} 更新了什么</h4>
+        <div style="font-size:13px;line-height:2">${(j.changes || []).map(x => '· ' + esc(x)).join('<br>')}</div>
+        <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px"><button class="btn" data-cancel>知道了</button></div>
+      </div>`;
+      document.body.appendChild(d);
+      d.onclick = e => { if (e.target === d) d.remove(); };
+      d.querySelector('[data-cancel]').onclick = () => d.remove();
+    };
     const ug = $('#updGet');
     if (ug) ug.onclick = () => {
       /* 优先用 version.json 给的 url；没给就用约定路径（和本站同目录） */
@@ -3422,6 +3480,24 @@ const Engine = {
   /* ---- 解析 ---- */
   async parse(file, onProgress) {
     const ext = (file.name.split('.').pop() || '').toLowerCase();
+    /* 这些格式**读不出文字**。以前会走 file.text() 把二进制读成乱码，
+       而且"成功"存进原文库 —— 客户以为蒸好了，实际全是垃圾（真实事故：
+       8 本 .doc 课蒸出 12 个知识点，还留下 109MB 乱码）。这里直接拦住并说清怎么办。 */
+    const IMG = ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp', 'tif', 'tiff', 'heic', 'heif', 'ico'];
+    const OLDWORD = ['doc', 'wps', 'rtf', 'odt'];
+    const OFFICE = ['ppt', 'pptx', 'xls', 'xlsx', 'et', 'dps'];
+    if (IMG.includes(ext)) {
+      throw new Error('「' + file.name + '」是图片，程序读不出里面的字。' +
+        '要读图片里的文字，得先把它转成文字（OCR / 视觉识读）；如果只是图表，它不适合蒸馏。');
+    }
+    if (OLDWORD.includes(ext)) {
+      throw new Error('「' + file.name + '」是老版 Word/WPS 格式（.' + ext + '），程序读不出文字。' +
+        '请用 Word 或 WPS 打开它 → 另存为 .docx → 再拖进来。');
+    }
+    if (OFFICE.includes(ext)) {
+      throw new Error('「' + file.name + '」是表格/幻灯片，程序读不了。' +
+        '请导出成 PDF 或另存为 .txt 再拖进来。');
+    }
     if (ext === 'pdf') return this.parsePDF(file, onProgress);
     if (ext === 'epub') return this.parseEPUB(file);
     if (ext === 'docx') return this.parseDOCX(file);
@@ -4813,9 +4889,12 @@ async function toggleDeprecated(pack, node) {
   return !was;
 }
 
-async function saveVersioned(pack) {
-  const prev = State.packs.find(x => x.id === pack.id);
-  if (prev) {
+/* beforeSnap：可选，传"修改之前"的深拷贝。
+   不传的话只能拿 State.packs 里那份 —— 但那往往就是被就地改过的同一对象，
+   快照会记成改后的状态，回滚就没意义了。就地改的调用方必须传。 */
+async function saveVersioned(pack, beforeSnap) {
+  const prev = beforeSnap || State.packs.find(x => x.id === pack.id);
+  if (prev && prev !== pack) {
     const snap = JSON.parse(JSON.stringify(prev));
     delete snap._history;
     pack._history = [{ at: new Date().toISOString().slice(0, 16).replace('T', ' '), pack: snap }]
@@ -4837,6 +4916,8 @@ async function rollbackPack(id, i) {
   if (State.pack && State.pack.id === id) selectPack(id);
   toast('已回滚');
 }
+/* 去重指纹：去掉标点空白，取前 30 字。标题相同但内容明显不同的不会被误并。 */
+function fp(x) { return String(x || '').replace(/[\s\u3000，。；、,.;:：!！?？"'“”‘’（）()《》\-—~·]/g, '').slice(0, 30); }
 function mergePacks(list) {
   if (list.length < 2) return null;
   const out = { schemaVersion: '1.0', meta: { name: '', createdAt: new Date().toISOString().slice(0, 10), model: Settings.active().model }, sources: [], points: [], skills: [], relations: [] };
@@ -4849,14 +4930,16 @@ function mergePacks(list) {
       SM[p.id + ':' + s.id] = nid;
     });
     (p.points || []).forEach(pt => {
-      const t = (pt.title || '').trim(), key = 'P|' + t;
+      // 去重不能只看标题 —— 两个不同来源、标题相同但内容不同的知识点会被并成一条，
+    // 而且悄无声息（真实事故：784 条合成 690 条，丢了 94 条）。加上摘要前缀当指纹。
+    const t = (pt.title || '').trim(), key = 'P|' + t + '|' + fp(pt.summary);
       if (seenT[key]) { PM[p.id + ':' + pt.id] = seenT[key]; return; }
       const nid = 'kp-' + String(out.points.length + 1).padStart(3, '0');
       seenT[key] = nid; PM[p.id + ':' + pt.id] = nid;
       out.points.push({ ...pt, id: nid, sourceId: SM[p.id + ':' + pt.sourceId] || (out.sources[0] && out.sources[0].id) });
     });
     (p.skills || []).forEach(sk => {
-      const t = (sk.title || '').trim(), key = 'K|' + t;
+      const t = (sk.title || '').trim(), key = 'K|' + t + '|' + fp(sk.when);
       if (seenT[key]) { KM[p.id + ':' + sk.id] = seenT[key]; return; }
       const nid = 'sk-' + String(out.skills.length + 1).padStart(3, '0');
       seenT[key] = nid; KM[p.id + ':' + sk.id] = nid;
@@ -4902,27 +4985,53 @@ async function ensurePerm(h, write) {
     return (await h.requestPermission(opt)) === 'granted';
   } catch (e) { return false; }
 }
+/* 把文件夹里"这一轮没写到的"旧 json 删掉。
+   —— 不删的话，库里已经删掉的包会一直躺在文件夹里，
+     某天点「从文件夹恢复」就把它们（连同一堆垃圾原文）全导回来。 */
+async function pruneDir(sub, keep) {
+  let n = 0;
+  try {
+    const names = [];
+    for await (const [name, h] of sub.entries()) {
+      if (h.kind === 'file' && /\.json$/i.test(name) && !keep.has(name)) names.push(name);
+    }
+    for (const name of names) { try { await sub.removeEntry(name); n++; } catch (e) { } }
+  } catch (e) { }
+  return n;
+}
+
 async function writePacksTo(dir) {
-  const packs = await DB.all();
+  const packs = (await DB.all()).filter(p => Array.isArray(p.sources));
   const sub = await dir.getDirectoryHandle('知识包', { create: true });
+  const keepP = new Set();
   for (const p of packs) {
-    const fh = await sub.getFileHandle(safeName((p.meta && p.meta.name) || p.id) + '.json', { create: true });
+    const base = safeName((p.meta && p.meta.name) || p.id);
+    let fn = base + '.json', k = 1;
+    while (keepP.has(fn)) fn = base + '-' + (++k) + '.json';   // 同名包不再互相覆盖
+    keepP.add(fn);
+    const fh = await sub.getFileHandle(fn, { create: true });
     const w = await fh.createWritable();
     await w.write(JSON.stringify(p, null, 2));
     await w.close();
   }
-  // D-004：本机备份含全文（换电脑能读回来）；导出给别人时不含
+  await pruneDir(sub, keepP);
+  // D-004：本机备份含全文（换电脑能读回来）；导出给别人时不含。
+  // 只备「被知识包引用的」原文 —— 备份文件夹里也堆几百 MB 垃圾没有意义（真实事故：112MB）。
   let texts = [];
-  try { texts = await DB.allTexts(); } catch (e) { texts = []; }
-  if (texts.length) {
-    const tsub = await dir.getDirectoryHandle('原文', { create: true });
-    for (const t of texts) {
-      const fh = await tsub.getFileHandle(safeName(t.name || t.id) + '.json', { create: true });
-      const w = await fh.createWritable();
-      await w.write(JSON.stringify(t));
-      await w.close();
-    }
+  try { texts = await Store.textsFor(packs); } catch (e) { texts = []; }
+  const tsub = await dir.getDirectoryHandle('原文', { create: true });
+  const keepT = new Set();
+  for (const t of texts) {
+    const base = safeName(t.name || t.id);
+    let fn = base + '.json', k = 1;
+    while (keepT.has(fn)) fn = base + '-' + (++k) + '.json';
+    keepT.add(fn);
+    const fh = await tsub.getFileHandle(fn, { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(t));
+    await w.close();
   }
+  await pruneDir(tsub, keepT);
   const meta = {
     app: '知识蒸馏工作台', version: 'v2', at: new Date().toISOString(), count: packs.length, textCount: texts.length,
     settings: { provider: Settings.d.provider, custom: Settings.d.custom, distill: Settings.d.distill }
@@ -5095,6 +5204,8 @@ const Views = {
     const ns = (pk.skills || []).filter(x => !(x.sourceIds || []).includes(srcId) === false).length;
     if (!(await Dialog.confirm('删掉《' + sc.title + '》？\n\n会同时删掉它的 ' + np + ' 条知识点和 ' + ns + ' 条技能。\n删了不能撤销。', { title: '删除这本书', ok: '删掉', danger: true }))) return;
     const goneIds = new Set([srcId, ...(pk.points || []).filter(x => x.sourceId === srcId).map(x => x.id)]);
+    /* 这本书的原文 id 先记下来，删完之后清理没人用的 */
+    const goneText = (pk.sources || []).filter(x => x.id === srcId).map(x => x.textId).filter(Boolean);
     pk.sources = (pk.sources || []).filter(x => x.id !== srcId);
     pk.points = (pk.points || []).filter(x => x.sourceId !== srcId);
     pk.skills = (pk.skills || []).filter(x => !(x.sourceIds || []).includes(srcId));
@@ -5106,8 +5217,9 @@ const Views = {
     } else {
       await saveVersioned(pk);
     }
+    const freed = await dropOrphanTexts(goneText);
     await loadPacks(); renderNav();
-    toast('已删掉《' + sc.title + '》', 3200);
+    toast('已删掉《' + sc.title + '》' + (freed ? '，顺带清掉 ' + freed + ' 份没人用的原文' : ''), 3600);
     Views.shelf();
   },
   shelf() {
@@ -5194,7 +5306,7 @@ const Views = {
         <div style="margin-left:auto" class="inline">
           <span class="micro" style="margin-right:2px">导出 → 书卡右边的 ⋯</span>
           ${packs.length > 1 ? `<button class="btn sm" id="mergeBtn2" title="把两个以上的知识包去重合并成一个新包">合并知识包…</button>` : ''}
-          <button class="btn sm" id="impBtn2" title="导入一个知识包 JSON（全局，不属于哪本书）">导入知识包</button>
+          <button class="btn sm" id="impBtn2" title="单个知识包、或「导出全部」的备份文件，都能导">导入（单包 / 备份都行）</button>
         </div>
       </div>
 
@@ -5569,56 +5681,6 @@ const Views = {
     };
     renderChatLog();
   },
-  library() {
-    const el = $('#v-library');
-    State.multi = State.multi || new Set();
-    el.innerHTML = `<div class="page">
-      <div class="page-h"><h2>我的知识包</h2>
-        <p>存在你本机浏览器里（IndexedDB），不上传。导出有三种格式：<b>JSON</b>（备份/迁移）、<b>SKILL.md</b>（装进 AI 工具）、<b>独立看板 HTML</b>（发给别人看，双击就能开）。</p></div>
-      <div class="inline" style="margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn pri" onclick="go('distill')">＋ 新建蒸馏</button>
-        <button class="btn" id="impBtn">导入 JSON</button>
-        <button class="btn" id="mergeBtn" disabled>合并选中</button>
-        <input type="file" id="impFile" accept=".json" style="display:none">
-      </div>
-      <div class="packs" id="packs"></div>
-    </div>`;
-    renderPacks();
-    const updMerge = () => {
-      const n = State.multi.size;
-      const b = $('#mergeBtn');
-      if (!b) return;
-      b.disabled = n < 2;
-      b.textContent = n ? `合并选中（${n}）` : '合并选中';
-    };
-    State.updMerge = updMerge; updMerge();
-    $('#impBtn').addEventListener('click', () => $('#impFile').click());
-    $('#impFile').addEventListener('change', e => {
-      const f = e.target.files[0]; if (!f) return;
-      const r = new FileReader();
-      r.onload = async () => {
-        try {
-          const d = JSON.parse(r.result);
-          if (!d.sources || !d.points || !d.skills) throw new Error('缺少 sources / points / skills');
-          d.id = 'pk-' + Date.now();
-          if (!d.meta) d.meta = { name: f.name.replace(/\.json$/, ''), createdAt: new Date().toISOString().slice(0, 10) };
-          await DB.put(d); await loadPacks(); Views.library(); toast('导入成功：' + d.meta.name);
-        } catch (err) { toast('导入失败：' + err.message, 3600); }
-      };
-      r.readAsText(f, 'utf-8');
-    });
-    $('#mergeBtn').addEventListener('click', async () => {
-      const list = State.packs.filter(p => State.multi.has(p.id));
-      if (list.length < 2) return;
-      if (!(await Dialog.confirm(`把选中的 ${list.length} 个知识包合并成一个？\n会去重并自动推断新关联，原包保留。`, { title: '合并知识包', ok: '合并' }))) return;
-      const merged = mergePacks(list);
-      if (!merged) return toast('合并失败', 3000);
-      merged.id = 'pk-' + Date.now();
-      await DB.put(merged); await loadPacks(); State.multi.clear();
-      Views.library();
-      toast(`合并完成：${merged.points.length} 知识点 / ${merged.skills.length} 技能 / ${merged.relations.length} 关系`, 4200);
-    });
-  },
   settings() {
     const el = $('#v-settings');
     if (!Settings.d.cfgView) Settings.d.cfgView = Settings.d.provider;
@@ -5642,8 +5704,8 @@ const Views = {
           <button class="btn pri" id="bkFolder">选择备份文件夹（只需一次）</button>
           <button class="btn" id="bkNow">立即同步一次</button>
           <button class="btn" id="rsFolder">从文件夹恢复</button>
-          <button class="btn" id="bkAll">导出全部（下载 · 万能兜底）</button>
-          <button class="btn" id="rsAll">导入备份</button>
+          <button class="btn" id="bkAll">导出全部备份（含原文）</button>
+          <button class="btn" id="rsAll">导入备份文件</button>
         </div>
         <input type="file" id="rsAllFile" accept=".json" style="display:none">
         <div class="sec"><h4>为什么"申请持久化"没有用</h4><p style="font-size:12.5px">
@@ -6055,8 +6117,12 @@ async function loadPacks() {
       State.packs = await DB.all();
       setTimeout(() => toast('修复了 ' + bad.length + ' 条损坏的记录（已还原出 ' + fixed + ' 个知识包）', 6200), 900);
     }
-    /* 剩下的、连 packs 都没有的垃圾记录直接不参与渲染（不删，避免误删） */
+    /* 剩下那些既不是知识包、也不是「导出全部」包装的垃圾记录（比如被误存进来的原文记录）
+       —— 直接删掉。留着没用，而且「导出全部」会把它一起带进备份，一路污染下去。 */
+    const junk = State.packs.filter(p => !Array.isArray(p.sources));
+    for (const j of junk) { try { await DB.del(j.id); } catch (e) { } }
     State.packs = State.packs.filter(p => Array.isArray(p.sources));
+    if (junk.length) setTimeout(() => toast('清掉了 ' + junk.length + ' 条无效记录', 4200), 900);
   } catch (e) { }
 
   if (!State.packs.length) { State.pack = null; Graph.build(); Graph.draw(); panel(); gauges(); renderGbar(); renderLegend(); }
@@ -6112,7 +6178,7 @@ function renderPacks() {
             if (!(await Dialog.confirm(`删除「${p.meta.name}」？\n这个知识包会被永久删除，不可恢复。`, { title: '删除知识包', ok: '删除', danger: true }))) return;
             await DB.del(p.id); State.multi && State.multi.delete(p.id);
             if (State.pack && State.pack.id === p.id) State.pack = null;
-            await loadPacks(); Views.library(); toast('已删除');
+            await loadPacks(); Views.shelf(); toast('已删除');
           }
         }, '删除')));
     card.addEventListener('click', () => { selectPack(p.id); go('graph'); });
@@ -6205,6 +6271,18 @@ async function boot() {
   await License.boot();
   if (!License.usable()) setTimeout(() => Onboard.open(), 300);
   else if (Onboard.need() && !State.packs.length) setTimeout(() => Onboard.open(), 420);
+  /* 引导里本来就有"设自动备份"那一步，但只能走一次 —— 跳过的人再也见不到。
+     这里补一个一次性提醒（设过备份、或者没有知识包时不打扰）。 */
+  setTimeout(() => {
+    try {
+      if (localStorage.getItem('dw.bkTip') === 'done') return;
+      if (backupDir) return;
+      if (!(State.packs || []).length) return;
+      if (Onboard.need()) return;
+      localStorage.setItem('dw.bkTip', 'done');
+      toast('知识包只存在这台电脑的浏览器里 —— 建议去「模型与设置 → 数据存储」选个文件夹自动备份，设一次以后不用管。', 11000);
+    } catch (e) { }
+  }, 2600);
   /* 如果是从网址打开的（不是本地文件），数据不会落到本地文件里 —— 常驻警告，别让用户白干 */
   if (location.protocol === 'http:' || location.protocol === 'https:') {
     const w = document.createElement('div');
@@ -6471,6 +6549,42 @@ const Dialog = {
       setTimeout(() => { const y = el.querySelector('[data-yes]'); if (y) y.focus(); }, 30);
     });
   },
+  /* 改一条知识点：说明可改，再给一个「我的备注」。
+     —— 引文（原文那句）锁死：它是从材料里原样抄的，改了"点引文跳回原文"就断了。 */
+  editPoint(pack, pt) {
+    const el = document.createElement('div');
+    el.className = 'dlgLayer';
+    el.innerHTML = `<div class="dlg" style="max-width:580px;text-align:left">
+      <h4 style="margin-bottom:6px">改这条知识点</h4>
+      <div class="updp" style="margin-bottom:14px">「说明」是模型写的，措辞不对可以修；<b>引文不能改</b> —— 它是从材料里原样抄的，改了就没法追溯回原文。觉得原文本身有问题，写在备注里。<br>
+        保存后原来的版本还会留着 —— 改错了在右侧「管理」里点<b>恢复上一版</b>就能退回来。</div>
+      <div class="field"><label>说明</label>
+        <textarea id="epSum" class="epTa" rows="5">${esc(pt.summary || '')}</textarea></div>
+      <div class="field" style="margin-top:12px"><label>我的备注（查询时会一起给模型看，遇到冲突以它为准）</label>
+        <textarea id="epNote" class="epTa" rows="3" placeholder="例如：15分钟三买→1分钟找点 那条实测不成立，别用">${esc(pt.userNote || '')}</textarea></div>
+      <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px">
+        <button class="btn pri" data-ok>保存</button>
+        <button class="btn" data-cancel>取消</button>
+      </div></div>`;
+    document.body.appendChild(el);
+    const done = () => el.remove();
+    el.onclick = e => { if (e.target === el) done(); };
+    el.querySelector('[data-cancel]').onclick = done;
+    el.querySelector('[data-ok]').onclick = async () => {
+      const sum = el.querySelector('#epSum').value.trim();
+      const note = el.querySelector('#epNote').value.trim();
+      if (!sum) return toast('说明不能空着', 3000);
+      const before = JSON.parse(JSON.stringify(pack));   // ← 改之前的快照，用于"恢复上一版"
+      pt.summary = sum;
+      if (note) pt.userNote = note; else delete pt.userNote;
+      pt.editedAt = new Date().toISOString().slice(0, 10);
+      await saveVersioned(pack, before);
+      try { Retriever._c = null; Retriever._k = null; } catch (e) { }
+      done();
+      try { panel(); Graph.tick = 0; Graph.draw(); } catch (e) { }
+      toast(note ? '已保存 · 备注会一起参与检索' : '已保存', 3600);
+    };
+  },
   /* 合并知识包：勾选两个以上 → 去重合并成一个新包（原包保留） */
   mergePacks() {
     const packs = (State.packs || []).filter(Boolean);
@@ -6480,8 +6594,9 @@ const Dialog = {
     el.className = 'dlgLayer';
     el.innerHTML = `<div class="dlg" style="max-width:520px;text-align:left">
       <h4 style="margin-bottom:6px">合并知识包</h4>
-      <div class="updp" style="margin-bottom:12px">勾选两个以上。同名知识点会去重，关系自动重连，合并成<b>一个新的包</b>；原来的包都保留，可以自己删。</div>
+      <div class="updp" style="margin-bottom:12px">勾选两个以上。标题和内容都一样的知识点会去重，关系自动重连，合并成<b>一个新的包</b>；原来的包都保留，可以自己删。</div>
       <div class="dgplist"></div>
+      <div class="dgpinfo" id="dgpInfo" style="margin-top:10px;font-size:12px;line-height:1.8;color:var(--txt-3)"></div>
       <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px">
         <button class="btn pri" data-ok disabled>合并</button>
         <button class="btn" data-cancel>取消</button>
@@ -6493,6 +6608,18 @@ const Dialog = {
       const n = pick.size;
       okBtn.disabled = n < 2;
       okBtn.textContent = n ? '合并选中的 ' + n + ' 个' : '合并';
+      const info = el.querySelector('#dgpInfo');
+      if (!info) return;
+      if (n < 2) { info.textContent = ''; return; }
+      const chosen = packs.filter(p => pick.has(p.id));
+      const tp = chosen.reduce((a, p) => a + (p.points || []).length, 0);
+      const ts = chosen.reduce((a, p) => a + (p.skills || []).length, 0);
+      const m = mergePacks(chosen);
+      if (!m) { info.textContent = ''; return; }
+      const dp = tp - m.points.length, ds = ts - m.skills.length;
+      info.innerHTML = '合并后：知识点 <b>' + tp + '</b> → <b>' + m.points.length + '</b>' +
+        (dp > 0 ? '（去重 ' + dp + ' 条）' : '') + '　·　技能 <b>' + ts + '</b> → <b>' + m.skills.length + '</b>' +
+        (ds > 0 ? '（去重 ' + ds + ' 条）' : '') + '<br><span style="color:var(--txt-4)">只并掉「标题和内容都一样」的；内容不同会各自保留。</span>';
     };
     packs.forEach(pk => {
       const n = (pk.sources || []).length, np = (pk.points || []).length;
