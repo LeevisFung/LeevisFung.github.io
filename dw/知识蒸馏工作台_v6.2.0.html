@@ -554,11 +554,6 @@ html[data-rail="mini"] .rail-toggle svg{transform:rotate(180deg)}
 .rw .sig span{font-size:10px;padding:2px 7px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);color:var(--txt-3)}
 .nav-sep{margin:9px 11px 5px;font-size:9.5px;letter-spacing:.15em;color:var(--txt-4);font-weight:600}
 .rail-foot{height:26px;padding:0 14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px;overflow:hidden}
-.gauges{display:flex;flex-direction:column;gap:6px}
-.gauge{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--txt-3)}
-.gauge .bar{flex:1;height:3px;background:var(--line-2);border-radius:2px;overflow:hidden}
-.gauge .bar i{display:block;height:100%;background:var(--accent);opacity:.85}
-.gauge .num{color:var(--txt-2);font-size:10px;min-width:38px;text-align:right}
 
 /* ---------- 顶栏 ---------- */
 .main{display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -685,6 +680,25 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 }
 .gsearch input{background:none;border:none;min-height:26px;padding:0;font-size:12.5px}
 .gsearch input:focus{background:none}
+/* 搜索结果下拉：以前只把不匹配的节点调暗 —— 买家根本看不出发生了什么，
+   搜不到时更是全图变白、一个字提示都没有。现在给结果本身。 */
+.gsearch{position:relative}
+.gres{position:absolute;top:calc(100% + 6px);right:0;width:302px;max-height:330px;overflow:auto;
+  background:var(--surface);border:1px solid var(--line-2);border-radius:9px;
+  box-shadow:0 12px 30px rgba(0,0,0,.18);padding:5px;z-index:60;display:none}
+.gres.on{display:block}
+.gres .gx{padding:7px 8px;font-size:12px;color:var(--txt-3);line-height:1.7}
+.gres .gi{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;
+  cursor:pointer;font-size:12.5px;color:var(--txt)}
+.gres .gi:hover{background:var(--surface-2)}
+.gres .gi .k{flex:0 0 auto;font-size:10.5px;padding:1px 5px;border-radius:4px;
+  border:1px solid var(--line-2);color:var(--txt-3)}
+.gres .gi .t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gres .gi .s{flex:0 0 auto;font-size:10.5px;color:var(--acc,var(--ok))}
+.gclr{background:none;border:none;color:var(--txt-4);cursor:pointer;font-size:13px;
+  line-height:1;padding:0 2px;display:none}
+.gclr.on{display:block}
+.gclr:hover{color:var(--txt)}
 .legend{
   position:absolute;left:12px;bottom:12px;
   /* 右侧同样让出详情面板 —— 否则面板打开时会压住图例（买家实测 1100px 以下必现） */
@@ -723,6 +737,7 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 .deprow .dn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt-3);text-decoration:line-through}
 .deprow .dmeta{flex:0 0 auto;font-size:11px;color:var(--txt-4)}
 .epTa{width:100%;font-size:13px;line-height:1.8;resize:vertical;min-height:74px}
+.epIn{width:100%;font-size:13px}
 .phtitle{display:flex;align-items:flex-start;gap:10px}
 .phtitle h3{flex:1 1 auto;margin:0;min-width:0}
 .depbtn{flex:0 0 auto;margin-top:4px;font-size:11.5px;padding:3px 9px;border-radius:6px;
@@ -1490,6 +1505,27 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = n => (n || 0).toLocaleString('en-US');
+/* 本地时间。别用 toISOString() —— 那是 UTC，中国用户会看到差 8 小时：
+   20:35 保存的版本，面板上写「上一次保存（12:35）」，看着像昨天的。 */
+const _p2 = n => String(n).padStart(2, '0');
+const stampNow = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${_p2(d.getMonth() + 1)}-${_p2(d.getDate())} ${_p2(d.getHours())}:${_p2(d.getMinutes())}`;
+};
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${_p2(d.getMonth() + 1)}-${_p2(d.getDate())}`; };
+/* 人工修改标记：蒸馏出来的是模型写的内容。用户点「改」并保存之后打 editedAt，
+   从此任何展示它的地方都要能看出「这是人改过的，不是模型原话」
+   —— 买家原话：「修改过的内容没有标识」。 */
+const isEdited = x => !!(x && x.editedAt);
+const editBadge = x => isEdited(x)
+  ? `<span class="badge acc" title="人工修改于 ${esc(x.editedAt)}">人工修改</span>`
+  : '';
+/* 作废 = 软删除：不参与检索 / 不出现在回答依据 / 不进导出，
+   **也不再出现在任何引用列表里**。想看它们只有两个入口：
+   图谱工具条的「显示已作废」、书架的「已作废」清单。
+   注意：详情面板里有一个同名局部变量 isDep（布尔），别在这儿混淆。 */
+const isDepNode = x => !!(x && x.status === 'deprecated');
+const liveOnly = arr => (arr || []).filter(x => !isDepNode(x));
 const toast = (m, ms = 2400) => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), ms); };
 const panelW = () => {
   const el = $('#panel');
@@ -1924,6 +1960,19 @@ function runInfer(quiet, pack) {
   }
   return n;
 }
+/* 图谱工具条上的「＋ 再推断一次」：推断 → 存盘 → 重画。
+   —— 以前这个动作只在蒸馏流程里自动跑过一次，之后就没有入口了
+      （帮助文档却写着"在工具条上"，买家照着找必然找不到）。 */
+async function inferNow() {
+  const p = State.pack;
+  if (!p) return toast('先载入一个知识包', 2400);
+  const before = JSON.parse(JSON.stringify(p));
+  const n = runInfer(true, p);
+  if (!n) return toast('没有发现新的关联（可能已经连过了，或者这条内容和别处差异太大）', 4000);
+  await saveVersioned(p, before);
+  try { Graph.build(); Graph.tick = 0; Graph.draw(); panel(); renderGbar(); renderLegend(); } catch (e) { }
+  toast(`找到 ${n} 条新关联（已生效）· 看到不对的，点那条线就能删`, 4600);
+}
 /* 把一批原文里"已经没有任何知识包引用"的删掉。
    —— 删书/删包时调用；不这么做的话，删一次就留一堆孤儿（真实事故：102 份 / 112MB）。 */
 async function dropOrphanTexts(ids) {
@@ -1937,7 +1986,13 @@ async function dropOrphanTexts(ids) {
   return n;
 }
 
-async function persistPack() { const p = State.pack; if (p && p.id) { await DB.put(p); State.packs = await DB.all(); } }
+async function persistPack() {
+  const p = State.pack; if (!p || !p.id) return;
+  await DB.put(p);
+  /* 同 saveVersioned：保住对象同一性，别让 State.packs 换成一批新对象 */
+  const i = (State.packs || []).findIndex(x => x.id === p.id);
+  if (i >= 0) State.packs[i] = p; else (State.packs = State.packs || []).unshift(p);
+}
 function rejectRel(r) { r.status = 'rejected'; }
 
 /* ============================================================
@@ -2198,29 +2253,6 @@ function assetStats(p) {
     pend: typeof relPendingCount === 'function' ? relPendingCount() : 0
   };
 }
-function gauges() {
-  const g = $('#gauges'); if (!g) return;      // 资产条已挪到书架顶部
-  const p = State.pack;
-  g.innerHTML = '';
-  if (!p) { g.appendChild(h('div', { class: 'gauge' }, h('span', {}, '无数据'), h('span', { class: 'bar' }))); return; }
-  const st = assetStats(p);
-  g.appendChild(h('div', { class: 'micro', style: 'padding:0 0 5px' }, '我的资产'));
-  const rows = [
-    ['资料', st.sources, Math.max(st.sources, 8)],
-    ['知识点', st.points, Math.max(st.points, 60)],
-    ['技能', st.skills, Math.max(st.skills, 40)],
-    ['跨来源', st.cross, Math.max(st.cross, 12)],
-    ['融合技能', st.fused, Math.max(st.fused, 4)],
-    ['本地推断', st.pend, Math.max(st.pend, 10)]
-  ];
-  rows.forEach(([lb, v, mx]) => {
-    g.appendChild(h('div', { class: 'gauge' },
-      h('span', { style: 'min-width:46px' }, lb),
-      h('span', { class: 'bar' }, h('i', { style: `width:${Math.min(100, Math.round(v / mx * 100))}%` })),
-      h('span', { class: 'num' }, String(v))));
-  });
-}
-
 /* ============================================================
    6. 路由
    ============================================================ */
@@ -2435,6 +2467,10 @@ const Graph = {
     return this.srcHue(n.si || 0, n.ring);
   },
   visible(n) {
+    /* 当前选中的节点永远可见。
+       否则「孤点」被 relOnly 收起来之后，从搜索结果 / 引用弹窗跳过去，
+       详情面板开了、图上却什么都没有 —— 看起来就像跳转失败。 */
+    if (n && n === State.sel) return true;
     if (State.srcOff[n.id]) return false;
     /* 「只看有连线的」：关系筛选关掉某几类之后，只连着那些关系的知识点会变成孤点 ——
        这个开关把它们一起收起来，图才干净。来源节点永远保留（它是锚）。 */
@@ -2462,6 +2498,25 @@ const Graph = {
     (p.points || []).forEach(x => (x.tags || []).forEach(t => c[t] = (c[t] || 0) + 1));
     return Object.keys(c).sort((a, b) => c[b] - c[a]).slice(0, 14).map(t => ({ t, n: c[t] }));
   },
+  /* 搜索：标题 / 摘要 / 什么时候用 / 标签 / 步骤 任一命中。
+     排序：标题命中的优先，短的优先（"温故连接" 比一大段摘要更像用户要找的）。
+     作废的不进结果 —— 它已经不算"资产"了。 */
+  searchNodes(kw) {
+    const q = String(kw || '').trim().toLowerCase();
+    if (!q) return [];
+    const out = [];
+    (this.N || []).forEach(n => {
+      if (n.kind === 'source' || n.dep) return;
+      const r = n.ref || {};
+      const t = ((r.title || '') + ' ' + (r.summary || '') + ' ' + (r.when || '') + ' '
+        + ((r.tags || []).join(' ')) + ' ' + ((r.steps || []).join(' ')) + ' ' + (r.userNote || '')).toLowerCase();
+      if (!t.includes(q)) return;
+      out.push({ n, hit: String(r.title || '').toLowerCase().includes(q), len: String(r.title || '').length });
+    });
+    out.sort((a, b) => (b.hit - a.hit) || (a.len - b.len));
+    return out.map(x => x.n);
+  },
+  firstMatch(kw) { return this.searchNodes(kw)[0] || null; },
   step() {
     const vis = this.N.filter(n => this.visible(n));
     // 节点多时用网格把斥力限制在邻近格子内，避免 O(n²) 卡死
@@ -2783,10 +2838,81 @@ function renderGbar() {
     h('button', {
       class: 'chip' + (State.showPending ? ' on' : ''), title: '本地算法推断出来的关联（不花钱）。点一下可以在图上显示/隐藏它们。',
       onclick: () => { State.showPending = !State.showPending; renderGbar(); Graph.draw(); }
-    }, h('span', { class: 'sw', style: `background:${RSRC.auto.color}` }), `推断出的关联 ${pend}`)));
+    }, h('span', { class: 'sw', style: `background:${RSRC.auto.color}` }), `推断出的关联 ${pend}`),
+    /* 入口以前只在「蒸馏 → 卡片 4」里，蒸完之后就再也找不到了；
+       而帮助文档又说"在工具条上" —— 补上这个入口，让文案和界面一致。 */
+    h('button', {
+      class: 'chip', title: '再跑一遍本地推断：按标签共现 / 同技能指向找新关联（不花钱，不动模型）',
+      onclick: () => inferNow()
+    }, '＋ 再推断一次')));
   const se = h('div', { class: 'gsearch' });
-  const inp = h('input', { placeholder: '搜索知识点 / 技能 / 标签', value: State.kw, oninput: e => { State.kw = e.target.value; Graph.draw(); } });
-  se.appendChild(inp); g.appendChild(se);
+  const inp = h('input', {
+    placeholder: '搜索知识点 / 技能 / 标签',
+    value: State.kw, 'aria-label': '搜索知识点或技能',
+    oninput: e => { State.kw = e.target.value; Graph.draw(); renderSearchResults(); },
+    onkeydown: e => {
+      if (e.key === 'Escape') { setSearch(''); e.target.blur(); }
+      else if (e.key === 'Enter') {
+        const n = Graph.firstMatch(State.kw);
+        if (n) { e.preventDefault(); jumpToNode(n); }
+        else if (String(State.kw || '').trim()) toast('没有匹配「' + State.kw.trim() + '」的内容', 3000);
+      }
+    }
+  });
+  se.appendChild(inp);
+  se.appendChild(h('button', {
+    class: 'gclr' + (State.kw ? ' on' : ''), title: '清除搜索', 'aria-label': '清除搜索',
+    onclick: () => { setSearch(''); inp.focus(); }
+  }, '✕'));
+  se.appendChild(h('div', { class: 'gres', id: 'gres' }));
+  g.appendChild(se);
+  renderSearchResults();
+}
+
+/* 搜索框的「清空」只有一个入口，保证三处状态一起复位 */
+function setSearch(v) {
+  State.kw = v || '';
+  const inp = document.querySelector('.gsearch input');
+  if (inp) inp.value = State.kw;
+  const clr = document.querySelector('.gclr');
+  if (clr) clr.classList.toggle('on', !!State.kw);
+  try { Graph.draw(); } catch (e) { }
+  renderSearchResults();
+}
+
+/* 搜索结果列表：看得见、点得到、搜不到时明确说"没有" */
+function renderSearchResults() {
+  const box = document.getElementById('gres'); if (!box) return;
+  const kw = String(State.kw || '').trim();
+  const clr = document.querySelector('.gclr');
+  if (clr) clr.classList.toggle('on', !!kw);
+  if (!kw) { box.className = 'gres'; box.innerHTML = ''; return; }
+  const nodes = (typeof Graph !== 'undefined' && Graph.searchNodes) ? Graph.searchNodes(kw) : [];
+  box.className = 'gres on';
+  if (!nodes.length) {
+    box.innerHTML = `<div class="gx">没有匹配「${esc(kw)}」的知识点或技能。<br>换个词试试；也可以去「会客厅」直接问。</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="gx">${nodes.length} 条匹配 · 点一条在图谱里定位</div>` +
+    nodes.slice(0, 8).map((n, i) => `<div class="gi" data-gi="${i}">
+      <span class="k">${n.kind === 'skill' ? (n.fused ? '融合' : '技能') : '知识点'}</span>
+      <span class="t">${esc((n.ref && n.ref.title) || '')}</span>
+      ${isEdited(n.ref) ? '<span class="s">已修改</span>' : ''}
+    </div>`).join('') +
+    (nodes.length > 8 ? `<div class="gx">还有 ${nodes.length - 8} 条，输入更具体的词收窄</div>` : '');
+  box.querySelectorAll('[data-gi]').forEach(b => b.onclick = () => {
+    const n = nodes[+b.dataset.gi];
+    if (n) { box.className = 'gres'; jumpToNode(n); }
+  });
+}
+
+/* 从搜索结果 / 回车直达一个节点 */
+function jumpToNode(n) {
+  if (!n) return;
+  if (State.view !== 'graph') go('graph');
+  State.sel = n;
+  try { Graph.centerOn(n); Graph.draw(); } catch (e) { }
+  try { panel(); } catch (e) { }
 }
 function renderLegend() {
   const l = $('#legend'); if (!l) return;
@@ -2813,6 +2939,13 @@ function panel() {
   const p = State.pack;
   if (!p) { el.innerHTML = '<div class="kick">状态</div><h3>还没有载入知识包</h3><div class="desc" style="font-size:13px;color:var(--txt-2);line-height:1.8">去「开始蒸馏」拖一份材料进来。</div>'; addX(); return; }
   const n = State.sel || Graph.hover;
+  /* 作废项默认从**所有引用列表**里消失（买家反馈：作废了还在别处当依据显示）。
+     只有图谱工具条的「显示已作废」打开时才列出来 —— 那是回头核对用的。 */
+  const showDep = !!State.showDep;
+  const keep = x => showDep || !isDepNode(x);
+  const hid = arr => (arr || []).filter(x => isDepNode(x)).length;
+  const hidTip = n2 => (n2 > 0 && !showDep)
+    ? `<span style="font-size:11.5px;color:var(--txt-4)">（另有 ${n2} 条已作废，已隐藏）</span>` : '';
   if (!n) {
     const cross = p.relations.filter(r => r.crossSource && r.status !== 'rejected').length;
     const fused = p.skills.filter(s => (s.sourceIds || []).length > 1).length;
@@ -2839,18 +2972,13 @@ function panel() {
       </div></div>
       <div class="sec"><h4>管理</h4>
         ${(p._history || []).length ? `<div style="font-size:12px;color:var(--txt-3);margin-bottom:8px;line-height:1.7">
-          上一次保存（${esc(p._history[0].at)}）之前的版本还留着 —— 改错了可以退回来。</div>
-        <button class="btn sm" id="rollbackBtn" style="margin-right:6px">恢复上一版</button>` : ''}
+          上一版（${esc(p._history[0].at)}）还留着 —— 点开能先看会变成什么样，再决定恢复。</div>
+        <button class="btn sm" id="rollbackBtn" style="margin-right:6px">查看上一版…</button>` : ''}
         <button class="btn sm ghost" id="delPackBtn" style="color:var(--err);border-color:color-mix(in srgb,var(--err) 35%,transparent)">删除这个知识包</button>
       </div>`;
     // 注意：这条分支提前 return，绑定必须放在 return 之前，否则按钮点不动
     const _rb = $('#rollbackBtn');
-    if (_rb) _rb.onclick = async () => {
-      await rollbackPack(p.id, 0);
-      await loadPacks();
-      try { panel(); Graph.tick = 0; Graph.draw(); } catch (e) { }
-      toast('已恢复到上一版', 3600);
-    };
+    if (_rb) _rb.onclick = () => Dialog.prevVersion(p);   // 先看会变成什么，再决定恢复
     const _dp = $('#delPackBtn');
     if (_dp) _dp.onclick = async () => {
       const nm = (p.meta && p.meta.name) || p.id;
@@ -2874,17 +3002,19 @@ function panel() {
     <div class="phtitle">
       <h3>${esc(n.ref.title)}</h3>
       ${n.kind === 'point' ? `<button class="depbtn" data-editpt="${n.id}" title="改说明 / 加我的备注。引文是从材料原样抄的，不能改">改</button>` : ''}
+      ${n.kind === 'skill' ? `<button class="depbtn" data-editsk="${n.id}" title="改标题 / 什么时候用 / 输入输出 / 步骤 / 常见误用">改</button>` : ''}
       ${n.kind !== 'source' ? `<button class="depbtn${isDep ? ' on' : ''}" data-dep="${n.id}"
         title="${isDep ? '恢复为有效 —— 重新参与检索、回到图谱' : '标记为作废 —— 不再参与检索、不出现在回答依据里，图上收起；内容留着，随时能恢复'}">${isDep ? '恢复' : '标记作废'}</button>` : ''}
     </div>`;
   if (n.kind === 'source') {
     const idx = (p.sources || []).findIndex(s => s.id === n.id);
     const [lb, cl] = LIC[n.ref.license] || ['未知', 'err'];
-    const ps = p.points.filter(x => x.sourceId === n.id), ss = p.skills.filter(x => (x.sourceIds || []).includes(n.id));
+    const psAll = p.points.filter(x => x.sourceId === n.id), ssAll = p.skills.filter(x => (x.sourceIds || []).includes(n.id));
+    const ps = psAll.filter(keep), ss = ssAll.filter(keep);
     html += `<div class="tags"><span class="badge ${cl}">${lb}</span>${(n.ref.tags || []).map(t => `<span class="badge">${esc(t)}</span>`).join('')}
       <span class="badge" style="border-color:${Graph.srcHue(idx, 0)};color:${Graph.srcHue(idx, 0)}">图谱配色</span></div>
       <div class="sec"><h4>信息</h4><p>${esc(n.ref.author || '—')}${n.ref.note ? '　·　' + esc(n.ref.note) : ''}</p></div>
-      <div class="sec"><h4>产出</h4><p>知识点 <b class="num">${ps.length}</b>　技能 <b class="num">${ss.length}</b></p></div>
+      <div class="sec"><h4>产出</h4><p>知识点 <b class="num">${ps.length}</b>　技能 <b class="num">${ss.length}</b> ${hidTip(hid(psAll) + hid(ssAll))}</p></div>
       <div class="sec"><h4>原文</h4>${(() => {
         const tid = n.ref.textId;
         const has = tid && State.textIds.has(tid);
@@ -2896,11 +3026,12 @@ function panel() {
       })()}</div>
       <div class="sec"><h4>聚焦</h4><button class="btn sm" data-only="${n.id}">只看这个来源</button>
         <button class="btn sm ghost" data-all="1" style="margin-left:6px">显示全部</button></div>
-      <div class="sec"><h4>知识点</h4>${ps.map(x => relRow(x.id, x.title, 'point')).join('')}</div>
-      <div class="sec"><h4>技能</h4>${ss.map(x => relRow(x.id, x.title, (x.sourceIds || []).length > 1 ? 'fused' : 'skill')).join('')}</div>`;
+      <div class="sec"><h4>知识点</h4>${ps.map(x => relRow(x.id, x.title, 'point')).join('') || '<p style="font-size:12.5px;color:var(--txt-3)">暂无</p>'}${hidTip(hid(psAll))}</div>
+      <div class="sec"><h4>技能</h4>${ss.map(x => relRow(x.id, x.title, (x.sourceIds || []).length > 1 ? 'fused' : 'skill')).join('') || '<p style="font-size:12.5px;color:var(--txt-3)">暂无</p>'}${hidTip(hid(ssAll))}</div>`;
   } else if (n.kind === 'point') {
-    const pt = n.ref, ss = p.skills.filter(s => (s.pointIds || []).includes(pt.id));
-    html += `<div class="tags"><span class="badge acc">知识点</span>${isDep ? '<span class="badge warn">已作废</span>' : ''}${(pt.tags || []).map(t => `<span class="badge">${esc(t)}</span>`).join('')}
+    const pt = n.ref, ssAll = p.skills.filter(s => (s.pointIds || []).includes(pt.id));
+    const ss = ssAll.filter(keep);
+    html += `<div class="tags"><span class="badge acc">知识点</span>${isDep ? '<span class="badge warn">已作废</span>' : ''}${isEdited(pt) ? `<span class="badge acc" title="人工修改于 ${esc(pt.editedAt)}">人工修改</span>` : ''}${(pt.tags || []).map(t => `<span class="badge">${esc(t)}</span>`).join('')}
       ${pt.verify === 'needed' ? '<span class="badge warn">需核实时效</span>' : ''}
       <span class="badge">可信度 ${({ high: '高', medium: '中', low: '低' })[pt.confidence] || '—'}</span></div>
       <div class="sec"><h4>它在说什么</h4><p>${esc(pt.summary)}</p>${pt.detail ? `<p style="margin-top:7px">${esc(pt.detail)}</p>` : ''}</div>
@@ -2912,24 +3043,28 @@ function panel() {
           ? '“' + esc(e.quote) + '”'
           : (mine ? '<span style="color:var(--txt-4)">本文档为作者自述，无外部出处</span>' : '<span style="color:var(--warn)">这条没有引文——出版物本该抄一句原话，建议核对</span>')}<small>${esc(e.locator)}</small></div>`).join('');
       })()}</div>
-      <div class="sec"><h4>支撑的技能</h4>${ss.length ? ss.map(s => relRow(s.id, s.title, (s.sourceIds || []).length > 1 ? 'fused' : 'skill')).join('') : '<p style="font-size:12.5px;color:var(--txt-3)">暂无 —— 这条还没被任何技能用到，可以考虑补一条，或删掉</p>'}</div>`;
+      <div class="sec"><h4>支撑的技能</h4>${ss.length ? ss.map(s => relRow(s.id, s.title, (s.sourceIds || []).length > 1 ? 'fused' : 'skill')).join('') : '<p style="font-size:12.5px;color:var(--txt-3)">暂无 —— 这条还没被任何技能用到，可以考虑补一条，或删掉</p>'}${hidTip(hid(ssAll))}</div>`;
   } else {
     const sk = n.ref;
-    html += `<div class="tags">${isDep ? '<span class="badge warn">已作废</span>' : ''}${n.fused ? '<span class="badge acc">融合</span>' : '<span class="badge ok">技能</span>'}${(sk.sourceIds || []).map(id => `<span class="badge">${esc((p.sources.find(s => s.id === id) || {}).title || id)}</span>`).join('')}</div>
+    const ptsAll = (sk.pointIds || []).map(id => p.points.find(x => x.id === id)).filter(Boolean);
+    const pts = ptsAll.filter(keep);
+    html += `<div class="tags">${isDep ? '<span class="badge warn">已作废</span>' : ''}${n.fused ? '<span class="badge acc">融合</span>' : '<span class="badge ok">技能</span>'}${isEdited(sk) ? `<span class="badge acc" title="人工修改于 ${esc(sk.editedAt)}">人工修改</span>` : ''}${(sk.sourceIds || []).map(id => `<span class="badge">${esc((p.sources.find(s => s.id === id) || {}).title || id)}</span>`).join('')}</div>
       <div class="sec"><h4>什么时候用</h4><p>${esc(sk.when)}</p></div>
       ${sk.input || sk.output ? `<div class="sec"><h4>输入 → 输出</h4><p>${esc(sk.input || '—')} → ${esc(sk.output || '—')}</p></div>` : ''}
       <div class="sec"><h4>怎么做</h4><ol>${(sk.steps || []).map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>
       ${(sk.pitfalls || []).length ? `<div class="sec"><h4>常见误用</h4><ul>${sk.pitfalls.map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>` : ''}
-      ${(sk.pointIds || []).length ? `<div class="sec"><h4>支撑它的知识点</h4>${sk.pointIds.map(id => { const t = p.points.find(x => x.id === id); return t ? relRow(id, t.title, 'point') : ''; }).join('')}</div>` : ''}
+      ${ptsAll.length ? `<div class="sec"><h4>支撑它的知识点</h4>${pts.map(t => relRow(t.id, t.title, 'point')).join('')}${hidTip(hid(ptsAll))}</div>` : ''}
       ${(() => {
-        const qs = (sk.pointIds || []).map(id => p.points.find(x => x.id === id)).filter(Boolean)
+        const qs = pts
           .flatMap(t => (t.evidence || []).filter(e => e.quote).map(e => ({ q: e.quote, l: e.locator })));
         return qs.length ? `<div class="sec"><h4>依据出处（${qs.length}）</h4>${qs.slice(0, 4).map(e => `<div class="quote">“${esc(e.q)}”<small>${esc(e.l)}</small></div>`).join('')}</div>` : '';
       })()}`;
   }
   const rs = [];
   Graph.E.forEach(e => { if (e.a === n) rs.push({ o: e.b, t: e.type, note: e.note, r: e.r }); else if (e.b === n) rs.push({ o: e.a, t: e.type, note: e.note, r: e.r }); });
-  const live = rs.filter(x => x.r && x.r.status !== 'rejected');
+  const live = rs.filter(x => x.r && x.r.status !== 'rejected'
+    /* 连向已作废节点的边也不再显示 —— 否则"被作废的东西还在当依据挂着" */
+    && !(x.o && x.o.kind !== 'source' && x.o.dep && !showDep));
   if (live.length) html += `<div class="sec"><h4>关联（${live.length}）</h4>${live.map(x => {
     const s = relSource(x.r), pend = relPending(x.r);
     const col = x.o.kind === 'source' ? Graph.pal.source : x.o.kind === 'point' ? Graph.pal.point : (x.o.fused ? Graph.pal.fused : Graph.pal.skill);
@@ -2945,7 +3080,16 @@ function panel() {
       ${x.note ? `<div style="font-size:11px;color:var(--txt-3);margin-top:5px">${esc(x.note)}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
+  /* 改完看的就是这一屏 —— 把「恢复上一版」也放这儿。
+     买家反馈：弹窗里写着"在右侧「管理」里点恢复上一版"，但选中节点后右侧根本没有「管理」
+     （那段只在"没选中任何节点"的概览里出现）。承诺必须落在看得见的地方。 */
+  if ((p._history || []).length) {
+    html += `<div class="sec"><h4>管理</h4>
+      <div style="font-size:12px;color:var(--txt-3);margin-bottom:8px;line-height:1.7">上一版（${esc((p._history[0] || {}).at || '')}）还留着 —— 点开能先看会变成什么样，再决定恢复。</div>
+      <button class="btn sm" data-rb="1">查看上一版…</button></div>`;
+  }
   el.innerHTML = html;
+  el.querySelectorAll('[data-rb]').forEach(b => b.addEventListener('click', () => Dialog.prevVersion(p)));
   el.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => {
     const t = Graph.idx[b.dataset.jump]; if (t) { State.sel = t; Graph.draw(); Graph.centerOn(t); panel(); }
   }));
@@ -2953,12 +3097,17 @@ function panel() {
     const pt = (State.pack.points || []).find(x => x.id === b.dataset.editpt);
     if (pt) Dialog.editPoint(State.pack, pt);
   }));
+  el.querySelectorAll('[data-editsk]').forEach(b => b.addEventListener('click', () => {
+    const sk = (State.pack.skills || []).find(x => x.id === b.dataset.editsk);
+    if (sk) Dialog.editSkill(State.pack, sk);
+  }));
   el.querySelectorAll('[data-dep]').forEach(b => b.addEventListener('click', async () => {
     const id = b.dataset.dep;
     const node = (State.pack.points || []).find(x => x.id === id)
       || (State.pack.skills || []).find(x => x.id === id);
     if (!node) return;
     const now = await toggleDeprecated(State.pack, node);
+    if (now === null) return;                       // 用户在确认框里点了取消
     toast(now ? '已标记作废 · 不再参与检索、图上收起来了' : '已恢复为有效 · 重新参与检索', 4200);
   }));
   el.querySelectorAll('[data-acc],[data-rej]').forEach(b => b.addEventListener('click', async () => {
@@ -3110,7 +3259,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.1.9';
+const APP_VER = '6.2.0';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -3403,13 +3552,10 @@ function setPanel(open) {
   syncPanelW();
   Graph.recenter();
 }
-const relRow = (id, title, kind) => `<button class="rel" data-jump="${id}"><span class="dt" style="background:${kind === 'point' ? Graph.pal.point : kind === 'fused' ? Graph.pal.fused : Graph.pal.skill}"></span>${esc(title)}</button>`;
+const relRow = (id, title, kind) => `<button class="rel" data-jump="${esc(id)}"><span class="dt" style="background:${kind === 'point' ? Graph.pal.point : kind === 'fused' ? Graph.pal.fused : Graph.pal.skill}"></span>${esc(title)}</button>`;
 
 /* ============================================================
-   9. 视图：蒸馏 / 会客厅 / 库 / 设置
-   ============================================================ */
-/* ============================================================
-   8.5 蒸馏引擎
+   8.5 蒸馏引擎（解析 → 切块 → 蒸馏 → 调用模型）
    ============================================================ */
 const D = { docs: [], jobs: [], pack: null, running: false, grow: true, targetPack: null };
 /* token 用量统计：优先用接口返回的 usage，没有就按字数估算 */
@@ -4555,7 +4701,7 @@ async function attachText(sourceId) {
       State.textIds.add(id);
       src.textId = id;
       await persistPack();
-      panel(); gauges();
+      panel();
       toast(`原文已补上（${fmt(parsed.text.length)} 字 / ${chapters.length} 章），现在可以阅读和回跳了。`, 5200);
     } catch (e) { toast('补录失败：' + String(e.message || e), 5600); }
   };
@@ -4855,6 +5001,8 @@ function buildSkillMd(p) {
   md += '\n## 核心框架\n\n';
   K.forEach(s => {
     md += '### ' + s.title + '\n\n';
+    /* 人改过的必须留痕：买家把这个文件丢给 AI 时，能看出哪条不是模型原话 */
+    if (isEdited(s)) md += '_人工修订：' + s.editedAt + '_\n\n';
     if (s.maturity === 'fused') md += '_跨来源融合技能（' + (s.sourceIds || []).map(titleOf).join(' + ') + '）_\n\n';
     md += '**什么时候用**：' + (s.when || '—') + '\n\n';
     if (s.input || s.output) md += '**输入 → 输出**：' + (s.input || '—') + ' → ' + (s.output || '—') + '\n\n';
@@ -4865,7 +5013,7 @@ function buildSkillMd(p) {
   });
   md += '## 关键原则\n\n| 原则 | 说明 | 出处 |\n|---|---|---|\n';
   P.forEach(x => {
-    md += '| ' + x.title + ' | ' + String(x.summary || '').replace(/\|/g, '／') + ' | ' + (((x.evidence || [])[0] || {}).locator || '—') + ' |\n';
+    md += '| ' + x.title + (isEdited(x) ? '（人工修订）' : '') + ' | ' + String(x.summary || '').replace(/\|/g, '／') + ' | ' + (((x.evidence || [])[0] || {}).locator || '—') + ' |\n';
   });
   md += '\n## 来源与授权\n\n';
   S.forEach(s => { md += '- 《' + s.title + '》' + (s.author ? '（' + s.author + '）' : '') + ' — ' + (s.license || 'unknown') + '\n'; });
@@ -4875,10 +5023,21 @@ function buildSkillMd(p) {
 function exportSKILL(p) { dl(buildSkillMd(p), safeName(p.meta.name) + '_SKILL.md', 'text/markdown;charset=utf-8'); }
 
 /* 切换「作废 / 有效」。点在哪都能用：详情面板、引用弹窗、书架清单。
-   返回切换后的新状态（true = 现在已作废）。 */
+   返回切换后的新状态（true = 现在已作废）；**用户取消时返回 null**（调用方别把取消当"已恢复"）。
+   作废要二次确认 —— 它会把这条从检索、回答依据、所有引用列表和导出里一起去掉，
+   虽然可恢复，但很多人是在"手一滑"的情况下点到的（买家要求）。 */
 async function toggleDeprecated(pack, node) {
   if (!pack || !node) return false;
   const was = node.status === 'deprecated';
+  if (!was) {
+    const nm = String(node.title || '').slice(0, 44);
+    const ok = await Dialog.confirm(
+      '把「' + nm + '」标记为作废？\n\n'
+      + '作废后：不再参与检索、不出现在回答依据里、不在任何引用列表中显示、不进 SKILL.md 导出。\n'
+      + '内容还在，随时能恢复。',
+      { title: '标记为作废', ok: '标记作废' });
+    if (!ok) return null;
+  }
   if (was) delete node.status; else node.status = 'deprecated';
   await saveVersioned(pack);
   try { Retriever._c = null; Retriever._k = null; } catch (e) { }
@@ -4889,6 +5048,31 @@ async function toggleDeprecated(pack, node) {
   return !was;
 }
 
+/* 彻底删除（不可恢复）。
+   —— 买家问「作废的要不要直接删掉」。作废的价值是**可恢复**，所以默认还留软删除；
+      但有些内容就是错的、早该没了，这里给一个显式入口：真删，并把它在别处的引用一起剪掉
+      （技能里的 pointIds、以及所有连到它的关系），否则会留下指向空气的连线。 */
+async function purgeNode(pack, node, kind) {
+  if (!pack || !node) return false;
+  const before = JSON.parse(JSON.stringify(pack));
+  if (kind === 'skill') {
+    pack.skills = (pack.skills || []).filter(x => x.id !== node.id);
+  } else {
+    pack.points = (pack.points || []).filter(x => x.id !== node.id);
+    (pack.skills || []).forEach(sk => {
+      if (Array.isArray(sk.pointIds)) sk.pointIds = sk.pointIds.filter(x => x !== node.id);
+    });
+  }
+  pack.relations = (pack.relations || []).filter(r => r.from !== node.id && r.to !== node.id);
+  await saveVersioned(pack, before);
+  try { Retriever._c = null; Retriever._k = null; } catch (e) { }
+  if (State.pack && State.pack.id === pack.id) {
+    State.sel = null;
+    try { Graph.build(); Graph.tick = 0; Graph.draw(); panel(); renderGbar(); renderLegend(); } catch (e) { }
+  }
+  return true;
+}
+
 /* beforeSnap：可选，传"修改之前"的深拷贝。
    不传的话只能拿 State.packs 里那份 —— 但那往往就是被就地改过的同一对象，
    快照会记成改后的状态，回滚就没意义了。就地改的调用方必须传。 */
@@ -4897,24 +5081,59 @@ async function saveVersioned(pack, beforeSnap) {
   if (prev && prev !== pack) {
     const snap = JSON.parse(JSON.stringify(prev));
     delete snap._history;
-    pack._history = [{ at: new Date().toISOString().slice(0, 16).replace('T', ' '), pack: snap }]
+    pack._history = [{ at: stampNow(), pack: snap }]
       .concat(prev._history || []).slice(0, 2);
   }
   await DB.put(pack);
-  State.packs = await DB.all();
+  /* ⚠ 不要写成 State.packs = await DB.all()。
+     DB 读回来的是**新对象**（结构化克隆），而 State.pack、Graph 节点的 ref、
+     书架正在用的 pk —— 全都还指着旧对象。那样 State.pack 会变成一个
+     "不在 State.packs 里的僵尸"：从书架彻底删掉一条，面板/图谱读到的仍是旧的，
+     要刷新才好（买家会发现"删了还在"）。这里就地替换，保住对象同一性。 */
+  const i = (State.packs || []).findIndex(x => x.id === pack.id);
+  if (i >= 0) State.packs[i] = pack; else (State.packs = State.packs || []).unshift(pack);
+  if (State.pack && pack.id && State.pack.id === pack.id) State.pack = pack;
 }
+/* 版本对比：target = 要恢复到的旧版本，cur = 当前。
+   返回「恢复之后会发生什么」：改回 / 回来 / 消失。
+   —— 买家原话：「恢复的内容是啥也不知道呢」。 */
+function packDiff(target, cur) {
+  const idxP = p => new Map(((p && p.points) || []).map(x => [x.id, x]));
+  const idxS = p => new Map(((p && p.skills) || []).map(x => [x.id, x]));
+  const fpP = x => [x.title, x.summary, x.userNote, (x.tags || []).join(','), x.status || ''].join('|');
+  const fpS = x => [x.title, x.when, x.input, x.output, (x.steps || []).join('|'),
+  (x.pitfalls || []).join('|'), (x.pointIds || []).join(','), x.status || ''].join('|');
+  const one = (A, B, fp) => {
+    const chg = [], back = [], gone = [];
+    B.forEach((v, k) => {
+      if (!A.has(k)) gone.push(v);                    // 当前有、旧版没有 → 恢复后消失
+      else if (fp(A.get(k)) !== fp(v)) chg.push({ was: A.get(k), now: v });
+    });
+    A.forEach((v, k) => { if (!B.has(k)) back.push(v); });  // 旧版有、当前没有 → 恢复后回来
+    return { chg, back, gone };
+  };
+  return { pts: one(idxP(target), idxP(cur), fpP), sks: one(idxS(target), idxS(cur), fpS) };
+}
+
+/* 回滚到第 i 版。确认这一步已经挪到 Dialog.prevVersion 里（预览即确认），
+   所以这里不再自己弹框 —— 否则用户要点两次。 */
 async function rollbackPack(id, i) {
-  const cur = State.packs.find(x => x.id === id); if (!cur) return;
-  const h = (cur._history || [])[i]; if (!h) return;
-  if (!(await Dialog.confirm('回滚到 ' + h.at + ' 的版本？\n当前版本会被存入历史。', { title: '回滚版本' }))) return;
+  const cur = State.packs.find(x => x.id === id); if (!cur) return false;
+  const h = (cur._history || [])[i]; if (!h) return false;
   const snap = JSON.parse(JSON.stringify(cur)); delete snap._history;
-  const restored = h.pack;
+  const restored = JSON.parse(JSON.stringify(h.pack));      // 深拷贝：别把历史对象挂回活对象
   restored.id = id;
-  restored._history = [{ at: new Date().toISOString().slice(0, 16).replace('T', ' '), pack: snap }]
+  restored._history = [{ at: stampNow(), pack: snap }]
     .concat((cur._history || []).filter((_, k) => k !== i)).slice(0, 2);
-  await DB.put(restored); State.packs = await DB.all();
-  if (State.pack && State.pack.id === id) selectPack(id);
-  toast('已回滚');
+  await DB.put(restored);
+  const j = (State.packs || []).findIndex(x => x.id === id);
+  if (j >= 0) State.packs[j] = restored; else State.packs.unshift(restored);
+  if (State.pack && State.pack.id === id) {
+    State.pack = restored;
+    State.sel = null;
+    try { Graph.build(); Graph.tick = 0; Graph.draw(); panel(); renderGbar(); renderLegend(); renderNav(); } catch (e) { }
+  }
+  return true;
 }
 /* 去重指纹：去掉标点空白，取前 30 字。标题相同但内容明显不同的不会被误并。 */
 function fp(x) { return String(x || '').replace(/[\s\u3000，。；、,.;:：!！?？"'“”‘’（）()《》\-—~·]/g, '').slice(0, 30); }
@@ -5068,6 +5287,20 @@ async function pickBackupDir() {
   return dir;
 }
 
+/* 导入白名单：id 会被拼进 HTML 属性（data-jump / data-cite）和图谱索引，
+   所以只接受 app 自己生成的那种（kp-001 / sk-002 / src-003 / pk-<ts> / 合并后的 pk-…::kp-…）。
+   注意不能用 String(x) 兜底 —— String(undefined) === 'undefined' 会通过正则。 */
+const ID_OK = /^[\w:.\-]{1,64}$/;
+const idOk = v => typeof v === 'string' && ID_OK.test(v);
+function packIdsOk(p) {
+  if (!idOk(p.id)) return false;
+  for (const k of ['sources', 'points', 'skills']) {
+    for (const x of (p[k] || [])) if (!x || !idOk(x.id)) return false;
+  }
+  for (const r of (p.relations || [])) if (!idOk(r.from) || !idOk(r.to)) return false;
+  return true;
+}
+
 const Store = {
   async info() {
     let quota = 0, usage = 0;
@@ -5129,6 +5362,7 @@ const Store = {
     if (res.updated) parts.push('更新 ' + res.updated + ' 个');
     if (res.merged) parts.push('合并 ' + res.merged + ' 个');
     if (res.skipped) parts.push('跳过 ' + res.skipped + ' 个（本机已经全有）');
+    if (res.bad) parts.push('拒绝 ' + res.bad + ' 个（id 格式不对）');
     return '导入完成：' + parts.join(' · ') + (res.texts ? ' · ' + res.texts + ' 份原文' : '');
   },
   async importAll(text) {
@@ -5162,7 +5396,7 @@ const Store = {
 
     const existing = new Map((await DB.all())
       .filter(x => Array.isArray(x.sources)).map(x => [x.id, x]));
-    let added = 0, updated = 0, merged = 0, skipped = 0;
+    let added = 0, updated = 0, merged = 0, skipped = 0, bad = 0;
 
     for (const p of packs) {
       if (!p.sources || !p.points || !p.skills) continue;
@@ -5172,6 +5406,9 @@ const Store = {
         if (src.textId && tmap[src.textId]) src.textId = tmap[src.textId];
       });
       clean.id = (clean.id || ('pk-' + Date.now())) + '';
+      /* id 会被拼进 HTML 属性（data-jump / data-cite / 图谱索引）。
+         别人手改过或构造过的包，id 里可以塞引号和标签 —— 直接拒，不做"修一修再用"。 */
+      if (!packIdsOk(clean)) { bad++; continue; }
 
       const old = existing.get(clean.id);
       if (!old) { await DB.put(clean); existing.set(clean.id, clean); added++; continue; }
@@ -5196,7 +5433,10 @@ const Store = {
     }
     const n = added + updated + merged;
     try { State.textIds = new Set(await DB.textIds()); } catch (e) { }
-    return { packs: n, texts: nt, added, updated, merged, skipped, why: '' };
+    return {
+      packs: n, texts: nt, added, updated, merged, skipped, bad,
+      why: bad ? `有 ${bad} 个知识包的 id 格式不对，已拒绝导入（可能是文件被手改过）` : ''
+    };
   }
 };
 /* 实时显示浏览器配额与"按当前平均包大小还能装多少个"——不写死任何数字 */
@@ -5235,7 +5475,7 @@ async function refreshStoreInfo() {
 }
 
 /* ============================================================
-   8.7 目标驱动：蒸完自测
+   9. 视图：书架 / 蒸馏 / 会客厅 / 设置 / 阅读
    ============================================================ */
 
 const Views = {
@@ -5247,7 +5487,7 @@ const Views = {
     const pk = (State.packs || []).find(x => x.id === packId); if (!pk) return;
     const sc = (pk.sources || []).find(x => x.id === srcId); if (!sc) return;
     const np = (pk.points || []).filter(x => x.sourceId === srcId).length;
-    const ns = (pk.skills || []).filter(x => !(x.sourceIds || []).includes(srcId) === false).length;
+    const ns = (pk.skills || []).filter(x => (x.sourceIds || []).includes(srcId)).length;   // 会被一起删掉的技能数
     if (!(await Dialog.confirm('删掉《' + sc.title + '》？\n\n会同时删掉它的 ' + np + ' 条知识点和 ' + ns + ' 条技能。\n删了不能撤销。', { title: '删除这本书', ok: '删掉', danger: true }))) return;
     const goneIds = new Set([srcId, ...(pk.points || []).filter(x => x.sourceId === srcId).map(x => x.id)]);
     /* 这本书的原文 id 先记下来，删完之后清理没人用的 */
@@ -5338,7 +5578,7 @@ const Views = {
       ${noBk ? `<div class="backupbar">
         <span>⚠ <b>数据只存在浏览器的本地数据库里</b> —— 清理浏览数据时可能被一起删掉，换浏览器/换电脑也是空的。</span>
         <span style="flex:1 1 auto"></span>
-        <button class="btn sm" id="bkNow">选个文件夹自动备份</button>
+        <button class="btn sm" id="bkNowShelf">选个文件夹自动备份</button>
       </div>` : ''}
 
       <div class="assetsum">
@@ -5360,7 +5600,7 @@ const Views = {
       ${depList.length ? `<div class="depcard">
         <div class="dephead">
           <b>${depList.length} 条已作废</b>
-          <span class="micro">不参与检索、不出现在回答的依据里、不进 SKILL.md 导出。内容都还在，随时能恢复。</span>
+          <span class="micro">不参与检索、不出现在回答的依据里、也不出现在任何引用列表中，不进 SKILL.md 导出。内容都还在，随时能恢复；确认永远不要了，可以「彻底删除」。</span>
         </div>
         <div class="deplist">
           ${depList.map(d => `<div class="deprow">
@@ -5368,6 +5608,7 @@ const Views = {
             <span class="dn">${esc(d.x.title)}</span>
             <span class="dmeta">${d.kind === 'skill' ? '技能' : '知识点'} · ${esc((d.pk.meta && d.pk.meta.name) || '')}</span>
             <button class="btn sm ghost" data-restore="${esc(d.pk.id)}|${esc(d.x.id)}|${d.kind}">恢复</button>
+            <button class="btn sm ghost" data-purge="${esc(d.pk.id)}|${esc(d.x.id)}|${d.kind}" title="不可恢复：连同它在别处的引用一起删掉">彻底删除</button>
           </div>`).join('')}
         </div>
       </div>` : ''}
@@ -5389,6 +5630,20 @@ const Views = {
       toast('已恢复为有效 · 重新参与检索', 3600);
       Views.shelf();
     });
+    el.querySelectorAll('[data-purge]').forEach(b => b.onclick = async () => {
+      const [pkId, id, kind] = b.dataset.purge.split('|');
+      const pk = (State.packs || []).find(x => x.id === pkId); if (!pk) return;
+      const node = kind === 'skill'
+        ? (pk.skills || []).find(x => x.id === id)
+        : (pk.points || []).find(x => x.id === id);
+      if (!node) return;
+      if (!(await Dialog.confirm('彻底删除「' + node.title + '」？\n\n和「作废」不一样：删了就找不回来，'
+        + '它和别的东西的关联也会一起剪掉。\n（想留个后路就点「取消」，改用「恢复」）',
+        { title: '彻底删除', ok: '删除', danger: true }))) return;
+      await purgeNode(pk, node, kind);
+      toast('已彻底删除', 3000);
+      Views.shelf();
+    });
     el.querySelectorAll('[data-read]').forEach(b => b.onclick = () => {
       selectPack(b.dataset.pack); State.readSrc = b.dataset.read; State.readTextId = null; go('read');
     });
@@ -5406,7 +5661,10 @@ const Views = {
       if (!pack) return;
       bookMenu(b, pack, b.dataset.more);
     });
-    const bkn = $('#bkNow'); if (bkn) bkn.onclick = async () => {
+    /* 书架和设置页各有一个备份按钮 —— id 必须分开。
+       原来两个都叫 #bkNow，$() 永远只拿到文档里第一个（书架那个），
+       结果设置页的「立即同步一次」是死的，还每开一次设置页就给书架按钮叠一个监听。 */
+    const bkn = $('#bkNowShelf'); if (bkn) bkn.onclick = async () => {
       try { await pickBackupDir(); toast('已设置备份文件夹，之后每次保存都会自动同步一份', 4200); Views.shelf(); }
       catch (e) { toast('没选成：' + String(e.message || e) + '（可以稍后再设）', 4200); }
     };
@@ -5559,7 +5817,7 @@ const Views = {
     });
     $('#viewBtn').addEventListener('click', () => {
       if (!D.pack) return;
-      State.pack = D.pack; State.sel = null; Graph.build(); Graph.tick = 0; Graph.draw(); panel(); gauges(); renderGbar(); renderLegend();
+      State.pack = D.pack; State.sel = null; Graph.build(); Graph.tick = 0; Graph.draw(); panel(); renderGbar(); renderLegend();
       go('graph');
     });
     $('#inferBtn').addEventListener('click', () => {
@@ -5750,7 +6008,7 @@ const Views = {
         <div class="est" id="storeInfo">读取中…</div>
         <div class="inline" style="flex-wrap:wrap;gap:8px">
           <button class="btn pri" id="bkFolder">选择备份文件夹（只需一次）</button>
-          <button class="btn" id="bkNow">立即同步一次</button>
+          <button class="btn" id="bkNowSet">立即同步一次</button>
           <button class="btn" id="rsFolder">从文件夹恢复</button>
           <button class="btn" id="bkAll">导出全部备份（含原文）</button>
           <button class="btn" id="rsAll">导入备份文件</button>
@@ -5907,10 +6165,6 @@ const Views = {
       }));
     }
     el.querySelectorAll('[data-th]').forEach(b => b.addEventListener('click', () => { Theme.pref = b.dataset.th; localStorage.setItem('dw.theme', Theme.pref); Theme.apply(); Views.settings(); }));
-    if ($('#saveCfg')) $('#saveCfg').addEventListener('click', () => {
-      Settings.d.distill = { chunk: +$('#ckChunk').value || 3, concurrency: +$('#ckConc').value || 2, temperature: +$('#ckTemp').value || 0.3 };
-      Settings.save(); toast('参数已保存');
-    });
 
     /* ---- 授权与版本 ---- */
     Updater.renderSettings();
@@ -5931,7 +6185,7 @@ const Views = {
           : '选文件夹失败：' + msg, 7000);
       }
     });
-    $('#bkNow').addEventListener('click', async () => {
+    $('#bkNowSet').addEventListener('click', async () => {
       if (!backupDir) return toast('先点「选择备份文件夹」', 3600);
       try { const n = await syncBackup(false); await refreshStoreInfo(); toast(n ? `已同步 ${n} 个知识包到「${backupDir.name}」` : '没有可备份的知识包', 4200); }
       catch (e) { toast('同步失败：' + String(e.message || e), 5200); }
@@ -5970,7 +6224,7 @@ const APP_MANUAL = `你是「知识蒸馏工作台」的内置使用助手。用
 【七个页面】
 1 知识图谱：看全貌。大圆=来源（每个来源一个颜色），灰点=知识点，青点=技能，朱点=跨来源融合技能；青虚线=两个来源在说同一件事，红虚线=在说反话，朱色点线=本地推断出来的关联（已生效）。看着不对的点那条线就能删掉。滚轮缩放、拖动平移、双击节点居中、右上详情面板可收起。
 2 开始蒸馏：把 PDF/EPUB/DOCX/TXT/MD 拖进虚线框 → 看材料体检结论（规则判断，也可以点「让模型评一下」）→ 确认分块数与并发 → 点开始。长材料按章节自动切块、并发调用、跑完自动结构校验，然后点「存入我的知识包」。
-3 关联：本地推断出来的关联（不花钱，靠标签共现和同技能指向）会直接画到图谱上，不用逐条审。看到奇怪的线，点它一下右侧会出现「这条不对，删掉」。也可以点工具条上的「用模型找跨来源关联」多找一轮。
+3 关联：本地推断出来的关联（不花钱，靠标签共现和同技能指向）会直接画到图谱上，不用逐条审。看到奇怪的线，点它一下右侧会出现「这条不对，删掉」。如果图还是一盘散沙，点工具条上的「＋ 再推断一次」再找一轮（仍然不花钱）；想让模型去找跨来源关联，那是蒸馏页的「多来源时自动找跨来源关联」开关（会多花一次模型调用）。
 4 思想会客厅：对着当前知识包提问。先从知识包本地检索（不花钱），再做图谱增强召回（命中一个点会把它相邻的一圈也带进来），最后交给模型，答案里带 [kp-001] 这种引用，点了跳回图谱。没配 key 时降级为「引用模式」，只给相关条目与出处，不生成答案。
 5 对话：就是这里。可以自由对话，也可以切「使用助手」模式。
 6 我的知识包：多个包的管理、导入、合并（自动去重并推断新关联）、版本回滚、删除；每个包能导出三种格式——JSON（备份/迁移）、SKILL.md（装进 AI 工具让它自动调用）、独立看板 HTML（约 45KB，发给别人看，对方双击就能打开）。
@@ -6133,7 +6387,7 @@ function renderChatLog() {
 }
 
 /* ============================================================
-   8.7 目标驱动：蒸完自测
+   9.5 对话：标尺 / 发送 / 渲染
    ============================================================ */
 function buildRuler() {
   const r = $('#ruler'); r.innerHTML = '';
@@ -6171,65 +6425,10 @@ async function loadPacks() {
     if (junk.length) setTimeout(() => toast('清掉了 ' + junk.length + ' 条无效记录', 4200), 900);
   } catch (e) { }
 
-  if (!State.packs.length) { State.pack = null; Graph.build(); Graph.draw(); panel(); gauges(); renderGbar(); renderLegend(); }
-  else { State.pack = State.packs.find(p => p.id === (State.pack && State.pack.id)) || State.packs[0]; Graph.build(); panel(); gauges(); renderGbar(); renderLegend(); }
-  renderPacks();
+  if (!State.packs.length) { State.pack = null; Graph.build(); Graph.draw(); panel(); renderGbar(); renderLegend(); }
+  else { State.pack = State.packs.find(p => p.id === (State.pack && State.pack.id)) || State.packs[0]; Graph.build(); panel(); renderGbar(); renderLegend(); }
   try { renderScope(); } catch (e) { }
   $('#stStore').textContent = `库 ${State.packs.length} 包`;
-}
-function renderPacks() {
-  const box = $('#packs'); if (!box) return;
-  if (!State.packs.length) {
-    box.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;padding:36px">
-      <h3 style="justify-content:center">还没有知识包</h3>
-      <div class="desc">还没有知识包。去「开始蒸馏」拖一份材料进来，几分钟就能得到你的第一份知识库。</div>
-      <button class="btn pri" onclick="go('distill')">去蒸馏第一份</button></div>`;
-    return;
-  }
-  box.innerHTML = '';
-  State.packs.forEach(p => {
-    const live = (p.relations || []).filter(r => r.status !== 'rejected');
-    const cross = live.filter(r => r.crossSource).length;
-    const fused = (p.skills || []).filter(s => (s.sourceIds || []).length > 1).length;
-    const pend = (p.relations || []).filter(relPending).length;
-    const hist = (p._history || []).length;
-    const card = h('div', { class: 'pk', 'data-id': p.id },
-      h('label', { class: 'pkc', title: '选中以合并', onclick: e => e.stopPropagation() },
-        h('input', {
-          type: 'checkbox', ...(State.multi && State.multi.has(p.id) ? { checked: 'checked' } : {}),
-          onchange: e => { e.target.checked ? State.multi.add(p.id) : State.multi.delete(p.id); if (State.updMerge) State.updMerge(); }
-        })),
-      h('b', {}, p.meta.name || '未命名'),
-      h('div', { class: 'meta' }, `${p.meta.createdAt || ''} · ${p.sources.length} 来源 · ${p.sources.map(s => s.title).slice(0, 3).join(' / ').slice(0, 40)}`),
-      h('div', { class: 'stats' },
-        h('div', {}, h('b', {}, String(p.points.length)), '知识点'),
-        h('div', {}, h('b', {}, String(p.skills.length)), '技能'),
-        h('div', {}, h('b', {}, String(cross)), '跨来源'),
-        h('div', {}, h('b', {}, String(fused)), '融合')),
-      pend ? h('div', { class: 'meta', style: 'color:var(--warn)' }, `有 ${pend} 条本地推断的关联（图上朱色虚线）`) : null,
-      hist ? h('div', { class: 'meta' }, `有 ${hist} 个历史版本 `,
-        ...(p._history || []).map((x, i) => h('button', {
-          class: 'btn sm ghost', style: 'margin-left:4px',
-          onclick: e => { e.stopPropagation(); rollbackPack(p.id, i); }
-        }, '回滚 ' + x.at.slice(5)))) : null,
-      h('div', { class: 'acts' },
-        h('button', { class: 'btn sm', onclick: e => { e.stopPropagation(); selectPack(p.id); go('graph'); } }, '打开'),
-        h('button', { class: 'btn sm ghost', onclick: e => { e.stopPropagation(); exportJSON(p); } }, 'JSON'),
-        h('button', { class: 'btn sm ghost', onclick: e => { e.stopPropagation(); exportSKILL(p); } }, 'SKILL.md'),
-        h('button', { class: 'btn sm ghost', onclick: e => { e.stopPropagation(); exportBoard(p); } }, '看板'),
-        h('button', {
-          class: 'btn sm danger', style: 'margin-left:auto',
-          onclick: async e => {
-            e.stopPropagation();
-            if (!(await Dialog.confirm(`删除「${p.meta.name}」？\n这个知识包会被永久删除，不可恢复。`, { title: '删除知识包', ok: '删除', danger: true }))) return;
-            await DB.del(p.id); State.multi && State.multi.delete(p.id);
-            if (State.pack && State.pack.id === p.id) State.pack = null;
-            await loadPacks(); Views.shelf(); toast('已删除');
-          }
-        }, '删除')));
-    card.addEventListener('click', () => { selectPack(p.id); go('graph'); });
-    box.appendChild(card);
-  });
 }
 /* 书卡上的 ⋯ 菜单：导出的是**这个知识包**（不是全局，也不是单本书） */
 function bookMenu(anchor, pack, srcId) {
@@ -6274,7 +6473,7 @@ function bookMenu(anchor, pack, srcId) {
 
 function selectPack(id) {
   const p = State.packs.find(x => x.id === id); if (!p) return;
-  State.pack = p; State.sel = null; Graph.build(); Graph.tick = 0; Graph.draw(); panel(); gauges(); renderGbar(); renderLegend();
+  State.pack = p; State.sel = null; Graph.build(); Graph.tick = 0; Graph.draw(); panel(); renderGbar(); renderLegend();
   $('#stPack').textContent = '包：' + (p.meta.name || '').slice(0, 22);
   $('#stNode').textContent = `节点 ${p.points.length + p.skills.length + p.sources.length}`;
 }
@@ -6305,6 +6504,9 @@ async function testConn(cfg) {
 
 async function boot() {
   Theme.apply();
+  /* 侧栏角落的版本号：以前硬编码 "v2.0 · 本地运行"，从 6.x 起就一直显示 V2.0 ——
+     买家报版本时说的是错的信息，客服对不上。改成读 APP_VER。 */
+  try { const _vl = $('#verline'); if (_vl) _vl.textContent = 'v' + APP_VER + ' · 本地运行'; } catch (e) { }
   if (Settings.d.chat && Settings.d.chat.mode) State.chatMode = Settings.d.chat.mode;
   buildRuler();
   Graph.init();
@@ -6343,6 +6545,14 @@ async function boot() {
   if (backupDir) syncBackup(true).then(n => { if (n) toast(`已自动同步 ${n} 个知识包到「${backupDir.name}」`, 3000); }).catch(() => { });
   go(location.hash.slice(1) || 'graph', true);
   setTimeout(() => { Graph.resize(); Graph.palette(); }, 60);
+  /* 搜索下拉：点到别处就收起来（只在开着的时候挂动作，别干扰正常点击） */
+  document.addEventListener('click', e => {
+    const box = document.getElementById('gres');
+    if (!box || !box.classList.contains('on')) return;
+    const se = document.querySelector('.gsearch');
+    if (se && se.contains(e.target)) return;
+    box.classList.remove('on');
+  });
 }
 /* ══════════════════════════════════════════════════════════
    引导层 · 只用一次，走完即消失
@@ -6572,6 +6782,66 @@ $('#obBtn').onclick = () => Onboard.open();
 
 /* ── 配套样式的确认框 ──────────────────────────────────── */
 const Dialog = {
+  /* 「上一版」预览 —— 恢复之前先让人看清**会变成什么**。
+     买家两个疑问都在这里回答：
+       ①「恢复的内容是啥也不知道」→ 列出改回哪几条（带旧文案）、会回来什么、会消失什么；
+       ②「怎么可以无限回滚」→ 历史只留 2 版：恢复一次 = 和"刚才那版"互换，
+          所以弹窗里明写"再点一次能回来"，按钮上也带着目标时间，不是无底洞。 */
+  prevVersion(pack) {
+    const hist = (pack && pack._history) || [];
+    if (!hist.length) return toast('还没有可恢复的上一版（改过、或者存过知识包之后才会有）', 3600);
+    const at = hist[0].at || '';
+    const d = packDiff(hist[0].pack, pack);
+    const cut = (s, n) => {
+      s = String(s || '').replace(/\s+/g, ' ').trim();
+      if (!s) return '（空）';
+      return s.length > n ? s.slice(0, n) + '…' : s;
+    };
+    const chg = [
+      ...d.pts.chg.map(x => ({ k: '知识点', t: x.now.title, was: x.was.summary || '' })),
+      ...d.sks.chg.map(x => ({ k: '技能', t: x.now.title, was: x.was.when || '' }))
+    ];
+    const back = [...d.pts.back.map(x => ({ k: '知识点', t: x.title })), ...d.sks.back.map(x => ({ k: '技能', t: x.title }))];
+    const gone = [...d.pts.gone.map(x => ({ k: '知识点', t: x.title })), ...d.sks.gone.map(x => ({ k: '技能', t: x.title }))];
+    const rows = arr => arr.slice(0, 6).map(x =>
+      `<div style="padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.7">
+        <span class="badge">${x.k}</span> ${esc(cut(x.t, 34))}</div>`).join('')
+      + (arr.length > 6 ? `<div style="font-size:11.5px;color:var(--txt-3);padding-top:5px">…还有 ${arr.length - 6} 条</div>` : '');
+    const chgRows = chg.slice(0, 6).map(x =>
+      `<div style="padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.75">
+        <span class="badge">${x.k}</span> ${esc(cut(x.t, 34))}
+        <div style="color:var(--txt-3);font-size:11.5px;margin-top:2px">会改回：${esc(cut(x.was, 46))}</div></div>`).join('')
+      + (chg.length > 6 ? `<div style="font-size:11.5px;color:var(--txt-3);padding-top:5px">…还有 ${chg.length - 6} 条</div>` : '');
+    const none = !chg.length && !back.length && !gone.length;
+    const el = document.createElement('div');
+    el.className = 'dlgLayer';
+    el.innerHTML = `<div class="dlg" style="max-width:640px;text-align:left">
+      <h4 style="margin-bottom:4px">上一版：${esc(at)}</h4>
+      <div class="updp" style="margin-bottom:12px">这是恢复之后的样子，先看清楚再决定。</div>
+      ${none ? '<div class="updp">两版内容完全一样 —— 没什么可恢复的。</div>' : ''}
+      <div style="font-size:12.5px;color:var(--txt-2);margin-bottom:10px">
+        改回 <b>${chg.length}</b> 条 · 回来 <b>${back.length}</b> 条 · 消失 <b>${gone.length}</b> 条</div>
+      ${chg.length ? `<div class="sec"><h4>会改回（${chg.length}）</h4>${chgRows}</div>` : ''}
+      ${back.length ? `<div class="sec"><h4>会回来（${back.length}）</h4>${rows(back)}</div>` : ''}
+      ${gone.length ? `<div class="sec"><h4>会消失（${gone.length}）</h4>${rows(gone)}</div>` : ''}
+      <div class="updp" style="margin-top:12px">当前这一版<b>不会丢</b>：恢复之后它就变成新的「上一版」，
+        再点一次能回到现在的样子（历史只留 2 版，不会无限往下翻）。</div>
+      <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px">
+        <button class="btn pri" data-rb2 ${none ? 'disabled' : ''}>恢复这一版</button>
+        <button class="btn" data-close2>算了</button>
+      </div></div>`;
+    document.body.appendChild(el);
+    const done = () => el.remove();
+    el.onclick = e => { if (e.target === el) done(); };
+    el.querySelector('[data-close2]').onclick = done;
+    el.querySelector('[data-rb2]').onclick = async () => {
+      if (none) return done();
+      const ok = await rollbackPack(pack.id, 0);
+      done();
+      if (ok) toast(`已回到 ${at} 的版本 · 再点一次能回到刚才那版`, 5200);
+      else toast('恢复失败：这条历史已经不在了', 3600);
+    };
+  },
   confirm(msg, opt) {
     opt = opt || {};
     return new Promise(resolve => {
@@ -6603,7 +6873,7 @@ const Dialog = {
     el.innerHTML = `<div class="dlg" style="max-width:580px;text-align:left">
       <h4 style="margin-bottom:6px">改这条知识点</h4>
       <div class="updp" style="margin-bottom:14px">「说明」是模型写的，措辞不对可以修；<b>引文不能改</b> —— 它是从材料里原样抄的，改了就没法追溯回原文。觉得原文本身有问题，写在备注里。<br>
-        保存后原来的版本还会留着 —— 改错了在右侧「管理」里点<b>恢复上一版</b>就能退回来。</div>
+        保存后原来的版本还会留着 —— 改错了，点右侧详情面板<b>最下面</b>的「查看上一版…」，看清会改回什么再恢复。</div>
       <div class="field"><label>说明</label>
         <textarea id="epSum" class="epTa" rows="5">${esc(pt.summary || '')}</textarea></div>
       <div class="field" style="margin-top:12px"><label>我的备注（查询时会一起给模型看，遇到冲突以它为准）</label>
@@ -6623,12 +6893,74 @@ const Dialog = {
       const before = JSON.parse(JSON.stringify(pack));   // ← 改之前的快照，用于"恢复上一版"
       pt.summary = sum;
       if (note) pt.userNote = note; else delete pt.userNote;
-      pt.editedAt = new Date().toISOString().slice(0, 10);
+      pt.editedAt = todayStr();
       await saveVersioned(pack, before);
       try { Retriever._c = null; Retriever._k = null; } catch (e) { }
       done();
       try { panel(); Graph.tick = 0; Graph.draw(); } catch (e) { }
       toast(note ? '已保存 · 备注会一起参与检索' : '已保存', 3600);
+    };
+  },
+  /* 改一条技能。买家原话：「技能是不允许修改的吗？」——
+     之前只给知识点做了「改」，技能只能作废重来，等于逼用户把自己改好的东西丢掉。 */
+  editSkill(pack, sk) {
+    const el = document.createElement('div');
+    el.className = 'dlgLayer';
+    el.innerHTML = `<div class="dlg" style="max-width:640px;text-align:left">
+      <h4 style="margin-bottom:6px">改这条技能</h4>
+      <div class="updp" style="margin-bottom:14px">技能是模型从材料里提炼的，<b>措辞、步骤、误用都可以改</b>。<br>
+        改过之后会打上<b>「人工修改」</b>标记，导出 SKILL.md 时也会注明。<br>
+        保存后原来的版本还会留着 —— 改错了，点右侧详情面板<b>最下面</b>的「查看上一版…」，看清会改回什么再恢复。</div>
+      <div class="field"><label>标题</label>
+        <input id="esTitle" class="epIn" value="${esc(sk.title || '')}" placeholder="这条技能叫什么"></div>
+      <div class="field" style="margin-top:12px"><label>什么时候用（检索靠它匹配，写清场景）</label>
+        <textarea id="esWhen" class="epTa" rows="2">${esc(sk.when || '')}</textarea></div>
+      <div class="inline" style="gap:12px;margin-top:12px;align-items:flex-start">
+        <div class="field" style="flex:1 1 0;margin-bottom:0"><label>输入</label>
+          <input id="esIn" class="epIn" value="${esc(sk.input || '')}"></div>
+        <div class="field" style="flex:1 1 0;margin-bottom:0"><label>输出</label>
+          <input id="esOut" class="epIn" value="${esc(sk.output || '')}"></div>
+      </div>
+      <div class="field" style="margin-top:12px"><label>步骤（一行一步）</label>
+        <textarea id="esSteps" class="epTa" rows="6">${esc((sk.steps || []).join('\n'))}</textarea></div>
+      <div class="field" style="margin-top:12px"><label>常见误用（一行一条，可留空）</label>
+        <textarea id="esPitfalls" class="epTa" rows="3">${esc((sk.pitfalls || []).join('\n'))}</textarea></div>
+      <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px">
+        <button class="btn pri" data-ok>保存</button>
+        <button class="btn" data-cancel>取消</button>
+      </div></div>`;
+    document.body.appendChild(el);
+    const done = () => el.remove();
+    el.onclick = e => { if (e.target === el) done(); };
+    el.querySelector('[data-cancel]').onclick = done;
+    el.querySelector('[data-ok]').onclick = async () => {
+      const title = el.querySelector('#esTitle').value.trim();
+      const when = el.querySelector('#esWhen').value.trim();
+      const inp = el.querySelector('#esIn').value.trim();
+      const out = el.querySelector('#esOut').value.trim();
+      const steps = el.querySelector('#esSteps').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const pits = el.querySelector('#esPitfalls').value.split('\n').map(s => s.trim()).filter(Boolean);
+      if (!title) return toast('标题不能空着', 3000);
+      if (!when) return toast('「什么时候用」不能空着 —— 检索靠它匹配', 3600);
+      if (steps.length < 2) return toast('至少写两步，否则它不算可执行的技能', 3600);
+      const before = JSON.parse(JSON.stringify(pack));
+      sk.title = title; sk.when = when;
+      if (inp) sk.input = inp; else delete sk.input;
+      if (out) sk.output = out; else delete sk.output;
+      sk.steps = steps;
+      if (pits.length) sk.pitfalls = pits; else delete sk.pitfalls;
+      sk.editedAt = todayStr();
+      await saveVersioned(pack, before);
+      try { Retriever._c = null; Retriever._k = null; } catch (e) { }
+      done();
+      /* 就地更新图谱节点，不要 Graph.build() —— 那会把布局打散、用户刚看清的位置全乱 */
+      try {
+        const g = Graph.idx && Graph.idx[sk.id];
+        if (g) { g.label = title; g.ref = sk; }
+        State.sel = g || State.sel;
+        Graph.tick = 0; Graph.draw(); panel(); renderGbar();
+      } catch (e) { }
+      toast('已保存 · 标记为「人工修改」', 3600);
     };
   },
   /* 检查重复：两台电脑来回导入很容易长出内容一样的知识包。
@@ -6834,16 +7166,18 @@ const Dialog = {
       body = `<div class="dlg-body">
         <div class="dlg-kicker">知识点 · ${esc2(ref.id)}${srcTitle(ref.sourceId) ? ' · 《' + esc2(srcTitle(ref.sourceId)) + '》' : ''}</div>
         <div class="dlg-h">${esc2(ref.title)}</div>
+        ${isEdited(ref) ? `<div style="font-size:11.5px;color:var(--ok);margin-top:2px">人工修改 · ${esc2(ref.editedAt)}</div>` : ''}
         <div class="dlg-p">${esc2(ref.summary || '')}</div>
         ${(ref.tags || []).length ? `<div class="dlg-tags">${ref.tags.map(t => `<span>${esc2(t)}</span>`).join('')}</div>` : ''}
         ${ref.confidence ? `<div class="dlg-p" style="color:var(--txt-4);font-size:12px;margin-top:6px">置信度：${esc2(ref.confidence)}</div>` : ''}
         ${quoteBlock(ref)}
       </div>`;
     } else {
-      const pts = (ref.pointIds || []).map(ptOf).filter(Boolean);
+      const pts = (ref.pointIds || []).map(ptOf).filter(x => x && x.status !== 'deprecated');
       body = `<div class="dlg-body">
         <div class="dlg-kicker">技能 · ${esc2(ref.id)}</div>
         <div class="dlg-h">${esc2(ref.title)}</div>
+        ${isEdited(ref) ? `<div style="font-size:11.5px;color:var(--ok);margin-top:2px">人工修改 · ${esc2(ref.editedAt)}</div>` : ''}
         ${ref.when ? `<div class="dlg-sec"><b>什么时候用</b><div>${esc2(ref.when)}</div></div>` : ''}
         ${(ref.steps || []).length ? `<div class="dlg-sec"><b>怎么做</b><ol>${ref.steps.map(x => `<li>${esc2(x)}</li>`).join('')}</ol></div>` : ''}
         ${(ref.pitfalls || []).length ? `<div class="dlg-sec"><b>常见误用</b><ul>${ref.pitfalls.map(x => `<li>${esc2(x)}</li>`).join('')}</ul></div>` : ''}
@@ -6873,6 +7207,7 @@ const Dialog = {
     /* 读答案时发现这条不对 —— 不用去图上找，直接在这儿废掉 */
     el.querySelector('[data-dep2]').onclick = async () => {
       const now = await toggleDeprecated(pack, ref);
+      if (now === null) return;            // 取消：弹窗留着，别关
       done();
       toast(now ? '已标记作废 · 以后不会再拿它回答' : '已恢复为有效 · 重新参与检索', 4200);
     };
@@ -6920,9 +7255,11 @@ const Dialog = {
   },
   /* 图片放大（扫描原图看字用） */
   zoom(src) {
+    /* 只放大本机渲染出来的图（data: / blob:）。别让一段拼进 src 的字符串变成注入面。 */
+    if (!/^(data:image\/|blob:)/.test(String(src || ''))) return;
     const el = document.createElement('div');
     el.className = 'imgview';
-    el.innerHTML = `<img src="${src}" alt="">`;
+    el.innerHTML = `<img src="${esc(src)}" alt="">`;
     el.onclick = () => el.remove();
     document.addEventListener('keydown', function k(e) {
       if (e.key === 'Escape') { el.remove(); document.removeEventListener('keydown', k); }
