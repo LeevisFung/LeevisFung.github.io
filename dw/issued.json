@@ -1,6 +1,6 @@
 {
   "schema": "dw/issued@1",
-  "at": "2026-10-31T12:26:56.600Z",
+  "at": "2026-11-01T01:27:23.075Z",
   "enc": true,
   "issued": [
     {
@@ -8,12 +8,12 @@
       "at": "2026-09-15",
       "exp": "永久",
       "to": {
-        "iv": "+EwYWKnMyBMDH3Vw",
-        "ct": "ZV3Y2kI5OCn6ayqo5TfDp6I1rfvKOg=="
+        "iv": "UQyY3wpRVsfXygLB",
+        "ct": "WWCfFHzvnXVsN2n4B446H3XbdNjAtg=="
       },
       "code": {
-        "iv": "mVl00ndScRuBi+/J",
-        "ct": "3troENE42fRi7+8hvaSIlzp5x83aWFXYne62E4XNFW5qysj5T3ETKKfj6zj59VEacdH3WVuOIEPMKjaeWIeJgHpBnobAVLKwAVtWOmDsS/2CxhZO+LcGjEhn27zakX1NTXh4aBpB/pfGkZmQID1gdDWIZJJSrpTD6vE6gs4e9dr85pe5ot55FXjONA=="
+        "iv": "OG8GSlnwrLRWEXIl",
+        "ct": "QA1/A1D4pSTOqBIBNnE/MFujGKHffOyE/IkC/66ZXpSgA/aiK9renVoFmYpnSV99CSXZH9UMGO8SarZz+jkmypwoDuuaT/I2ZdQjEmWvHrDUPesefdUVgu2jpK7Re2N3O6/FhQJjKob/XY9crrRy6Mmn09Y/FgS2cRsbNEJI8zyZtwrJXAfKmoGvyg=="
       }
     },
     {
@@ -21,12 +21,12 @@
       "at": "2026-09-15",
       "exp": "永久",
       "to": {
-        "iv": "8vsWqNeJq41FRopt",
-        "ct": "uo8U5i8OBTlao3LQIBnU+mQrQPoI8r4="
+        "iv": "I4mQuSeDrZkBvHag",
+        "ct": "lQtfJ3/obBwl7rCMQZBV0ZsbaEfux3k="
       },
       "code": {
-        "iv": "HAY6KFLw4Rl/6jo0",
-        "ct": "Z8VFprXqyDDMgmoD0lr89qiUKJxMBsdzg4hpIFa85yuV3OZmb2FCPnvVHjE5U8NGF84sYduGTRauXKuznWuvxBOFLVl+XxXQz1je6yjPc5J5HTgm7HW/oKq39ohMs842mBnk5AcRUq0ZGP9MX/OVYdXn0CeKkBzPIFAvEpOs+NFMFvdVcBHJLObfBA=="
+        "iv": "nM8cR/x9Q+pZFGBJ",
+        "ct": "KDT47Wjvd8SXR6h6SuqErN363aNdW7ivbeGx2F+lKm58Zcd5QLVt2SR+vr6rZWb4z8mWlh3YATCVI5rLBz5+6KqMYwAuH+Nmj/XuIqXg3yDZu992CxGd4VTCXphocCplvQsGVIhwLgs9yW+qSJn7Nc+c0dcS0CORnZIn0JnZBcG0JwOaEO5X/LgOAg=="
       }
     },
     {
@@ -34,12 +34,12 @@
       "at": "2026-09-15",
       "exp": "永久",
       "to": {
-        "iv": "omtRgFI15gkLoQ2+",
-        "ct": "ll2axqXEhaa+sMcP5FeDv+sWeUHgAQ=="
+        "iv": "BrdLu0kWV5M1aERf",
+        "ct": "CekEUw92APojaNglT7XK7ifWMGoFCw=="
       },
       "code": {
-        "iv": "n5ddv8kQEdjwiyCD",
-        "ct": "XAg6XJ93yOhQwQo1j1GWgdP9w5nXoGtS4pjj3fmMJvKv7PQkQJi5slAdCBcZ6WQ26KX+qPMWbbCDebmxbFtucFHQWgp/wdbsJHGaTkooPXEqmRhVyNDEGFKjxhE/7F7W4GBVAD2IJ66btFnNmkzsIvZGvwAOoQ4LEnF7yBz2J09YWKeIAdZVzK7tZQ=="
+        "iv": "bfjELnbWk+7cLySH",
+        "ct": "PHAWPNSq9En3hx4OJb3oxkOzLP639soDFsrM18Up+UT1olYnY5rQIZpEuZv7NKW2Bcb97+DLwawZMRSfr0NLRyXYywQ424ZGOrDwWFJPYCYRx7+JV/EegpKTTVo2l3RrWgUs/RP+OdiRNKwFQL9ttUWM38Gjts+HVQBW2tPO/Aj/S2JoLPDz3Z70ag=="
       }
     },
     {
@@ -47,12 +47,12 @@
       "at": "2026-10-25",
       "exp": "永久",
       "to": {
-        "iv": "6gBX/9r9QfZo46Tz",
-        "ct": "T/iEsWJval80vFK9LP90pNxXS9Sn"
+        "iv": "TXwiYUNMGxrEffCE",
+        "ct": "BexilGHQD6wthGx7yTqDTvY/mT/Z"
       },
       "code": {
-        "iv": "x8Gsy/lLqyZMEYXm",
-        "ct": "y9U1mYHr4roACKuc9jsuG/OSTo8Q70fHomOdA7A96Xc9RSxSb65zNsRPIOi+vQdb9ZyEY6TYWlpd5z2ECnJwA6DKkBBX521iSV59MviPobQ/2yLi8QHWbUjeM6gtG/lKDg/wJ9itFE27Qlwh//ShhE2P3PLjdtm8IxAMw7hB8lHHrwkzu+Ef8SDk+g=="
+        "iv": "/x2+aqrUnhxEtZOC",
+        "ct": "H/ttV6oY524f5kpwagbKxk7TOeJxeCFFvJanus+uLuRBW01zCiCTMi5c0LdofEGxHQVaD8Ugc7WSfE+58PCbMUyusQniQT4zdxOvzjDGWgdyOaeId4FbzHQZxKEbA93XHDMcGUAkUh3Koaq3iWdbqgQBM6AQ0ow+4RPIPHhjQxeWtbp0eEUvVmvsOg=="
       }
     },
     {
@@ -60,12 +60,12 @@
       "at": "2026-10-26",
       "exp": "永久",
       "to": {
-        "iv": "gKvNG0lkunMNCAx2",
-        "ct": "rrRgPna6eqc3KNVq4QPhxdXIL9RP"
+        "iv": "AkWX2lF9nEZbUkIg",
+        "ct": "u18bFhMrR2Emrk6VWulAxY2IuGrZ"
       },
       "code": {
-        "iv": "Qf62E55Y+IR+/HYj",
-        "ct": "KbRtkVQq/uEoqtFUmQghrYgOQFrbEbDXcqMqNh/fFYC4S66P66dlGFbaINLlwOl9KFsF+boSSz0wR2vFIZr5xAQmLboRRh5e+zUXZCWL0koRjcdQW2WmBCK/yGIBuil8aycOEOXKQkjlknLpvIsIW6D9itU4REzyXvIAnKkWwNTBVTVCqwQ4EW8udg=="
+        "iv": "nsNH5ZvtTOW2hwRD",
+        "ct": "2qT0s/msfY077bpTg3e+ZYdKBdV2opg2EvtvDzI4BxvcsgJh75+UaVJGFqQPO3C+v+vWI38U4OEU00aWeqFMMXXjRsSOwskTuu1XKEJOB+fA5VoQX2AwZXkoMWDMyj/dvwTAMRv3xRlgwnvJGnXm2vbC53d2f6IngA1m18wS08df3sxwsi3pb+7Oug=="
       }
     },
     {
@@ -73,12 +73,12 @@
       "at": "2026-10-26",
       "exp": "永久",
       "to": {
-        "iv": "YOt8q+6n0rAbjLKI",
-        "ct": "0/AMsxYydamA2HKcBMAPPKh6PxKKX0NO"
+        "iv": "XNqH/OeSfomPEUnP",
+        "ct": "OnAxQIfvMWibRx5B/NmTJb7zWXOrkKkT"
       },
       "code": {
-        "iv": "Juprcob+KE7FS0/n",
-        "ct": "133JsW+ScexBg1XrFrfTDYY9GYpIyWEdPPfP9c5qSDZM4fKa2Zpa7vC9Bca0gIaPPlvjLDRo1L665CRQ0VMlTgrIoRPCDv6NcGjddHGwQSlL6YHEhQvvFv+xizo/tqoPSDdrLOzkT9JmE1qskPSA9mAbm6VHB5qUZas74CsHZ7Vf/bM3yMeClV4+ig=="
+        "iv": "yOO/eLJbaP2QqZnT",
+        "ct": "gTWzO1p7WjJZht6Tcloychuz3rzl/QapWZXzdzCfaNwnNjoswMcseiISbL6BWhJqdiaNIRLQghz+KGaE3voBxN+V4zSNHarqQ0nI+Y4d0apvjeemQRDtMNysdD/Upw5uWZcQba2VTOsXxbBX0PgIuYx1l01xUvBSgdt37ZsJfkL/xFILCfD/LL617A=="
       }
     },
     {
@@ -86,12 +86,12 @@
       "at": "2026-10-29",
       "exp": "永久",
       "to": {
-        "iv": "4aEOWKvhUzHcCg0V",
-        "ct": "kJl6xwK7mUm/h6yy3paE9RVe0XgNRqN/lWMcruX2ASeGLQJHfPPTHU0RY5gu3yzoT8S52DvZzbEz1JowA0Pc1g=="
+        "iv": "A6syyto3HRhZWb81",
+        "ct": "le651HEBqAyZa5qvPzuekTCFIJjkVEAVwuSdlB/ofRAsrO7Bb3NsDAwRcobdAnUTYlKc6D1esdvniGcj9EAH6g=="
       },
       "code": {
-        "iv": "PxNt6cw2Mbyr07JL",
-        "ct": "PjJ4tO44/wXaM4tX12OpLJYDdTwC0sETMVvY0Q5mSXqOjh80ClnSJBBnfytlxRuFkreVtbYsV0C428T2QPqMoPXSgctmpyro1ZZ9GXq12mz8+jE06GJWEIiTAK9bs+h17g+2tfP+91RcfBVF0g1ahp3SiNg1ox01bjFxWiVI/JslxiDuB9B0ERbMZA=="
+        "iv": "HAaLWmsUHdd9jsJQ",
+        "ct": "J8XMt6rgtCXzdd0ZMrqun5L5H3JzRebhSLRIObEDsysOpgS/ZyBsk89J5a0Q9ivNucQoyS8LFfIJtccv7cUSnwVI9JDAcWJq/muAe96+LIdjCeFys0LPJWPyT+TlVnURbV4TM2GaNZoGhzffQdCpODAimhV92EKZZUbpQwyi0SxLErxyBE0OKg/yQA=="
       }
     },
     {
@@ -99,12 +99,12 @@
       "at": "2026-10-29",
       "exp": "永久",
       "to": {
-        "iv": "N4BdbMyjLI00A32Z",
-        "ct": "BsHDqhx7o7yvsEWfiOCeep2TxlYKYdY8hvOBHpzVMbidnxmpv5xbNjgDXGZrf34kXmjyND4DGLLk"
+        "iv": "XEhCIGKVFFz4oLqh",
+        "ct": "Uf4hnsApuei1Vu++X47mryJRz+R8KW5Me55XVI9dPe/Q6zStWpt23MzODyPuDqXe8+8nLOhJzHOs"
       },
       "code": {
-        "iv": "YbtAd0p/7hTY/uEb",
-        "ct": "lInBytXLfQ/nnjGN1dq5ltQJ9eP2imYHtjuIm7D26gG8Hwp8i8TDKNXsXZ6DqT/Z+AaoTC1Valflo/DFGlbjPzXCw5l5CTl4APnyGA2saSEBqxRvnCL9TuNoRD9OVnYEuADOjnRo8NnO1bc8Rp4hi42+XEc0MWvEspsg/MppBxmtjA+O6KspX1RRww=="
+        "iv": "ZHP+6RF2Se5mq20R",
+        "ct": "jznPZI3tAbXACnQrPce5aKwU10OQdfifIvWvTQf9c0IOKA9TgN7UsM7N1qMPyI2pW7ivS+7T29lBkEaHBFHYmKAULhPy0Qe3qC94W/uo160+3L7Xx7RcNPpu+jbCrMK22OLmrHMZxMSSVfNEopp9xnxv8qW0sCrwd+uU4sRW02anHrbx/1eKICLxbg=="
       }
     },
     {
@@ -112,12 +112,12 @@
       "at": "2026-10-30",
       "exp": "永久",
       "to": {
-        "iv": "j7MZFSJBXGDErYGJ",
-        "ct": "neVoegEteNVvUYdYnCN90mlWIWwUnuc/cA=="
+        "iv": "FuF11VEDdiQ5mO5q",
+        "ct": "w3zO2rgXrgV7URcZLcC722ctQUOKoIKL5A=="
       },
       "code": {
-        "iv": "1vPryJ0HcpvddarU",
-        "ct": "ITfkteM8UxEyfRx1fcyJJST7HWEl8rXYV06uC48AuhEcC3tpE2bE8uFlMTGJcjAOeW2bBqKw4dTqtLuBH8ezmoKjR3WtRtgVjsH6p28xpkwn8ljjvlMzZYQQj0ahv/v2C+31hGNhyfkBDDNvGZYzvypksF4Lin84K1EFlPI7uRlBwBRaQkSNGyrlhg=="
+        "iv": "mRW9DEfgYWzV58wY",
+        "ct": "Nr8yPRlcGa/ubVhdTKFwrBSA2G4udy471GUunrbdcdjLCZ/E8DAgdPEIxlh7WnBMR9PSIGjshQp1uUG55TgP5EBRYOhnhsLgAnfKnD/6r/kGeLEuRirOZ+yqotwix4Rns6KHpyVLlPwEx2MSZHiDklABytABOonvj5A85/4TMNH98Sy8tSHQOCTIjg=="
       }
     },
     {
@@ -125,12 +125,12 @@
       "at": "2026-10-31",
       "exp": "永久",
       "to": {
-        "iv": "8YhHyUqgIL4rWBRq",
-        "ct": "cRAAWxqYN7GLtGv6+AZZULoZY0RR5k7uXu5csolfxMtVB0FncUQ2EpBY6WmqXgQN+untnmDNc7s="
+        "iv": "3iXD7bPeGuw+AbsA",
+        "ct": "7klhxx4KwkfhsaNvRztryiU0sbxNwHm/trpk3RMvNI7XPISlmQRr7wOwq+4GGUTX3j+xNOIjw7k="
       },
       "code": {
-        "iv": "iw233VzrlznjLSF5",
-        "ct": "T3Aa8TXYFW2RXXx9F7o/PQapjlhdhPwoAY6pwY+NuHXZPzRyPGy7Ex2v/etzyIJCNDl+4rBMYMPJGAK7JVJq80qvOCjAqj8i84yC2fWT3ZSrt6naSxSrbqnNgizjcMtfWPKm0gyibRVAdhuIvrmCTtwnJZ9VZL/8juNxDPN++FgiLPzsotmHWmzHlg=="
+        "iv": "DeY3c9yMAV8JzwNB",
+        "ct": "kHCJrZMrdGJrLOZuLu9J2ZFv86FsiyeZDO2gQuv9rht8ruaT22Wj7ombn+jB34oGgO7W5YaoWV2IDTsODqPXQO7uvZOzcOrUmwNptSE5Wxexyy3KQytngyh2/ZdJyuwBcU6f2PhViudjb7dSnXRVoHZtWGgysCkYil/Mh6RV2Y636H0I8KcFaAcydw=="
       }
     },
     {
@@ -138,12 +138,25 @@
       "at": "2026-10-31",
       "exp": "永久",
       "to": {
-        "iv": "7UT3GLDZgv99KDs6",
-        "ct": "+98Y3sJn/ZFgK6t6/3tEOhyR4swoWxlwGJvg/DSmFMBnRKvk6GcspYZLR9Uxd+7RYEw="
+        "iv": "FCdHO7cHXu3/m/zX",
+        "ct": "M+sVTYRHpieD0VpTy7Zl7+dBHNv7+8QD/1BcCdIWJBxC4RhUuc4g+6cs9THhfteNLck="
       },
       "code": {
-        "iv": "knpEMGFOptuEnGPE",
-        "ct": "S8XRx0KLPpizTElnh+62ODQNXTXRYmanO4CLOJQUOo7oG+818GEKIxzipHHKlhq/gO/2CzwDw8blNml7fJlbEmYTfDkWkn1t9kv4dFnrtvTzWhpPM1Gdc1EIpGw1TpYqVYpGIHiofz1OTbF4d479YZ+WWK7vLnPP20KaF0XD+pWsqvBSTd3umd2mZA=="
+        "iv": "zJkQkdsbp1oCar0C",
+        "ct": "ueO/w/OW1jDUCSQPUl9uNnV+Sm0tITAWqcciHQhcoEnriXK56ZfKhdoZY7cB+7T7T4ZgHP6213tXx3rK5zPdP3a1Eqr4PfELfofW4uWoPRO8k8KR3PMwksstqczYRr2I8IYWt6FsQI/ObcRii7Gr+2R5A75jotIjuCamEBxaxsqVWymJud5GB3v43g=="
+      }
+    },
+    {
+      "id": "cb427612de",
+      "at": "2026-11-01",
+      "exp": "永久",
+      "to": {
+        "iv": "JzpUwP2fDPJP0xNf",
+        "ct": "Stdit9MzLa1uQFNR4wktWzALgBZLdZQaFSjKY73Y4Ss1W6BKthlM/R2aJlfjCrA="
+      },
+      "code": {
+        "iv": "PfaYnXkQaFIhh9cg",
+        "ct": "Jb59oUDlAvLgUXFFGQ2G2Xw5kbpYRS2QZclBFGCVf3ULJIXTKtqH7PK+FYIuO91RmvzwzCS8umZBPdvEp0yTAVL1mcsqUgPRB3nhO5UmFt+wSwP8H36QpubyiVY8DepHQP2JVV3vsE54PgmClwtY8uSo91V8K8c1jAgVuLB8WGQPL/CrxZqImKsyFA=="
       }
     }
   ]
