@@ -1,188 +1,201 @@
 {
   "schema": "dw/issued@1",
-  "at": "2026-11-01T13:27:32.271Z",
+  "at": "2026-11-02T06:48:33.580Z",
   "enc": true,
   "issued": [
     {
       "id": "1562706a83",
       "at": "2026-09-15",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "87wrTT77WnU4LGyF",
-        "ct": "LoKyfLRl7ZpHvswY0MEbBFQYPGsMEw=="
+        "iv": "hTJ3lohavYnQ4uGd",
+        "ct": "3VF3+5sjYdXW2yTiQ/JNGRcN57dGMw=="
       },
       "code": {
-        "iv": "5vp1VtYCDMwmeTEp",
-        "ct": "07xMlwlamVhBgrycyjElNR+4OTomoluUskFrf/V2jiQ6uW3plyAW64bTEnhL4L39EVWDNYFNbQh4j5hmIGOMrgP3Jh7poj7F7Z9z6GnEKECA3hYB7WeNzQWhknJUllg71Vxz0zodagKLjY0l/ycaxMnt9kjA9+P5zToAE7azCDvMUmLSXS0R3hqr0A=="
+        "iv": "Zq79fGgBmdSFGn0w",
+        "ct": "+Ol6wQKp4tiHVSYssVQjP6O6rUFdkNfKhzZH7utgXvFn9pSIP+plG+aChTbNjo2cuIXTCw=="
       }
     },
     {
       "id": "7867bc8c40",
       "at": "2026-09-15",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "xab6Rz3qUhn/ozwD",
-        "ct": "oN2AfD+VVaBq0WNijtTOXaX7w7y4NPI="
+        "iv": "HC7tMHSRyTftwiXE",
+        "ct": "uQCC98MYDH4UUutRw/scWVl+NMkGuTI="
       },
       "code": {
-        "iv": "oS1Q5JwoTQu2B0SP",
-        "ct": "7TdwK9AxNgzAKfVcKDtKXwrZ9BH4QZ/IaMHvCyVbmnHpZDdc3I8lRyGJ/TCeZfMf4FXQ6XOI1UKXyXdYhADOmRWBGGGPRkuJAEK+ZJJyZX0BSu09orSVAeYSub99AdmPqK8HNpVYzg8BBvDYaG1M56ppdkpey7dukIO2876J4SnbAwJA1tvUtT99oA=="
+        "iv": "y1GQQ37oPSShj1DG",
+        "ct": "mFQN5BQixW5aCVgP0i2UNrdN5ZekTIrGXP50s1MgRHgKsOf0dvFlPOhAMhNTSMSNcb8pVA=="
       }
     },
     {
       "id": "18fcd88df9",
       "at": "2026-09-15",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "nA5dtOlpfvxFqlNz",
-        "ct": "EEDX1K342X0114PByeNyvX8knrtZyw=="
+        "iv": "8TgUSHQqgtEGDesq",
+        "ct": "dVWDJlaw3wmsl56GEAGMTrz1ishA8w=="
       },
       "code": {
-        "iv": "Z3/ZjCurpWTblOEW",
-        "ct": "jnqIWIYFurFxvqGjduqfY07wxu5GJjZj5l6tYXb0gF+Npe8irDAEC2FSSKsuooV+ClQn+LkHCwCCj4VjO1gfEhNzQMpowMtPpbnZnNrS3alS+Sy+64jXv/Cacn4NejdQ3pGBBzedFk7WMxBeLkFa+IF4nI5q/0MMs2cPCtVunzpk7NEFG9Oon1+hwg=="
+        "iv": "7cdeESzLOKUXJ/sj",
+        "ct": "b8Zkn4KFImT4prhuKs1VnK6DfjktXXwoWeS0nHKaDQDF1o9oNrMvcz6o55KJZMNaAwLV2w=="
       }
     },
     {
       "id": "1d4d9618aa",
       "at": "2026-10-25",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "azejYhDNxhz0LTqV",
-        "ct": "9TzsmBR2pAKAmypZv/F3nDHeVGfT"
+        "iv": "y4D2DQNXDa4GkJgt",
+        "ct": "cRP3WLRgJG4i6rxa74lwvNqd+CpB"
       },
       "code": {
-        "iv": "lET5XV15+3sAp3XR",
-        "ct": "TP9tYLeryPow7sqNiTxQStx26WZGA3SAyCJomqdtxrSBJWlErZQ/sHrwAeJpP3TdsdF3HL06H1CK7R03wW7SMcxxQwqXkwpYxJBLSlJ4jOrNdCOl6W5V5ZVWCWrytRZMoAgRvGfadcWjwytVa3OUAcyMRfvULghcaHQB9ScOqabSYl8INwlAQH9LNg=="
+        "iv": "lGK83Ke0GZOcbzRo",
+        "ct": "5IYj5+9oBUcRyJSY+Auszoi6FzyZiDaWWJ901eCJLTCEUou9M/0NpWSwMydF+1oh0jm6EVLYVfQgcc4UywTnKzejwdhKWTf+rfVHHSCszQrTR4bXEbvTZki8QyMIRTJsFTF9KCVVKeu26St7RLjDGLtVh1fb4aopbH9ALnQDGFFUwnJSZtH0CsRAuQ=="
       }
     },
     {
       "id": "955a536144",
       "at": "2026-10-26",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "TzKt50Wi+3i9Ux1x",
-        "ct": "g51bRRKKp2Xl+A7B/nqdI9cqqUYJ"
+        "iv": "tpIklYK7BkzZW2bq",
+        "ct": "6TJBu7q3v572mAkdvGl4k899VIJK"
       },
       "code": {
-        "iv": "bQ3LivE33LnEAC++",
-        "ct": "14LEBq+WgK/CaBM+ZXuRN9AZf3Lx4Etp2QZbqZH88foME2UQrovUgbvgOqSyh3U3C1+MtxjfSSeIIkGPrWVFkqCrnVBqQ+ju7sCEfIsInAjmhA8i1e3Xvct8bLUVF3irimvdX2dwbUmoKhh7vDkA9ggrCB7PkF8rpMhpomUfT2txaG/cF5MeOeNZ5g=="
+        "iv": "V3N0QXzEbJT4cdV4",
+        "ct": "/p7kjw4yGSaF6Afx0BuVIBWwpBc8xnUZomsch1OcRW/ZPLNuwLsLjuwx5uAt+1SgWhcv+qIQFg0Fkld9LYCG4ZfCjFlDNVD5xl19xgTFWayu2h483Zn8AL0FWaHT582d4XtSTCo2PKVHY1vBKTupfTSP9RJ0heMXHGA/E63WVeuWBYaTRZwaj55y/g=="
       }
     },
     {
       "id": "3842d5bde5",
       "at": "2026-10-26",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "vmtk89KGV/JcyPi4",
-        "ct": "CwauENXwBftELUz+E5oxZVsVWfFW7DvM"
+        "iv": "w7i/2+3SjHqXF0c/",
+        "ct": "N43A6pCeNA4So3Yh6nj0PnxkOU5sVhCM"
       },
       "code": {
-        "iv": "aaPKngIZ1BdvfBh7",
-        "ct": "HSc1TXtdHZSmNSdNVv+8sKs2jqTavbBDs1KwtXblsPTgwSFNR1dHw+EnmiqzzWIM8U5p9A/TIYYbFshhL33LDsUUj08On5Krv2N2dO5RpU32mGF5B8Xn5kJ8ot8Zs+seUgdI94r25SPG14uZQ7SYv0WmBXtKGoSCwOfVW6V3tL63M+vKNK+zPFvguw=="
+        "iv": "zESlh2fkZTrzaFKd",
+        "ct": "nV4WqYSE5voOegbpRtSUFksFlChdURrUnQ2YGz/U5QB//K0O7W14TZrsOdJ3nP9CAxycZBoJZgy8hFrLBKg/JhzBs9ZVt8wHEXzhACWRyFOoX28GkDHmGFh6cNZJagk0FMqCwC7RJBjsOl+NY5TrTywAZ1ckKDVVg0uoxpjljwLoJvD1oXuuNXO/Yw=="
       }
     },
     {
       "id": "fe3c7a6e46",
       "at": "2026-10-29",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "/jqKsgN2mXJ5g6H/",
-        "ct": "mL93/eU6SJ7xdtJhVZOLxWaSUficacj65aOasYO39haw1YWshKvdguC26uygG2mXqiNzSzDouznGlfTPiuGkQg=="
+        "iv": "Yq/E1HBnCktPsb4y",
+        "ct": "4oo+JpinL596yrpiMEHWWNjWZu+/VV+hTv/DLlKUvj6vZgmQFCGe0qBUZFnmvtERvyKQ6nK6Ku4CehSEl4lapg=="
       },
       "code": {
-        "iv": "fxqrKENQkbQZTWsI",
-        "ct": "PMYID64V5vki+viTJL869QrBA8/Q6sq/NQrAbhnI+r37O3or2FinlAWU4MUTPvs5D4waoNRxOBINWtUKRHbv3hp00iDvCXQIAB0GBd/ZWQV1DSORonKQSWRIGMeK1NCZEJRON+TG3l0edIZnQ8+ltLYiiKtwf2f4lKWV8KAgokydhRBUzfsBme52cg=="
+        "iv": "UlzoFsshiSLqyQlW",
+        "ct": "Y6dxFYzgMDWWztbRPXcRSWLDpCnLrIFphVoAE+/nXPhaSsy4gV8aF2nFtgOAdSW41Fo8GyzFYRMiqKrjBZjkAy1tJRLQvK+5Yizlw21mey0YhR7xlE8SjVkC3y0Itz2c8/J5oRNjLh/Q4ONu8XI6AcyjZgdtx5AW0Y6dbLJkF5Wx7P/r7Lt7c0OSLA=="
       }
     },
     {
       "id": "518aab6205",
       "at": "2026-10-29",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "efJmNo57/2F+XbXX",
-        "ct": "PUkIZEEOwNUdYORqb3V1AqztHqiox5BMoAEMbZRP4osKa5+QBiDMc1ozd2tq23U8khXac+2Tp6KG"
+        "iv": "pElQzxl1bdadd9vx",
+        "ct": "xbfusrxVPIHlLDSjGP+EwGsWU245H4Pi/or0SdGJohtGxd2wRCrBP7BNdxJZwksb7nE+MtDPdmL3"
       },
       "code": {
-        "iv": "toqXZ8NlpC92dgcf",
-        "ct": "bcRcbr+afz83xeU5HyiPMpyYSdqhQmqw/+QpK/8ATqgccQGH4xOut8N+7OLlXdXcNV98+LjFqRJCfc1iyJI+vLC4mVpJzsjBLMcvwBUT87ta+8y1x/xri9uhgO7+68igmxXfU7zx3dcqs2K5B0Y3HqmDSoLXKMKSah4uNBsrCokM9PaNJPfZArjZSA=="
+        "iv": "CZ0hga/qhsdxqB6e",
+        "ct": "TeqN2rc5UKrtbqzgDesnMbEtioW1SJqqd6y4OcnDjPksWmFosgy/NQrnhGzRdydrfwBJY3QXLUTTll9/nwVgvaqmR5tyifP9FLgaaRLZDqqoJdDSs+e4B3uL236E+t/x5gi5UCKMJlOa3mETLPH2CwAylV7zhO4EkSLEQx4k+v4BXSGzJdbdnPtisw=="
       }
     },
     {
       "id": "f42fd93c0b",
       "at": "2026-10-30",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "aZ5eTTY/oT7HLQIw",
-        "ct": "uZp50nW6ah3JINV9YQajNMWCDDKdOd2yMA=="
+        "iv": "WpcANTnIHRN8F81L",
+        "ct": "/t2PzLG4dIDH+y4sNNiEaTs4fuh6amPU3g=="
       },
       "code": {
-        "iv": "nRAxSU6ssOMZmQJC",
-        "ct": "AMvqw/VL1bSQHDv4AK93iM8PRUSQwEvgayYck7CzkaDmR2S7WfHu9OzsFeOeK3tVeYSdd2AETFJsUCXuMOGiiCDSnOWN4NbX7nANa+twnQ9lG6fee7zCHPzZgWb9QN0EeU9keC+PeBZGiNjxh4VV/IoZJFsE2Q9JwT/2JAmRtwUlzmXfKk8UAIBmcQ=="
+        "iv": "va3Hw/Xe7HqD/res",
+        "ct": "r8SzdywxqrepVO4V+gb7m2aw7lI0PdSCAIngPwCKSxcaHd6pmwy40kR0MSqJvjAd3EfC/qGCJwP+A9rkZeBSiKN9GKdvxop/RjZ3e1ThF8EZlGMelKhq9qjQWZA3eTqoy4sUSyAAWLcwvH7LTs70VcoiPSX/DBG4DEkQpwzjKs4LPtdYTreT1sPzLA=="
       }
     },
     {
       "id": "7af0f76c1c",
       "at": "2026-10-31",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "dcxjeoYFV6m+sO4s",
-        "ct": "4hBZs6X7kBLfgmd+v4gVjMeXHtpVxoiEhinDcoSII19yRS5eI15n+PZ8V+BshJ3Bj+FfPrCmsHE="
+        "iv": "6YKk90RnFW5V0ZE2",
+        "ct": "Gt2bRKHuF7+q9SWHwX2IgPPqgx3DaYlKym/mxLUSDMONjmqNwQANRCJawbgTwN+Gt0vTsRiSuLA="
       },
       "code": {
-        "iv": "lOBNKyOHC1NuXhpr",
-        "ct": "Z3oCC86EtnlhFBiVU9XwZJ25QJDxlRBx8N0WLpiV5ATiqC0yKJx0uR8q30c7Z70I21cssV91iXEfXs+SGeaMDqGtMUIu1DTNpZXY6iQb12QlXsLKqTn+F+b+Nb+qLxo5j5scbeOSravQf8VVdIj/lnhQmUc/nxzcK7HOuTW07pSb9MqPbBIO00FmJQ=="
+        "iv": "U6wJsAlda8u7VnXM",
+        "ct": "exMxG2QiNO5IhkogNWmaw7AWP9u5g16qg3jMDsUidJhS5CnLL/2z8G02pVoJx6Z/kADu3OpU1BDCkMq7TqAYhvgyd+lszD+Vv586B0iO6+dTppBHyUVoXQ3ov7SNdf2IgToxASfi5oz02b41oKMOVW7t+lUOUj1JOgqzWmgbAJcwCKdXwaWHbPHRxg=="
       }
     },
     {
       "id": "bf2591996f",
       "at": "2026-10-31",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "nOoCtFPNvMrMKZ2m",
-        "ct": "2l0UmmUsYDEdc1AflUSDSrGWVKyIQlBZvAocqUTCYctGM+sa4Nv/1sKDpRHymu5JMS0="
+        "iv": "SmDVjNRwzIMrE5yW",
+        "ct": "grYI+5Xon5xX72yKQT8b1kF2vzgQzdeYfVGXOksqPYk6wWHH1fPp/42DUrWyJN4cg4Y="
       },
       "code": {
-        "iv": "Myfq7VVSGerqyGOV",
-        "ct": "pOYI+TJnW6+H0le/kWrK+bvArADETnobDpVz0L+hg/qccq3/ZtO6El3FBSlGA4VLiGxOfqVG7aBIBTgCUkj0catRvzJY+OQDXeQf1bMd//F5SZigwUxpw8BDmYiHxF5wF92ZPQns9Zf0fh32FZATXVrg5wexDSmuwGNhon0pKW+VFCGB1Leuy9r8Gg=="
+        "iv": "YD7fW+V5TlAbLK2F",
+        "ct": "M1up6XoAAH7z3vF/0GwNjHay3RVWTB7nxDLmlTK+oRc9+cojoRS9xWfNGNSkkkXUid3IEhV9+9q6oIz9M9s1k7FDTnq9llWICM93LuULKJLoyTjuoWA7SmP4toSNy3TMcof7YXa69vHtfYn2oaIYtI7NJUQsy7x6QzEnc6kI4J4H3nPr7uscdHaQTw=="
       }
     },
     {
       "id": "cb427612de",
       "at": "2026-11-01",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "e/8JX5etT93zFcHf",
-        "ct": "WG33O8cCzRt8pXAoYFUudKbTOPz+RQzUtt2sf6YrZWzi8szi3zEg6B1V5FgFlsQ="
+        "iv": "FQQqSQHXiZFEzCqc",
+        "ct": "4z7A/cU54qoVyPkS7rhTtgK1zwG8XYv17oOhp5NApTBCN1TeePMJ5hHZlg8L9rA="
       },
       "code": {
-        "iv": "MIrLJpg8copPfZKc",
-        "ct": "XghLX4huBGIezDxk4HUQ+6QO/aVdNSrrdGmMbf2Qj36KT3bZPxgybOstcZYZj/xeinvijKSQyW62pIFjgdlwBSIIgbHWkj9qenlBzmMSPPZ0vRNhFEvI3/cpg3lpTGKog14iD3XJFTjyQZFme0WecTM3Ffr9aAS2j+wREeD99X1NBqULMWBou/nNOg=="
+        "iv": "pszEAmMZ3Fo1Voht",
+        "ct": "GZOY47u82iZWL2WWUoWrx3SR5L8+jQ0nnSPAuzocQJo9P9wJXYQ7F7r5ynEDJgCijtR/yoMXFM2gjRMZswbTfynn7UJeo/5uNCxTVK5LGZUaaurpSNYMJTHyev6ta3ObamZpts2N3Wm5aUeq12a/xYOzF6pHtjK7sK6QE1KkFxzz1LVVd4mDCDq4vw=="
       }
     },
     {
       "id": "81b7544782",
       "at": "2026-11-01",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "fMXVITpYwjBAnkUZ",
-        "ct": "TPLjsRTfeD2f1gZ3nhR2XchoRn/L7j15O0QyIwpG92nneYtMdtPUwYrtxKa5"
+        "iv": "tOGtp2ID134b+5n0",
+        "ct": "2aZu6haq301Qj+Aqa1LWi67teDcSxiTa0EEjOuCTkp+68KOy26KIrXYQ4lQC"
       },
       "code": {
-        "iv": "zLXK7CQNQWMzMfP2",
-        "ct": "wWBCl7y1wmRYINEBioKCN9soJ/Z1BbQ+xjTX+/AQEcQKIkK3Kfai7NIM8Bhq6ij7BLLvmWy1Q7hTxAp4ZmseSHb9ElXwHfAgNtfNDqbgpmtFWn6kzIrUAMWcfcEdtl26gCUVxfQbr74DvLvxx4YGh7Wooy4+egxHWMtKxTSbONEMzqEeL+TCHED4wA=="
+        "iv": "hC0bWL9jmtBRuC+x",
+        "ct": "pNg8kIiqI/1ePzVYlqram+HTIanJi3IkduLS1jcSLhHsWu1L+RII5rwgWnV02/0PAaVjWU2RkJpwd8tQbWFdfxo0n3o6xMk0dYtSRP7zOrSA6jKGliA18KKYXr/WLGgqurgumeS4u7iO42U2Ft2VTwVVVGLOAduoHAHLFuNMPCVVMEv2LEm4i7SJ9g=="
       }
     },
     {
       "id": "7753f87c68",
       "at": "2026-11-01",
-      "exp": "永久",
+      "exp": "æ°¸ä¹",
       "to": {
-        "iv": "CxVIJLzlHtFKpsYl",
-        "ct": "0Vw+dfFBkFeClcWRAVc4aYhmq/18C3IzdoygPKZzlowZ5/0zS44OaRPUsA=="
+        "iv": "WpQYOOyr9xd2tVwp",
+        "ct": "zwOIfVCIWuO7gkMDXpIqoiuLTSnJ2skORrMf3ddKaw8TPGd7Tw5odo1BhQ=="
       },
       "code": {
-        "iv": "CaQrHpbESZraavrf",
-        "ct": "dzxlpyRe7z/4B0L06ft/nSaIlsN0e3rembcgo29RaUWpGwhrMYGzOWh9eaiNK963OHiC2Dv63VbFwwbB3226pizTFTrbmq/IA0JVz0q3Cr5PT39qXTO7NB+iGLkbsL/OfF1F57aluP6LOkvFpeEg/X06A8zYdUJSDfw7hI+vbkzfOrwOe6mHoe61vw=="
+        "iv": "/Shq7dA7wwcw+E2s",
+        "ct": "NLfz4Ndn2R9u+29HVsPF8WVj8mttE5/Im8ATyS2rNoP1YBF6/szh2alwESTqvkHqdF5cB8JhJ6ruI0ZzwfVnxpoFjDBxdIwk0KxwHTWWMTTBSucxaBKQC54rLmLcHZEo5ZKqXx7zxZ6lZmGMRXDTIjaGwupxPWu7i2OYl1Z0KDp+n1iQMf72ZXWStg=="
+      }
+    },
+    {
+      "id": "4d32326f8f",
+      "at": "2026-11-02",
+      "exp": "永久",
+      "to": {
+        "iv": "Shvrsr1D+wiTaDNP",
+        "ct": "bVlHvtXuvoxa8CyTamlCwPEYNL1nDj0EcZsIf3G4aV1VD/Px4KVFO5UVo2GmQyL3k/EMEQ=="
+      },
+      "code": {
+        "iv": "K+0wWaAPdWC3nL+F",
+        "ct": "3DFAa+3Hx1p7ZOH+6i23upx1eYU+b+TEoAD/iZPPRZZhe9Ao6K/C1Zst3rmqVx0PF0AVLoNWsC+5hFMr86w7uHSpl7kXoHgJz5Wt5SqiNocIMxuAlM5I8oVRg4qJfgjh27kPczJP18/1lJKePmcjELVmXNnb8OZlvpqfxP5CmpEj/zlpPBZf6ccEFA=="
       }
     }
   ]
