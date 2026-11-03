@@ -631,6 +631,105 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 .view{position:absolute;inset:0;display:none;overflow:auto}
 .view.on{display:block}
 .view.flex.on{display:flex}
+/* ---------- 文档视图（图谱的"排列"形态） ---------- */
+.docbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:9px 20px;
+  background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.docbar .sp{flex:1 1 auto}
+.docstat{font-size:12px;color:var(--txt-3)}
+.docpack{font-size:12px;max-width:210px;padding:3px 7px;border-radius:6px}
+.doccols{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:0 0 auto}
+.colbtn{background:none;border:none;padding:3px 9px;font-size:11.5px;color:var(--txt-3);cursor:pointer;white-space:nowrap}
+.colbtn + .colbtn{border-left:1px solid var(--line)}
+.colbtn.on{background:var(--surface-2);color:var(--txt)}
+.doc{width:100%;max-width:calc(var(--cols,1) * 560px + 48px);margin:0 auto;padding:30px 44px 90px;line-height:1.95;color:var(--txt-2)}
+.doc .ptgrid,.doc .skgrid{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:14px;align-items:stretch;margin-bottom:14px}
+.doc .ptgrid .pt,.doc .skgrid .sk{margin:0;display:flex;flex-direction:column}
+.doc .pt>.ptused{margin-top:auto}
+.doc h1{font-family:var(--serif);font-size:27px;color:var(--txt);margin:0 0 6px;line-height:1.4}
+.docmeta{font-size:11.5px;color:var(--txt-4);margin-bottom:24px}
+.doc h2{font-family:var(--serif);font-size:20px;color:var(--txt);margin:34px 0 4px;
+  padding-bottom:8px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+.doc h2 .dn{font-size:13px;color:var(--accent);font-family:var(--sans);letter-spacing:.06em}
+.doc h2 small{font-size:12px;color:var(--txt-3);font-weight:400}
+.srcmeta{font-size:11.5px;color:var(--txt-4);margin:0 0 14px 26px}
+.doc .pt,.doc .sk{margin:0 0 20px;padding:13px 17px;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);cursor:pointer;transition:.13s}
+.doc .pt:hover,.doc .sk:hover{border-color:var(--line-2);box-shadow:0 6px 18px -12px rgba(0,0,0,.3)}
+.doc h3{font-family:var(--serif);font-size:16.5px;color:var(--txt);margin:0 0 8px;display:flex;align-items:baseline;gap:8px}
+.doc h3 .pn{font-size:11.5px;color:var(--txt-4);font-family:var(--mono)}
+/* 标题一行、标签右上角 */
+.doc .pth{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:9px}
+.doc .pth h3{flex:1 1 auto;min-width:0;margin:0}
+.doc .pttags{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:52%}
+.doc .lead{font-size:14px;color:var(--txt-2);line-height:1.85}
+.doc .lead b{color:var(--txt);font-weight:600}
+.doc .sk b{color:var(--txt);font-weight:600}
+.doc .sk ol{padding-left:20px}
+.doc .sk li{margin-bottom:3px}
+.doc .ptused{font-size:11.5px;color:var(--txt-3);margin-top:8px;padding-top:7px;border-top:1px dashed var(--line)}
+/* ---------- 讲义版式：连续文档，不用卡片（对齐参考稿） ---------- */
+.doc.paper{max-width:calc(var(--cols,1) * 520px + 64px);padding:34px 48px 90px;line-height:1.95}
+.doc.paper h1{font-size:30px;letter-spacing:.01em;margin-bottom:8px}
+.doc.paper h2{color:var(--accent);font-size:21px;margin:44px 0 3px;padding-bottom:9px;border-bottom:1px solid var(--line-2)}
+.doc.paper h2 .dn{color:var(--accent);opacity:.8;font-size:15px}
+.doc.paper h2 small{color:var(--txt-4);font-size:13px}
+.doc.paper .srcmeta{margin:0 0 16px 0;color:var(--txt-4)}
+.doc.paper .pplist{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:0 30px;align-items:stretch}
+.doc.paper .pp{padding:20px 0 22px;border-bottom:1px solid var(--line);display:flex;flex-direction:column}
+.doc.paper .pp:last-child{border-bottom:none;padding-bottom:4px}
+.doc.paper .pth{margin-bottom:4px;align-items:center}
+/* 知识点标题明显大于正文；编号与标题同字号、同基线 */
+.doc.paper .pp h3{font-size:19px;font-weight:600;margin:0;cursor:pointer;line-height:1.5;gap:6px}
+.doc.paper .pp h3 .pn{font-size:19px;font-weight:400;color:var(--txt-4);font-family:var(--serif)}
+.doc.paper .pp h3:hover{color:var(--accent)}
+.doc.paper .lab{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.06em;
+  margin:18px 0 6px;display:flex;align-items:center;gap:9px}
+.doc.paper .lab:first-child{margin-top:0}
+.doc.paper p{margin:0 0 8px;font-size:15.2px;line-height:1.95;color:var(--txt-2)}
+.doc.paper .lead{font-size:15.4px}
+.doc.paper .lead b{font-weight:600;color:var(--txt)}
+.doc.paper blockquote{margin:3px 0 6px;background:transparent;border-left:2px solid var(--accent);
+  padding:1px 0 1px 15px;border-radius:0;font-size:15px}
+.doc.paper blockquote cite{margin-top:3px}
+.doc.paper ol,.doc.paper ul{padding-left:23px;margin:4px 0 8px}
+.doc.paper ol li,.doc.paper ul li{margin-bottom:5px;font-size:15px;line-height:1.9}
+.doc.paper .muted{color:var(--txt-3);font-size:13.5px}
+.doc.paper .tag{background:transparent;border-color:var(--line-2)}
+.doc.paper .pp{padding-left:0}
+.doc p{margin:0 0 8px}
+.doc blockquote{margin:10px 0;padding:9px 14px;border-left:3px solid var(--accent);background:var(--accent-bg);
+  border-radius:0 7px 7px 0;font-family:var(--serif);font-size:14px;color:var(--txt)}
+.doc blockquote cite{display:block;font-style:normal;font-family:var(--sans);font-size:11px;color:var(--txt-4);margin-top:4px}
+.doc .note{font-size:13px;color:var(--txt-3)}
+.doc ol{margin:6px 0 8px;padding-left:22px}
+.doc .docrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.doc .tag{font-size:10.5px;padding:1px 8px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);color:var(--txt-3)}
+.doc .used{font-size:11.5px;color:var(--txt-3);margin-left:4px}
+.doc .muted{color:var(--txt-3);font-size:12px}
+.docfoot{text-align:center;color:var(--txt-4);font-size:11.5px;margin-top:40px;line-height:2}
+.doc-empty{max-width:520px;margin:80px auto;text-align:center;color:var(--txt-2);line-height:2}
+.doc-empty h3{font-family:var(--serif);font-size:19px;color:var(--txt);margin-bottom:8px}
+@media print{
+  @page{size:A4;margin:14mm 12mm}
+  html,body{background:#fff!important}
+  .rail,.top,.status,.docbar,.toast,.gbar,.panel,.legend,.webwarn,.updchip,.tipbar,#obLayer{display:none!important}
+  .app,.main{display:block!important;height:auto!important;grid-template-columns:none!important}
+  .views{position:static!important;display:block!important;height:auto!important}
+  .view{display:none!important;position:static!important;overflow:visible!important}
+  .view#v-doc{display:block!important}
+  .doc{max-width:none!important;width:auto!important;margin:0!important;padding:0!important;
+       font-size:11pt;line-height:1.7;color:#111}
+  .doc .ptgrid,.doc .skgrid{grid-template-columns:1fr!important;gap:6pt!important}
+  .doc h1{font-size:20pt;margin:0 0 4pt}
+  .doc h2{font-size:14pt;margin:14pt 0 3pt;border-bottom:1px solid #ccc}
+  .doc h3{font-size:11.5pt}
+  .doc .pt,.doc .sk{break-inside:avoid;page-break-inside:avoid;box-shadow:none!important;
+       background:#fff!important;border:1px solid #dcdcdc!important;padding:7pt 9pt;border-radius:4pt}
+  .doc blockquote{background:#faf7f2!important;border-left:2pt solid #8B3A3A;page-break-inside:avoid}
+  .doc .tag{background:#f3f3f3!important;border-color:#ddd!important}
+  .docfoot{margin-top:12pt;font-size:9pt}
+  a{color:inherit;text-decoration:none}
+}
 
 /* ---------- 状态条（仪器感） ---------- */
 .status{
@@ -757,6 +856,15 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 .dlg-q{margin-top:12px;padding:9px 12px;border-left:3px solid var(--accent);background:var(--accent-bg);border-radius:0 7px 7px 0}
 .dlg-q .qq{font-family:var(--serif);font-size:13.5px;line-height:1.8;color:var(--txt)}
 .dlg-q .ql{font-size:11px;color:var(--txt-4);margin-top:4px}
+/* 上一版 / 当前 的逐字段 diff（买主要求"能看出两边各是什么样"） */
+.dfv{border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:9px;background:var(--surface-2)}
+.dfv-t{font-size:12.5px;color:var(--txt);display:flex;align-items:center;gap:6px}
+.dfv-k{font-size:11px;color:var(--txt-4);letter-spacing:.05em;margin:9px 0 4px}
+.dfv-l{display:flex;gap:8px;font-size:12px;line-height:1.75;border-radius:5px;padding:4px 8px;margin-top:3px}
+.dfv-l>span{flex:0 0 42px;font-size:11px;color:var(--txt-4);padding-top:2px;white-space:nowrap}
+.dfv-l>p{margin:0;flex:1 1 auto;min-width:0;white-space:pre-wrap;word-break:break-word}
+.dfv-l.was{background:color-mix(in srgb,var(--err) 9%,transparent)}
+.dfv-l.now{background:color-mix(in srgb,var(--ok) 11%,transparent)}
 .dlg-pt{margin-top:8px;padding:8px 11px;border-radius:7px;background:var(--surface-2);cursor:pointer}
 .dlg-pt:hover{background:var(--surface-3)}
 /* 版本更新弹窗 */
@@ -1188,6 +1296,7 @@ kbd{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line-2);bord
           <aside class="panel" id="panel"></aside>
         </div>
       </section>
+      <section class="view" id="v-doc"></section>
       <section class="view flex" id="v-read"></section>
       <section class="view" id="v-shelf"></section>
       <section class="view" id="v-distill"></section>
@@ -1577,7 +1686,7 @@ const DEFAULTS = {
   provider: 'deepseek',      // 正在【使用】的服务商
   cfgView: 'deepseek',       // 正在【配置】的服务商（点卡片只改这个）
   providers: {},                 // id -> {key, model, base, remember}
-  custom: { name: '自定义', base: '', model: '' },
+  custom: { name: '自定义', base: '', model: '', ctx: 0 },   // ctx：本地模型的上下文窗口（0=不知道，按 128k 估）
   // 三处用模型的场合，温度诉求完全不同，必须分开
   // chunk=1 表示不切块（默认）——切块会断掉跨章节的因果链，只在材料超出模型上下文时才切
   distill: { chunk: 1, concurrency: 2, temperature: 0.25, goal: '' },
@@ -1693,7 +1802,9 @@ async function fetchModelList(base, key) {
     const c = m && (m.context_length || m.context_window || m.max_context_length || m.max_tokens);
     return { id: m && (m.id || m.name) || '', ctx: Number(c) || 0, api: !!c };
   }).filter(x => x.id);
-  if (!raw.length) throw new Error('接口返回里没有模型列表');
+  /* 清单为空不再抛错 —— 有的厂商 /models 返回空数组（或压根不支持），
+     调用方自己决定：设置页提示手填，新手引导用内置清单兜底。
+     （以前在这里 throw，把引导页逼成了死路。） */
   const hasCtx = raw.some(x => x.ctx > 0);
   const models = raw.map(x => {
     let ctx = x.ctx, src = x.api ? 'api' : '';
@@ -2212,6 +2323,7 @@ const ICON = {
   relations: '<path d="M7 7l10 10M17 7L7 17"/><circle cx="12" cy="12" r="9"/>',
   library: '<path d="M5 4h4v16H5zM11 4h3v16h-3zM17 5l3 15-3 1z"/>',
   shelf: '<path d="M4 3h5v18H4zM11 3h5v18h-5z"/><path d="M18.6 5.2l2.6 15.6"/>',
+  doc: '<path d="M7 4h7l4 4v12a1 1 0 01-1 1H7a1 1 0 01-1-1V5a1 1 0 011-1z"/><path d="M14 4v4h4M9 12h6M9 16h6"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10l2.1 2.1M19.1 4.9l-2.1 2.1m-10 10l-2.1 2.1"/>'
 };
 /* 5 项。判断标准：这个页面能不能"空着进入"？
@@ -2220,9 +2332,10 @@ const NAV = [
   { id: 'shelf', label: '书架', kb: '1' },
   { id: 'distill', label: '蒸馏', kb: '2' },
   { id: 'graph', label: '知识图谱', kb: '3' },
-  { id: 'chat', label: '对话', kb: '4' },
+  { id: 'doc', label: '文档', kb: '4' },
+  { id: 'chat', label: '对话', kb: '5' },
   { sep: '设置' },
-  { id: 'settings', label: '模型与设置', kb: '5' }
+  { id: 'settings', label: '模型与设置', kb: '6' }
 ];
 function renderNav() {
   const n = $('#nav'); n.innerHTML = '';
@@ -2260,11 +2373,12 @@ function go(v, silent) {
   State.view = v;
   document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
   if (v === 'relations' || v === 'library' || v === 'salon') { v = (v === 'salon' ? 'chat' : (v === 'library' ? 'shelf' : 'graph')); State.view = v; location.hash = '#' + v; }
-  $('#ttl').textContent = { graph: '知识图谱', read: '阅读', distill: '蒸馏', shelf: '书架', chat: '对话', settings: '模型与设置' }[v] || '';
+  $('#ttl').textContent = { graph: '知识图谱', doc: '文档', read: '阅读', distill: '蒸馏', shelf: '书架', chat: '对话', settings: '模型与设置' }[v] || '';
   renderNav();
   if (!silent) location.hash = '#' + v;
   renderScope();   // 非图谱/对话页会自动清空
   if (v === 'graph') { requestAnimationFrame(() => Graph.resize()); }
+  if (v === 'doc') Views.doc();
   if (v === 'read') Views.read();
   if (v === 'distill') Views.distill();
   if (v === 'shelf') Views.shelf();
@@ -2844,7 +2958,11 @@ function renderGbar() {
     h('button', {
       class: 'chip', title: '再跑一遍本地推断：按标签共现 / 同技能指向找新关联（不花钱，不动模型）',
       onclick: () => inferNow()
-    }, '＋ 再推断一次')));
+    }, '＋ 再推断一次'),
+    h('button', {
+      class: 'chip', title: '把知识包排成一篇能读 / 能打印的文档（和这里是同一份数据）',
+      onclick: () => go('doc')
+    }, '文档视图')));
   const se = h('div', { class: 'gsearch' });
   const inp = h('input', {
     placeholder: '搜索知识点 / 技能 / 标签',
@@ -2971,9 +3089,14 @@ function panel() {
         ${p.sources.map(s => { const [lb, cl] = LIC[s.license] || ['未知', 'err']; return `· ${esc(s.title)} <span class="badge ${cl}">${lb}</span>`; }).join('<br>')}
       </div></div>
       <div class="sec"><h4>管理</h4>
-        ${(p._history || []).length ? `<div style="font-size:12px;color:var(--txt-3);margin-bottom:8px;line-height:1.7">
-          上一版（${esc(p._history[0].at)}）还留着 —— 点开能先看会变成什么样，再决定恢复。</div>
-        <button class="btn sm" id="rollbackBtn" style="margin-right:6px">查看上一版…</button>` : ''}
+        ${(() => {
+        const dn = packDiffCount(p);
+        /* 没有差异就不摆这个按钮 —— 买家原话：没改动过的为什么要显示「查看上一版」 */
+        return dn ? `<div style="font-size:12px;color:var(--txt-3);margin-bottom:8px;line-height:1.7">
+          上一版（${esc((p._history[0] || {}).at || '')}）和现在有 <b>${dn}</b> 处不同 —— 点开看整包对比。
+          只想改某一条，点开那一条再恢复。</div>
+        <button class="btn sm" id="rollbackBtn" style="margin-right:6px">查看整包改动…</button>` : '';
+      })()}
         <button class="btn sm ghost" id="delPackBtn" style="color:var(--err);border-color:color-mix(in srgb,var(--err) 35%,transparent)">删除这个知识包</button>
       </div>`;
     // 注意：这条分支提前 return，绑定必须放在 return 之前，否则按钮点不动
@@ -3080,16 +3203,16 @@ function panel() {
       ${x.note ? `<div style="font-size:11px;color:var(--txt-3);margin-top:5px">${esc(x.note)}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
-  /* 改完看的就是这一屏 —— 把「恢复上一版」也放这儿。
-     买家反馈：弹窗里写着"在右侧「管理」里点恢复上一版"，但选中节点后右侧根本没有「管理」
-     （那段只在"没选中任何节点"的概览里出现）。承诺必须落在看得见的地方。 */
-  if ((p._history || []).length) {
+  /* 改完看的就是这一屏 —— 但只对**这条自己改过**才显示（不再是整包 diff）。
+     买家反馈：① 没改动也显示；② 点任何一条都出现按钮，diff 里却是别的知识点。 */
+  const _dn = nodeDiffCount(p, n.id);
+  if (_dn) {
     html += `<div class="sec"><h4>管理</h4>
-      <div style="font-size:12px;color:var(--txt-3);margin-bottom:8px;line-height:1.7">上一版（${esc((p._history[0] || {}).at || '')}）还留着 —— 点开能先看会变成什么样，再决定恢复。</div>
-      <button class="btn sm" data-rb="1">查看上一版…</button></div>`;
+      <div style="font-size:12px;color:var(--txt-3);margin-bottom:8px;line-height:1.7">这一条在上一次保存后改过 —— 点开能看「上一版 / 当前」逐字段对照。</div>
+      <button class="btn sm" data-rb="1">查看这一条的改动…</button></div>`;
   }
   el.innerHTML = html;
-  el.querySelectorAll('[data-rb]').forEach(b => b.addEventListener('click', () => Dialog.prevVersion(p)));
+  el.querySelectorAll('[data-rb]').forEach(b => b.addEventListener('click', () => Dialog.prevVersion(p, { id: n.id })));
   el.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => {
     const t = Graph.idx[b.dataset.jump]; if (t) { State.sel = t; Graph.draw(); Graph.centerOn(t); panel(); }
   }));
@@ -3259,7 +3382,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.2.0';
+const APP_VER = '6.2.1';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -4757,7 +4880,14 @@ ${d.text.slice(0, 4000)}
 function estTokens(chars) { return Math.round((chars || 0) * 0.62); }
 function modelCtx() {
   try {
-    const m = String(Settings.active().model || '');
+    const a = Settings.active();
+    /* 自定义端点（本地模型）优先用用户填的窗口 —— 本地模型常见 8k~32k，
+       按 128k 估会"不切块"，整份塞进去直接被截断/报错。 */
+    if (a.id === 'custom') {
+      const c = +(Settings.d.custom && Settings.d.custom.ctx) || 0;
+      if (c >= 2048) return c;
+    }
+    const m = String(a.model || '');
     if (KNOWN_CTX[m]) return KNOWN_CTX[m];
   } catch (e) { }
   return 128000;   // 保守默认（大多数主流模型 ≥128k）
@@ -4778,8 +4908,11 @@ function chunkWhy(chars) {
   const n = autoChunkFor(chars);
   const m = fmt(modelCtx());
   if (n === 1) return `约 ${tk.toLocaleString()} tokens，当前模型是 ${m} 上下文，一次装得下 —— <b>整份送</b>，跨章节的因果链不断。`;
+  const local = (() => { try { return Settings.active().id === 'custom'; } catch (e) { return false; } })();
   return `约 ${tk.toLocaleString()} tokens，<b>超出当前模型 ${m} 的可用上下文</b>，所以切成 ${n} 段分别蒸再合并。` +
-    `想整份送，换一个更大上下文的模型（DeepSeek V4 是 1M）。`;
+    (local
+      ? `想整份送：把本地模型的 num_ctx 调大（Ollama：设置里的上下文滑杆，或 OLLAMA_CONTEXT_LENGTH），再到「模型与设置 → 自定义端点」把「上下文长度」改成同一个数。`
+      : `想整份送，换一个更大上下文的模型（DeepSeek V4 是 1M）。`);
 }
 /* 材料性质选项（也用于拖拽区那一行） */
 
@@ -5115,16 +5248,68 @@ function packDiff(target, cur) {
   return { pts: one(idxP(target), idxP(cur), fpP), sks: one(idxS(target), idxS(cur), fpS) };
 }
 
+/* 差异总条数：0 就说明"上一版和现在一模一样" —— 那就别摆「查看上一版」的按钮。
+   （买家原话：没改动过的为什么要显示「查看上一版」） */
+function diffCount(d) {
+  if (!d) return 0;
+  return ['pts', 'sks'].reduce((n, k) => n + d[k].chg.length + d[k].back.length + d[k].gone.length, 0);
+}
+/* 一个包里"当前 vs 上一版"的差异（没有历史就是 0） */
+function packDiffCount(p) {
+  const h = ((p && p._history) || [])[0];
+  if (!h) return 0;
+  try { return diffCount(packDiff(h.pack, p)); } catch (e) { return 0; }
+}
+
+/* 只数**某一个**节点自己的差异。
+   —— 买家反馈：点任何一条知识点都显示「上一版」按钮，而且 diff 里是别的知识点的内容。
+      根因就是节点面板用了整包 diff。 */
+function nodeDiffCount(p, id) {
+  const h = ((p && p._history) || [])[0];
+  if (!h || !id) return 0;
+  let d; try { d = packDiff(h.pack, p); } catch (e) { return 0; }
+  const has = (arr, pick) => arr.filter(x => {
+    const o = pick ? pick(x) : x; return o && o.id === id;
+  }).length;
+  return has(d.pts.chg, x => x.now) + has(d.pts.back) + has(d.pts.gone)
+    + has(d.sks.chg, x => x.now) + has(d.sks.back) + has(d.sks.gone);
+}
+
+/* 逐字段对比：只列出真正变了的字段，用来画"上一版 / 当前"两行 */
+const DIFF_FIELDS = {
+  point: [['title', '标题'], ['summary', '说明'], ['userNote', '我的备注'], ['tags', '标签'], ['status', '状态']],
+  skill: [['title', '标题'], ['when', '什么时候用'], ['input', '输入'], ['output', '输出'],
+  ['steps', '步骤'], ['pitfalls', '常见误用'], ['pointIds', '支撑的知识点'], ['status', '状态']]
+};
+const diffVal = (x, k) => {
+  /* 状态别把内部的 deprecated 直接甩给买家看 */
+  if (k === 'status') return (x && x.status === 'deprecated') ? '已作废' : '有效';
+  const v = x ? x[k] : '';
+  if (Array.isArray(v)) return v.length ? v.join('；') : '';
+  return v == null ? '' : String(v);
+};
+function diffFields(kind, was, now) {
+  const out = [];
+  (DIFF_FIELDS[kind] || []).forEach(([k, label]) => {
+    const a = diffVal(was, k), b = diffVal(now, k);
+    if (a !== b) out.push({ label, was: a, now: b });
+  });
+  return out;
+}
+
 /* 回滚到第 i 版。确认这一步已经挪到 Dialog.prevVersion 里（预览即确认），
-   所以这里不再自己弹框 —— 否则用户要点两次。 */
+   所以这里不再自己弹框 —— 否则用户要点两次。
+
+   🔴 恢复之后**清空历史**，不再保留「刚才那一版」。
+      为什么：买家回到初始版本后按钮还挂着（历史里那条 = 改坏的那版），看起来像没生效；
+      而且再点一次就会跳回改坏那版 —— 对非技术买家是陷阱。
+      代价：恢复不能"撤销"，所以预览里必须写明。 */
 async function rollbackPack(id, i) {
   const cur = State.packs.find(x => x.id === id); if (!cur) return false;
   const h = (cur._history || [])[i]; if (!h) return false;
-  const snap = JSON.parse(JSON.stringify(cur)); delete snap._history;
   const restored = JSON.parse(JSON.stringify(h.pack));      // 深拷贝：别把历史对象挂回活对象
   restored.id = id;
-  restored._history = [{ at: stampNow(), pack: snap }]
-    .concat((cur._history || []).filter((_, k) => k !== i)).slice(0, 2);
+  restored._history = [];
   await DB.put(restored);
   const j = (State.packs || []).findIndex(x => x.id === id);
   if (j >= 0) State.packs[j] = restored; else State.packs.unshift(restored);
@@ -5134,6 +5319,57 @@ async function rollbackPack(id, i) {
     try { Graph.build(); Graph.tick = 0; Graph.draw(); panel(); renderGbar(); renderLegend(); renderNav(); } catch (e) { }
   }
   return true;
+}
+
+/* 只把**某一条**恢复成上一版的样子，别的条目不动。
+   —— 买家质疑：「恢复整个知识包？？这逻辑对吗？？」
+      从"这一条"点进去、却整包回退，语义对不上；这才是节点入口该做的事。
+   返回：'restored' | 'removed' | null（什么都没变） */
+async function restoreNode(pack, id) {
+  const h = ((pack && pack._history) || [])[0];
+  if (!h || !id) return null;
+  const oldP = h.pack || {};
+  const oldPt = (oldP.points || []).find(x => x.id === id);
+  const oldSk = (oldP.skills || []).find(x => x.id === id);
+  let res = null;
+
+  if (oldPt) {
+    const i = (pack.points || []).findIndex(x => x.id === id);
+    if (i >= 0) pack.points[i] = JSON.parse(JSON.stringify(oldPt));
+    else { pack.points = pack.points || []; pack.points.push(JSON.parse(JSON.stringify(oldPt))); }
+    res = 'restored';
+  } else if (oldSk) {
+    const i = (pack.skills || []).findIndex(x => x.id === id);
+    if (i >= 0) pack.skills[i] = JSON.parse(JSON.stringify(oldSk));
+    else { pack.skills = pack.skills || []; pack.skills.push(JSON.parse(JSON.stringify(oldSk))); }
+    res = 'restored';
+  } else {
+    /* 上一版里没有这一条 → "恢复"就等于把它删掉（连带清掉引用，别留悬空） */
+    const i = (pack.points || []).findIndex(x => x.id === id);
+    const j = (pack.skills || []).findIndex(x => x.id === id);
+    if (i >= 0) {
+      pack.points.splice(i, 1);
+      (pack.skills || []).forEach(sk => { if (Array.isArray(sk.pointIds)) sk.pointIds = sk.pointIds.filter(x => x !== id); });
+      res = 'removed';
+    } else if (j >= 0) {
+      pack.skills.splice(j, 1);
+      res = 'removed';
+    }
+    if (res) pack.relations = (pack.relations || []).filter(r => r.from !== id && r.to !== id);
+  }
+  if (!res) return null;
+
+  /* ⚠ 不要再 saveVersioned —— 那会把"恢复前"再推成历史，于是这一条的入口立刻又出现，
+     看起来像"恢复了但没恢复"。这里直接落库，历史保持不动：
+     恢复完 = 这条与上一版一致 → 入口自然消失。 */
+  await DB.put(pack);
+  const k = (State.packs || []).findIndex(x => x.id === pack.id);
+  if (k >= 0) State.packs[k] = pack;
+  if (State.pack && State.pack.id === pack.id) State.pack = pack;
+  try { Retriever._c = null; Retriever._k = null; } catch (e) { }
+  State.sel = null;
+  try { Graph.build(); Graph.tick = 0; Graph.draw(); panel(); renderGbar(); renderLegend(); renderNav(); } catch (e) { }
+  return res;
 }
 /* 去重指纹：去掉标点空白，取前 30 字。标题相同但内容明显不同的不会被误并。 */
 function fp(x) { return String(x || '').replace(/[\s\u3000，。；、,.;:：!！?？"'“”‘’（）()《》\-—~·]/g, '').slice(0, 30); }
@@ -5479,6 +5715,195 @@ async function refreshStoreInfo() {
    ============================================================ */
 
 const Views = {
+  /* ── 文档：把知识包排成一篇能读、能打印、能复制的笔记 ──────────
+     买家原话："把图谱转换成这样子的排列形式，可以切换图谱也可以切换成排列"。
+     结构：按来源分组 → 每条知识点（说明 / 原文引句 / 标签 / 被哪些技能用到）→ 末尾技能区。
+     作废的不进文档（和导出 SKILL.md 一致）。点标题可跳回图谱。 */
+  doc() {
+    const el = $('#v-doc'); if (!el) return;
+    const p = State.pack;
+    if (!p) {
+      el.innerHTML = `<div class="doc-empty"><h3>还没有载入知识包</h3>
+        <p>先去「蒸馏」放一份材料，或到「书架」点开一个已有的包。</p></div>`;
+      return;
+    }
+    const cnNum = n => n <= 10 ? '一二三四五六七八九十'[n - 1] : (n < 20 ? '十' + '一二三四五六七八九'[n - 11] : String(n));
+    /* 买家："知识点的排版略差，再把重点内容分段、加粗" ——
+       说明按句号切段（最多 4 段、每段 2 句），第一句当论点加粗。 */
+    const splitParas = txt => {
+      const s = String(txt || '').trim(); if (!s) return [];
+      const parts = s.split(/(?<=[。！？；])/).map(x => x.trim()).filter(Boolean);
+      if (parts.length <= 2) return [s];
+      const out = [];
+      for (let k = 0; k < parts.length; k += 2) out.push(parts.slice(k, k + 2).join(''));
+      return out.slice(0, 4);
+    };
+    const renderSum = txt => {
+      const ps = splitParas(txt);
+      if (!ps.length) return '';
+      /* 只有一句时不加粗 —— 整段加粗等于没有重点（买家要的是"重点"能看出来） */
+      const multi = (String(txt).split(/[。！？；]/).filter(x => x.trim()).length >= 2);
+      return ps.map((t, k) => {
+        if (k) return `<p>${esc(t)}</p>`;
+        if (!multi) return `<p class="lead">${esc(t)}</p>`;
+        const m = t.match(/^[^。！？；]{2,60}[。！？；]/);
+        return m
+          ? `<p class="lead"><b>${esc(m[0])}</b>${esc(t.slice(m[0].length))}</p>`
+          : `<p class="lead">${esc(t)}</p>`;
+      }).join('');
+    };
+    const S = (p.sources || []).slice();
+    const P = liveOnly(p.points || []);
+    const K = liveOnly(p.skills || []);
+    const bySrc = new Map(S.map(s => [s.id, []]));
+    P.forEach(x => {
+      if (!bySrc.has(x.sourceId)) { bySrc.set(x.sourceId, []); S.push({ id: x.sourceId, title: '（未标注来源）' }); }
+      bySrc.get(x.sourceId).push(x);
+    });
+    const title = (p.meta && p.meta.name) || '知识包';
+    /* 版式：讲义（连续文档，默认）/ 卡片（一卡一条，支持多列） */
+    const stylePref = (() => { try { return localStorage.getItem('dw.docStyle') || 'paper'; } catch (e) { return 'paper'; } })();
+    const isPaper = stylePref === 'paper';
+    /* 列数：auto = 按窗口宽度自适应；也能手动锁 1/2/3 列（记在本机）。讲义版式固定单列。 */
+    const colsPref = (() => { try { return localStorage.getItem('dw.docCols') || 'auto'; } catch (e) { return 'auto'; } })();
+    const autoCols = () => (window.innerWidth >= 1660 ? 3 : window.innerWidth >= 1240 ? 2 : 1);
+    const cols = colsPref === 'auto' ? autoCols() : Math.max(1, Math.min(3, +colsPref || 1));
+    let h = `<div class="docbar">
+      <button class="btn sm ghost" id="docBack" title="回到图谱">← 图谱</button>
+      ${(State.packs || []).length > 1 ? `<select id="docPack" class="docpack" title="切换知识包">
+        ${State.packs.map(x => `<option value="${esc(x.id)}" ${x.id === p.id ? 'selected' : ''}>${esc((((x.meta && x.meta.name) || x.id) + '').slice(0, 26))}</option>`).join('')}
+      </select>` : ''}
+      <div class="docstat">${S.length} 个来源 · ${P.length} 条知识点 · ${K.length} 条技能</div>
+      <span class="sp"></span>
+      <div class="doccols" title="版式">
+        ${[['paper', '讲义'], ['card', '卡片']].map(([v, t]) =>
+      `<button class="colbtn${stylePref === v ? ' on' : ''}" data-style="${v}">${t}</button>`).join('')}
+      </div>
+      <div class="doccols" title="排成几列">
+        ${[['auto', '自适应'], ['1', '1 列'], ['2', '2 列'], ['3', '3 列']].map(([v, t]) =>
+        `<button class="colbtn${colsPref === v ? ' on' : ''}" data-cols="${v}">${t}</button>`).join('')}
+      </div>
+      <button class="btn sm" id="docCopy" title="把整篇文档的纯文本复制走">复制全文</button>
+      <button class="btn sm" id="docMd" title="导出结构化的 SKILL.md">导出 SKILL.md</button>
+      <button class="btn sm" id="docPrint" title="打印，或另存为 PDF">打印 / 存 PDF</button>
+    </div>
+    <article class="doc${isPaper ? ' paper' : ''}" id="docBody" style="--cols:${cols}">
+      <h1>${esc(title)}</h1>
+      <div class="docmeta">由「知识蒸馏工作台」生成${(p.meta && p.meta.createdAt) ? ' · ' + esc(p.meta.createdAt) : ''}
+        · ${P.length} 条知识点 / ${K.length} 条技能</div>`;
+
+    S.forEach((s, i) => {
+      const pts = bySrc.get(s.id) || [];
+      h += `<h2><span class="dn">${cnNum(i + 1)}、</span>${esc(s.title)}`
+        + (s.author ? `<small>${esc(s.author)}</small>` : '') + `</h2>`;
+      h += `<div class="srcmeta">${pts.length} 条知识点`
+        + (s.license ? ' · ' + esc((LIC[s.license] || [s.license])[0]) : '') + `</div>`;
+      if (!pts.length) { h += `<p class="muted">这本还没有知识点。</p>`; return; }
+      h += isPaper ? `<div class="pplist">` : `<div class="ptgrid">`;
+      pts.forEach((pt, j) => {
+        const ev = (pt.evidence || []).find(e => e.quote) || (pt.evidence || [])[0] || {};
+        const used = K.filter(sk => (sk.pointIds || []).includes(pt.id));
+        const tags = (pt.tags || []).length
+          ? `<div class="pttags">${pt.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : '';
+        const head = `<div class="pth">
+            <h3 data-doc-jump="${esc(pt.id)}" title="点标题跳到图谱里的这个点"><span class="pn">${i + 1}.${j + 1}</span>${esc(pt.title)}${isEdited(pt) ? ' <span class="badge acc">人工修改</span>' : ''}</h3>
+            ${tags}
+          </div>`;
+        if (isPaper) {
+          /* 讲义：连续文档 —— 没有卡片边框，用「内容 / 原文依据 / 我的备注」这种加粗小标签分段 */
+          h += `<section class="pp">
+            ${head}
+            ${pt.summary ? `<div class="lab">内容</div>${renderSum(pt.summary)}` : ''}
+            ${ev.quote ? `<div class="lab">原文依据</div><blockquote>“${esc(ev.quote)}”<cite>${esc(ev.locator || '')}</cite></blockquote>` : ''}
+            ${pt.userNote ? `<div class="lab">我的备注</div><p>${esc(pt.userNote)}</p>` : ''}
+            ${used.length ? `<div class="lab">用到它的技能</div><p class="muted">${used.map(x => esc(x.title)).join('、')}</p>` : ''}
+          </section>`;
+        } else {
+          h += `<section class="pt" data-doc-jump="${esc(pt.id)}" title="点一下跳到图谱里的这个点">
+            ${head}
+            ${renderSum(pt.summary)}
+            ${ev.quote ? `<blockquote>“${esc(ev.quote)}”<cite>${esc(ev.locator || '')}</cite></blockquote>` : ''}
+            ${pt.userNote ? `<p class="note"><b>我的备注</b>　${esc(pt.userNote)}</p>` : ''}
+            ${used.length ? `<div class="ptused">用到它：${used.map(x => esc(x.title)).join('、')}</div>` : ''}
+          </section>`;
+        }
+      });
+      h += `</div>`;
+    });
+
+    if (K.length) {
+      h += `<h2><span class="dn">${cnNum(S.length + 1)}、</span>技能</h2>`;
+      h += `<div class="srcmeta">${K.length} 条 · 蒸馏出的可执行能力</div>`;
+      h += isPaper ? `<div class="pplist">` : `<div class="skgrid">`;
+      K.forEach((sk, k) => {
+        const pts = (sk.pointIds || []).map(id => P.find(x => x.id === id)).filter(Boolean);
+        /* 技能也编号，和知识点同一套（章节号.条号 → 七、技能 下是 7.1 / 7.2） */
+        const head = `<div class="pth">
+            <h3 data-doc-jump="${esc(sk.id)}" title="点标题跳到图谱里的这个点"><span class="pn">${S.length + 1}.${k + 1}</span>${esc(sk.title)}${isEdited(sk) ? ' <span class="badge acc">人工修改</span>' : ''}</h3>
+          </div>`;
+        if (isPaper) {
+          h += `<section class="pp">
+            ${head}
+            <div class="lab">什么时候用</div><p>${esc(sk.when || '—')}</p>
+            ${(sk.input || sk.output) ? `<div class="lab">输入 → 输出</div><p>${esc(sk.input || '—')} → ${esc(sk.output || '—')}</p>` : ''}
+            ${(sk.steps || []).length ? `<div class="lab">步骤</div><ol>${sk.steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}
+            ${(sk.pitfalls || []).length ? `<div class="lab">常见误用</div><p>${sk.pitfalls.map(x => esc(x)).join('；')}</p>` : ''}
+            ${pts.length ? `<div class="lab">依据知识点</div><p class="muted">${pts.map(t => esc(t.title)).join('、')}</p>` : ''}
+          </section>`;
+        } else {
+          h += `<section class="sk" data-doc-jump="${esc(sk.id)}" title="点一下跳到图谱里的这个点">
+            ${head}
+            <p><b>什么时候用</b>　${esc(sk.when || '—')}</p>
+            ${(sk.input || sk.output) ? `<p><b>输入 → 输出</b>　${esc(sk.input || '—')} → ${esc(sk.output || '—')}</p>` : ''}
+            ${(sk.steps || []).length ? `<ol>${sk.steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}
+            ${(sk.pitfalls || []).length ? `<p class="note"><b>常见误用</b>　${sk.pitfalls.map(x => esc(x)).join('；')}</p>` : ''}
+            ${pts.length ? `<p class="muted">依据：${pts.map(t => esc(t.title)).join('、')}</p>` : ''}
+          </section>`;
+        }
+      });
+      h += `</div>`;
+    }
+    h += `<div class="docfoot">— 完 —<br><span>由知识蒸馏工作台生成 · 点任意标题可回到图谱</span></div></article>`;
+    el.innerHTML = h;
+
+    const bk = $('#docBack'); if (bk) bk.onclick = () => go('graph');
+    /* 切知识包：换包 → 重建图谱 → 重渲染本文档 */
+    const dp = $('#docPack');
+    if (dp) dp.onchange = () => {
+      if (!dp.value) return;
+      selectPack(dp.value);
+      go('doc');
+    };
+    /* 版式：记在本机 */
+    el.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click', () => {
+      try { localStorage.setItem('dw.docStyle', b.dataset.style); } catch (e) { }
+      Views.doc();
+    }));
+    /* 列数：记在本机，下次进来还是这个排法 */
+    el.querySelectorAll('[data-cols]').forEach(b => b.addEventListener('click', () => {
+      try { localStorage.setItem('dw.docCols', b.dataset.cols); } catch (e) { }
+      Views.doc();
+    }));
+    const cp = $('#docCopy');    if (cp) cp.onclick = async () => {
+      const t = ($('#docBody') || {}).innerText || '';
+      try { await navigator.clipboard.writeText(t); toast('已复制全文'); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = t; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); toast('已复制全文'); } catch (e2) { toast('复制失败，请手动选中复制', 3200); }
+        ta.remove();
+      }
+    };
+    const md = $('#docMd'); if (md) md.onclick = () => exportSKILL(p);
+    const pr = $('#docPrint'); if (pr) pr.onclick = () => window.print();
+    el.querySelectorAll('[data-doc-jump]').forEach(b => b.addEventListener('click', () => {
+      const n = Graph.idx && Graph.idx[b.dataset.docJump];
+      if (!n) { toast('这条在图谱里没找到', 2600); return; }
+      go('graph');
+      setTimeout(() => { State.sel = n; Graph.tick = 0; Graph.draw(); Graph.centerOn(n); panel(); }, 30);
+    }));
+  },
+
   /* ── 书架：罗列你所有的书 ────────────────────────────────
      不按"知识包"分组 —— 包是系统概念，用户脑子里只有"我有哪些书"。
      顶部是总的统计看板（资产、导出、备份）。                */
@@ -6071,13 +6496,19 @@ const Views = {
           <input type="text" id="cModel" class="num" placeholder="model-id" value="${esc(Settings.d.custom.model)}" style="margin-top:7px">
           ${(Settings.p('custom').cachedAt) ? `<span class="hint">上次拉取 ${esc(Settings.p('custom').cachedAt)} · ${(Settings.p('custom').cachedModels || []).length} 个模型</span>` : ''}
         </div>
-        <div class="field"><label>API Key</label><input type="password" id="cKey" placeholder="sk-..." value="${esc(Settings.p('custom').key || '')}"></div>
+        <div class="field"><label>API Key</label><input type="password" id="cKey" placeholder="sk-...（本地模型可留空）" value="${esc(Settings.p('custom').key || '')}"></div>
+        <div class="field"><label>上下文长度（tokens，可留空）</label>
+          <input type="number" id="cCtx" class="num" min="0" step="1024" placeholder="例如 32768"
+            value="${+(Settings.d.custom.ctx) > 0 ? +(Settings.d.custom.ctx) : ''}">
+          <span class="hint">本地模型（Ollama / LM Studio / vLLM）常见只有 8k～32k。不填就按 128k 估，
+            长材料会"不切块"整份塞进去 → 超出窗口被截断或报错。填了它，切块就按这个数算。</span></div>
         <div class="inline"><button class="btn pri" id="cSave">保存</button><button class="btn" id="cTest">测试连接</button></div>`;
       $('#cSel').addEventListener('change', () => { if ($('#cSel').value !== '__custom') $('#cModel').value = $('#cSel').value; });
       $('#cFetch').addEventListener('click', async () => {
         const btn = $('#cFetch'); btn.disabled = true; btn.textContent = '拉取中…';
         try {
           const got = await fetchModelList($('#cBase').value.trim(), $('#cKey').value.trim());
+          if (!got.models.length) throw new Error('这家接口没返回模型清单 —— 在下面「模型」框里手动填一个模型名就行');
           const c = Settings.p('custom');
           c.cachedModels = got.models; c.cachedHasCtx = got.hasCtx;
           c.cachedAt = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -6090,8 +6521,14 @@ const Views = {
         } catch (e) { btn.disabled = false; btn.textContent = '拉取模型列表'; toast('拉取失败：' + String(e.message || e) + netHint(e), 6200); }
       });
       $('#cSave').addEventListener('click', () => {
-        Settings.d.custom = { name: $('#cName').value.trim() || '自定义', base: $('#cBase').value.trim().replace(/\/+$/, ''), model: $('#cModel').value.trim() };
-        Settings.p('custom').key = $('#cKey').value.trim(); Settings.save(); Views.settings(); toast('已保存');
+        Settings.d.custom = {
+          name: $('#cName').value.trim() || '自定义',
+          base: $('#cBase').value.trim().replace(/\/+$/, ''),
+          model: $('#cModel').value.trim(),
+          ctx: Math.max(0, +$('#cCtx').value || 0)
+        };
+        Settings.p('custom').key = $('#cKey').value.trim(); Settings.save(); Views.settings();
+        toast(Settings.d.custom.ctx ? `已保存 · 按 ${Settings.d.custom.ctx} 上下文切块` : '已保存');
       });
       $('#cTest').addEventListener('click', () => testConn({
         base: $('#cBase').value.trim().replace(/\/+$/, ''), model: $('#cModel').value.trim(), key: $('#cKey').value.trim(), name: '自定义'
@@ -6137,6 +6574,7 @@ const Views = {
         const btn = $('#pmFetch'); if (btn) { btn.disabled = true; btn.textContent = '拉取中…'; }
         try {
           const got = await fetchModelList($('#pb').value.trim(), $('#pk').value.trim());
+          if (!got.models.length) throw new Error('这家接口没返回模型清单 —— 在「模型」框里手动填模型名一样能用');
           const c = Settings.p(cur);
           c.key = $('#pk').value.trim(); c.base = $('#pb').value.trim().replace(/\/+$/, '');
           c.cachedModels = got.models;
@@ -6688,15 +7126,23 @@ const Onboard = {
     try {
       Settings.d.provider = id;
       Settings.p(id).key = key;
-      const arr = await fetchModelList(meta.base, key);
-      const list = Array.isArray(arr) ? arr : [];
-      if (!list.length) throw new Error('拉到了模型清单但是空的');
+      /* ⚠ fetchModelList 返回的是 { models, hasCtx, count }，不是数组。
+         这里以前写成 `Array.isArray(arr) ? arr : []` → 永远拿到 [] →
+         每个买家在第 2 步都看到「拉到了模型清单但是空的」、下一步是灰的
+         （2026-11-02 几个用户同时报的就是这个）。 */
+      const got = await fetchModelList(meta.base, key);
+      let list = (got && Array.isArray(got.models)) ? got.models : [];
+      let fromPreset = false;
+      /* 接口没给清单（有的厂商 /models 返回空）→ 用内置清单兜底，别把人卡在这一步 */
+      if (!list.length && (meta.models || []).length) { list = meta.models.slice(); fromPreset = true; }
+      if (!list.length) throw new Error('连上了，但这家的接口没返回模型清单 —— 可以先去「模型与设置」手动填模型名，照样能用');
       Settings.p(id).cachedModels = list;
       const def = (list.find(m => m.rec) || list[0] || {}).id || '';
       Settings.p(id).model = def;
       Settings.save();
       this.ok = true;
-      if (msg) msg.innerHTML = '<span style="color:var(--ok)">✅ 通了 —— 默认用「' + esc(def) + '」</span>';
+      if (msg) msg.innerHTML = '<span style="color:var(--ok)">✅ 通了 —— 默认用「' + esc(def) + '」'
+        + (fromPreset ? '（内置清单，没走接口）' : '') + '</span>';
       if ($('#obNext')) $('#obNext').disabled = false;
       if (typeof Settings.syncStatus === 'function') Settings.syncStatus();
     } catch (e) {
@@ -6783,62 +7229,106 @@ $('#obBtn').onclick = () => Onboard.open();
 /* ── 配套样式的确认框 ──────────────────────────────────── */
 const Dialog = {
   /* 「上一版」预览 —— 恢复之前先让人看清**会变成什么**。
-     买家两个疑问都在这里回答：
-       ①「恢复的内容是啥也不知道」→ 列出改回哪几条（带旧文案）、会回来什么、会消失什么；
-       ②「怎么可以无限回滚」→ 历史只留 2 版：恢复一次 = 和"刚才那版"互换，
-          所以弹窗里明写"再点一次能回来"，按钮上也带着目标时间，不是无底洞。 */
-  prevVersion(pack) {
+     focus：可选，某个节点 id。传了就**只显示这一条**的差异
+     （买家反馈：点任何一条知识点都出现按钮，diff 里却是别的知识点的内容 —— 那是整包 diff）。 */
+  prevVersion(pack, focus) {
     const hist = (pack && pack._history) || [];
     if (!hist.length) return toast('还没有可恢复的上一版（改过、或者存过知识包之后才会有）', 3600);
     const at = hist[0].at || '';
-    const d = packDiff(hist[0].pack, pack);
-    const cut = (s, n) => {
+    const oldPack = hist[0].pack;
+    const d = packDiff(oldPack, pack);
+    if (!diffCount(d)) return toast('这一版和现在完全一样 —— 不用恢复', 3200);
+    const fid = focus && focus.id || '';
+
+    const cut = (s, nn) => {
       s = String(s || '').replace(/\s+/g, ' ').trim();
       if (!s) return '（空）';
-      return s.length > n ? s.slice(0, n) + '…' : s;
+      return s.length > nn ? s.slice(0, nn) + '…' : s;
     };
-    const chg = [
-      ...d.pts.chg.map(x => ({ k: '知识点', t: x.now.title, was: x.was.summary || '' })),
-      ...d.sks.chg.map(x => ({ k: '技能', t: x.now.title, was: x.was.when || '' }))
+    const badge = k => `<span class="badge">${k === 'point' ? '知识点' : '技能'}</span>`;
+    /* 改动条目：**逐字段**「上一版 / 当前」两行对照（买家要的 diff 效果） */
+    const chgCard = (kind, x) => {
+      const fs = diffFields(kind, x.was, x.now);
+      const ttl = (x.now && x.now.title) || (x.was && x.was.title) || '';
+      return `<div class="dfv">
+        <div class="dfv-t">${badge(kind)} ${esc(cut(ttl, 40))}</div>
+        ${fs.map(f => `<div class="dfv-k">${esc(f.label)}</div>
+          <div class="dfv-l was"><span>上一版</span><p>${esc(cut(f.was, 160))}</p></div>
+          <div class="dfv-l now"><span>当前</span><p>${esc(cut(f.now, 160))}</p></div>`).join('')}
+      </div>`;
+    };
+    const oneLine = (kind, x, tag, cls) => `<div class="dfv-l ${cls}"><span>${tag}</span>
+      <p>${badge(kind)} ${esc(cut(x.title, 34))}　<span style="color:var(--txt-3)">${esc(cut(kind === 'point' ? (x.summary || '') : (x.when || ''), 56))}</span></p></div>`;
+
+    const chgE = [
+      ...d.pts.chg.map(x => ({ id: ((x.now || x.was) || {}).id, html: chgCard('point', x) })),
+      ...d.sks.chg.map(x => ({ id: ((x.now || x.was) || {}).id, html: chgCard('skill', x) }))
     ];
-    const back = [...d.pts.back.map(x => ({ k: '知识点', t: x.title })), ...d.sks.back.map(x => ({ k: '技能', t: x.title }))];
-    const gone = [...d.pts.gone.map(x => ({ k: '知识点', t: x.title })), ...d.sks.gone.map(x => ({ k: '技能', t: x.title }))];
-    const rows = arr => arr.slice(0, 6).map(x =>
-      `<div style="padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.7">
-        <span class="badge">${x.k}</span> ${esc(cut(x.t, 34))}</div>`).join('')
-      + (arr.length > 6 ? `<div style="font-size:11.5px;color:var(--txt-3);padding-top:5px">…还有 ${arr.length - 6} 条</div>` : '');
-    const chgRows = chg.slice(0, 6).map(x =>
-      `<div style="padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.75">
-        <span class="badge">${x.k}</span> ${esc(cut(x.t, 34))}
-        <div style="color:var(--txt-3);font-size:11.5px;margin-top:2px">会改回：${esc(cut(x.was, 46))}</div></div>`).join('')
-      + (chg.length > 6 ? `<div style="font-size:11.5px;color:var(--txt-3);padding-top:5px">…还有 ${chg.length - 6} 条</div>` : '');
-    const none = !chg.length && !back.length && !gone.length;
+    const backE = [
+      ...d.pts.back.map(x => ({ id: x.id, html: oneLine('point', x, '回来', 'was') })),
+      ...d.sks.back.map(x => ({ id: x.id, html: oneLine('skill', x, '回来', 'was') }))
+    ];
+    const goneE = [
+      ...d.pts.gone.map(x => ({ id: x.id, html: oneLine('point', x, '消失', 'now') })),
+      ...d.sks.gone.map(x => ({ id: x.id, html: oneLine('skill', x, '消失', 'now') }))
+    ];
+    const pick = arr => fid ? arr.filter(e => e.id === fid) : arr;
+    const chg = pick(chgE), back = pick(backE), gone = pick(goneE);
+    if (fid && !chg.length && !back.length && !gone.length) {
+      return toast('这一条没有改动', 2600);
+    }
+    const nChg = chg.length, nBack = back.length, nGone = gone.length;
     const el = document.createElement('div');
     el.className = 'dlgLayer';
-    el.innerHTML = `<div class="dlg" style="max-width:640px;text-align:left">
+    el.innerHTML = `<div class="dlg" style="max-width:700px;text-align:left">
       <h4 style="margin-bottom:4px">上一版：${esc(at)}</h4>
-      <div class="updp" style="margin-bottom:12px">这是恢复之后的样子，先看清楚再决定。</div>
-      ${none ? '<div class="updp">两版内容完全一样 —— 没什么可恢复的。</div>' : ''}
-      <div style="font-size:12.5px;color:var(--txt-2);margin-bottom:10px">
-        改回 <b>${chg.length}</b> 条 · 回来 <b>${back.length}</b> 条 · 消失 <b>${gone.length}</b> 条</div>
-      ${chg.length ? `<div class="sec"><h4>会改回（${chg.length}）</h4>${chgRows}</div>` : ''}
-      ${back.length ? `<div class="sec"><h4>会回来（${back.length}）</h4>${rows(back)}</div>` : ''}
-      ${gone.length ? `<div class="sec"><h4>会消失（${gone.length}）</h4>${rows(gone)}</div>` : ''}
-      <div class="updp" style="margin-top:12px">当前这一版<b>不会丢</b>：恢复之后它就变成新的「上一版」，
-        再点一次能回到现在的样子（历史只留 2 版，不会无限往下翻）。</div>
+      <div class="updp" style="margin-bottom:10px">每一处改动都给出两组：<b>上一版</b>和
+        <b>当前</b>，逐字段对照。</div>
+      ${fid ? `<div class="updp" style="margin-bottom:8px">下面只列<b>这一条</b>。
+        「恢复这一条」只改它自己，别的条目不动。</div>` : ''}
+      <div style="font-size:12.5px;color:var(--txt-2);margin-bottom:12px">
+        改动 <b>${nChg}</b> 条 · 会回来 <b>${nBack}</b> 条 · 会消失 <b>${nGone}</b> 条</div>
+      ${chg.slice(0, 6).map(e => e.html).join('')}
+      ${chg.length > 6 ? `<div class="updp">…还有 ${chg.length - 6} 条改动没展开</div>` : ''}
+      ${back.length ? `<div class="sec"><h4>恢复后会回来（${nBack}）</h4>${back.map(e => e.html).join('')}</div>` : ''}
+      ${gone.length ? `<div class="sec"><h4>恢复后会消失（${nGone}）</h4>${gone.map(e => e.html).join('')}</div>` : ''}
+      ${fid ? '' : `<div class="updp" style="margin-top:12px">⚠ 恢复之后，现在这一版就<b>不再保留</b>了 ——
+        要留个后路，先「导出 JSON」备份再恢复。</div>`}
       <div class="dlg-btns" style="justify-content:flex-start;margin-top:14px">
-        <button class="btn pri" data-rb2 ${none ? 'disabled' : ''}>恢复这一版</button>
+        ${fid ? `<button class="btn pri" data-nrb>恢复这一条</button>
+          <button class="btn ghost" data-rb2 title="整个知识包回到这一版，别的改动也会一起回去">整包回退…</button>`
+        : `<button class="btn pri" data-rb2>恢复整个知识包</button>`}
         <button class="btn" data-close2>算了</button>
       </div></div>`;
     document.body.appendChild(el);
-    const done = () => el.remove();
+    /* Esc 也要能关 —— 之前漏了，弹窗关不掉，后面的点击全被它挡住 */
+    const onKey = e => { if (e.key === 'Escape') done(); };
+    const done = () => { el.remove(); document.removeEventListener('keydown', onKey); };
+    document.addEventListener('keydown', onKey);
     el.onclick = e => { if (e.target === el) done(); };
     el.querySelector('[data-close2]').onclick = done;
-    el.querySelector('[data-rb2]').onclick = async () => {
-      if (none) return done();
-      const ok = await rollbackPack(pack.id, 0);
+    /* 按条恢复：从"这一条"进来就该只改这一条 */
+    const _nrb = el.querySelector('[data-nrb]');
+    if (_nrb) _nrb.onclick = async () => {
+      const res = await restoreNode(pack, fid);
       done();
-      if (ok) toast(`已回到 ${at} 的版本 · 再点一次能回到刚才那版`, 5200);
+      if (res === 'restored') toast('已把这一条恢复成上一版的样子（其它条目没动）', 4800);
+      else if (res === 'removed') toast('这条在上一版里没有 —— 已删掉它，并清掉相关引用', 5200);
+      else toast('这一条没有可恢复的改动', 3000);
+    };
+    /* 整包回退：破坏性动作，再确认一次 */
+    el.querySelector('[data-rb2]').onclick = async () => {
+      if (fid) {
+        const ok = await Dialog.confirm(
+          `整个知识包回到 ${at} 的版本？\n\n`
+          + '其它条目的改动也会一起回去；现在这一版不再保留。\n'
+          + '只想改这一条的话，点「取消」，用左边的「恢复这一条」。',
+          { title: '整包回退' });
+        if (!ok) return;
+      }
+      const ok2 = await rollbackPack(pack.id, 0);
+      done();
+      if (ok2) toast(`已回到 ${at} 的版本 · 这次恢复不留「刚才那版」`, 5200);
       else toast('恢复失败：这条历史已经不在了', 3600);
     };
   },
@@ -6873,7 +7363,8 @@ const Dialog = {
     el.innerHTML = `<div class="dlg" style="max-width:580px;text-align:left">
       <h4 style="margin-bottom:6px">改这条知识点</h4>
       <div class="updp" style="margin-bottom:14px">「说明」是模型写的，措辞不对可以修；<b>引文不能改</b> —— 它是从材料里原样抄的，改了就没法追溯回原文。觉得原文本身有问题，写在备注里。<br>
-        保存后原来的版本还会留着 —— 改错了，点右侧详情面板<b>最下面</b>的「查看上一版…」，看清会改回什么再恢复。</div>
+        保存后原来的版本还会留着 —— 改错了，点右侧详情面板<b>最下面</b>的「查看这一条的改动…」，
+        逐字段看完「上一版 / 当前」再决定恢复（恢复是整个知识包回到上一版）。</div>
       <div class="field"><label>说明</label>
         <textarea id="epSum" class="epTa" rows="5">${esc(pt.summary || '')}</textarea></div>
       <div class="field" style="margin-top:12px"><label>我的备注（查询时会一起给模型看，遇到冲突以它为准）</label>
@@ -6910,7 +7401,8 @@ const Dialog = {
       <h4 style="margin-bottom:6px">改这条技能</h4>
       <div class="updp" style="margin-bottom:14px">技能是模型从材料里提炼的，<b>措辞、步骤、误用都可以改</b>。<br>
         改过之后会打上<b>「人工修改」</b>标记，导出 SKILL.md 时也会注明。<br>
-        保存后原来的版本还会留着 —— 改错了，点右侧详情面板<b>最下面</b>的「查看上一版…」，看清会改回什么再恢复。</div>
+        保存后原来的版本还会留着 —— 改错了，点右侧详情面板<b>最下面</b>的「查看这一条的改动…」，
+        逐字段看完「上一版 / 当前」再决定恢复（恢复是整个知识包回到上一版）。</div>
       <div class="field"><label>标题</label>
         <input id="esTitle" class="epIn" value="${esc(sk.title || '')}" placeholder="这条技能叫什么"></div>
       <div class="field" style="margin-top:12px"><label>什么时候用（检索靠它匹配，写清场景）</label>
