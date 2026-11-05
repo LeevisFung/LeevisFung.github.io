@@ -1066,21 +1066,22 @@ html[data-theme="light"] .tipbar .tip-act{color:#fff}
 .nexts .tx{flex:1 1 auto;font-size:12.5px;line-height:1.75;color:var(--txt-2)}
 .nexts .tx b{display:block;color:var(--txt);font-weight:600;margin-bottom:2px}
 /* ---- A1 阅读器 ---- */
-.reader-col{display:flex;flex-direction:column;height:100%;min-height:0}
+.reader-col{display:flex;flex-direction:column;height:100%;min-height:0;flex:1 1 auto;min-width:0;width:100%}
 .rtop{display:flex;align-items:center;gap:12px;padding:11px 22px;border-bottom:1px solid var(--line);flex:0 0 auto;flex-wrap:wrap}
 .rtop select{min-height:32px;font-size:12.5px;max-width:250px}
 .rwrap{flex:1 1 auto;display:flex;min-height:0}
-.rnav{flex:0 0 208px;overflow:auto;border-right:1px solid var(--line);padding:12px 8px}
+.rnav{flex:0 0 clamp(148px,13vw,228px);overflow:auto;border-right:1px solid var(--line);padding:12px 8px}
 .rnav button{display:block;width:100%;text-align:left;font-size:12.5px;padding:7px 10px;border-radius:6px;border:none;background:none;color:var(--txt-3);cursor:pointer;line-height:1.5;font-family:inherit}
 .rnav button:hover{background:var(--surface-2);color:var(--txt)}
 .rnav button.on{background:var(--accent-bg);color:var(--accent)}
-.rtext{flex:1 1 auto;overflow:auto;padding:24px 40px 70px}
-.rtext-in{max-width:760px;margin:0 auto}
+/* 正文列：跟着屏幕宽度走并居中 —— 窄屏占满、宽屏拉宽到 ~1060px（再宽就不好读了） */
+.rtext{flex:1 1 auto;overflow:auto;padding:26px clamp(16px,3.2vw,80px) 80px;display:flex;justify-content:center}
+.rtext-in{width:100%;max-width:clamp(620px,64vw,1060px);margin:0 auto}
 .rc h3{font-family:var(--serif);font-weight:600}
 .rc{margin-bottom:32px}
-.rc h3{font-size:14.5px;font-weight:600;color:var(--txt);margin-bottom:11px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rc h3{font-size:clamp(16px,1.25vw,21px);font-weight:600;color:var(--txt);margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
 /* 正文用中文衬线 —— 「书」这个主题的天然字体，也是中文产品里几乎没人用的武器 */
-.rbody{font-family:var(--serif);font-size:15.5px;line-height:2.15;color:var(--txt);white-space:pre-wrap;word-break:break-word;letter-spacing:.01em}
+.rbody{font-family:var(--serif);font-size:clamp(15.5px,1.02vw,18px);line-height:2.05;color:var(--txt);white-space:pre-wrap;word-break:break-word;letter-spacing:.01em}
 /* ── 眉批 ─────────────────────────────────────────────
    墨是原文，朱是你在上面写的东西。
    侧标不做成"高亮色块"，做成古籍里那种【朱笔旁注】：
@@ -1098,6 +1099,13 @@ mark.sm i{
   opacity:.92;
 }
 mark.sm.skill i{color:var(--ok);border-left-color:var(--ok)}
+/* 标注里的小字（知识点名）不参与划选/复制 —— 复制的应该是原文本身 */
+mark.sm i{user-select:none;-webkit-user-select:none}
+.rbody{user-select:text;-webkit-user-select:text}
+.selcopy{position:fixed;z-index:80;display:none;padding:5px 12px;font-size:12px;font-family:inherit;
+  color:#fff;background:var(--accent);border:none;border-radius:6px;cursor:pointer;
+  box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+.selcopy:hover{filter:brightness(1.06)}
 mark.sm:hover{background:var(--accent-bg);border-bottom-color:var(--accent)}
 mark.sm.skill:hover{background:color-mix(in srgb,var(--ok) 9%,transparent);border-bottom-color:var(--ok)}
 @media (prefers-reduced-motion:reduce){mark.sm{transition:none}}
@@ -1787,9 +1795,41 @@ const KNOWN_CTX = {                      // 仅收录有官方文档明确写过
   'deepseek-flash': 1048576,
   'deepseek-v4-pro': 1048576
 };
-const netHint = e => /Failed to fetch|NetworkError|load failed|CORS/i.test(String((e && e.message) || e))
-  ? '（浏览器直连被拦或地址不对。有的服务商只在认证成功时才回 CORS 头，所以拉不到清单不代表 key 有问题——直接手填模型 ID 一样能用）'
+const netHint = e => /Failed to fetch|NetworkError|load failed|CORS/i.test(String((e && e.message) || e))  ? '（浏览器直连被拦或地址不对。有的服务商只在认证成功时才回 CORS 头，所以拉不到清单不代表 key 有问题——直接手填模型 ID 一样能用）'
   : '';
+/* ── 复制：统一入口（http(s) 走 clipboard，file:// 退回 execCommand） ── */
+async function copyText(t, okMsg) {
+  const s = String(t || '');
+  if (!s.trim()) { toast('没有可复制的文字', 2400); return false; }
+  try { await navigator.clipboard.writeText(s); toast(okMsg || '已复制'); return true; }
+  catch (e) { }
+  const ta = document.createElement('textarea');
+  ta.value = s; ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+  ta.remove();
+  toast(ok ? (okMsg || '已复制') : '复制失败，请手动选中后按 Ctrl+C', 3200);
+  return ok;
+}
+/* 取一段 DOM 的纯文本，去掉标注里的小字标签（那些是知识点名，不该跟着被复制走） */
+function plainOf(node) {
+  if (!node) return '';
+  const d = document.createElement('div');
+  d.innerHTML = node.innerHTML;
+  d.querySelectorAll('i,.badge,.pn,.lab,.tag').forEach(x => x.remove());
+  return (d.innerText || d.textContent || '').replace(/\u200b/g, '').trim();
+}
+/* 当前选区的纯文本（同样去掉标注小字） */
+function selectionPlain() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || sel.isCollapsed) return '';
+  const d = document.createElement('div');
+  d.appendChild(sel.getRangeAt(0).cloneContents());
+  d.querySelectorAll('i,.badge').forEach(x => x.remove());
+  return (d.innerText || d.textContent || '').replace(/\u200b/g, '').trim();
+}
 async function fetchModelList(base, key) {
   const b = String(base || '').replace(/\/+$/, '');
   if (!b) throw new Error('先填接口地址');
@@ -3382,7 +3422,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.2.1';
+const APP_VER = '6.2.2';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -5884,16 +5924,8 @@ const Views = {
       try { localStorage.setItem('dw.docCols', b.dataset.cols); } catch (e) { }
       Views.doc();
     }));
-    const cp = $('#docCopy');    if (cp) cp.onclick = async () => {
-      const t = ($('#docBody') || {}).innerText || '';
-      try { await navigator.clipboard.writeText(t); toast('已复制全文'); }
-      catch (e) {
-        const ta = document.createElement('textarea');
-        ta.value = t; document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); toast('已复制全文'); } catch (e2) { toast('复制失败，请手动选中复制', 3200); }
-        ta.remove();
-      }
-    };
+    const cp = $('#docCopy');
+    if (cp) cp.onclick = () => copyText(($('#docBody') || {}).innerText || '', '已复制全文');
     const md = $('#docMd'); if (md) md.onclick = () => exportSKILL(p);
     const pr = $('#docPrint'); if (pr) pr.onclick = () => window.print();
     el.querySelectorAll('[data-doc-jump]').forEach(b => b.addEventListener('click', () => {
@@ -6339,6 +6371,8 @@ const Views = {
         <select id="readSrc">${srcs.map(x => `<option value="${x.id}" ${x.id === src.id ? 'selected' : ''}>${esc(x.title)}</option>`).join('')}</select>
         <span class="micro">${chaps.length} 章 · ${fmt(t.chars)} 字 · 找到 ${found.length} 处可回跳的原句${marks.length - found.length ? `（${marks.length - found.length} 条没对上原文）` : ''}</span>
         <span style="flex:1 1 auto"></span>
+        <button class="btn sm" id="rdCopyCh" title="复制当前这一章的正文（不含右侧小字标注）">复制本章</button>
+        <button class="btn sm" id="rdCopyAll" title="复制整份原文">复制全文</button>
         <span class="micro">右边朱色小字是蒸出来的知识点／技能，点一下回到图谱看它 · 左上角可换书</span>
       </div>
       <div class="rwrap">
@@ -6351,9 +6385,71 @@ const Views = {
       const sec = document.getElementById('rc-' + b.dataset.ch);
       if (sec) { sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.querySelectorAll('.rnav button').forEach(x => x.classList.remove('on')); b.classList.add('on'); }
     });
+    /* 点标注 = 跳图谱；但如果用户正在划选文字（想复制），就别把选区毁了 */
     el.querySelectorAll('mark.sm').forEach(m => m.onclick = () => {
+      if (String((window.getSelection() || {}).toString() || '').length) return;
       const nd = Graph.idx[m.dataset.node]; if (!nd) return;
       State.sel = nd; go('graph'); Graph.draw(); Graph.centerOn(nd); panel();
+    });
+
+    /* ── 复制：本章 / 全文 / 划选后浮出「复制」小按钮 ── */
+    const rdCur = () => {
+      const wrap = el.querySelector('.rtext'); const secs = [...el.querySelectorAll('.rc')];
+      if (!wrap || !secs.length) return 0;
+      const wr = wrap.getBoundingClientRect();
+      let idx = 0;
+      secs.forEach((s, i) => { if (s.getBoundingClientRect().top - wr.top <= 14) idx = i; });
+      return idx;
+    };
+    const rdBodyOf = i => {
+      const s = el.querySelectorAll('.rc')[i];
+      if (!s) return '';
+      const head = (s.querySelector('h3') || {}).textContent || '';
+      return (head ? head.trim() + '\n\n' : '') + plainOf(s.querySelector('.rbody'));
+    };
+    const cc = $('#rdCopyCh');
+    if (cc) cc.onclick = () => copyText(rdBodyOf(rdCur()), '已复制这一章');
+    const ca = $('#rdCopyAll');
+    if (ca) ca.onclick = () => {
+      const secs = [...el.querySelectorAll('.rc')];
+      copyText(secs.map((s, i) => rdBodyOf(i)).join('\n\n'), '已复制全文');
+    };
+
+    /* 划选即浮出「复制」按钮（不打断原生 Ctrl+C，只是多一个入口） */
+    let bubble = document.getElementById('selCopy');
+    if (!bubble) {
+      bubble = document.createElement('button');
+      bubble.id = 'selCopy'; bubble.className = 'selcopy'; bubble.type = 'button';
+      bubble.style.display = 'none';
+      bubble.textContent = '复制';
+      document.body.appendChild(bubble);
+      bubble.addEventListener('mousedown', e => e.preventDefault());   /* 别让按下时清掉选区 */
+      bubble.addEventListener('click', async () => {
+        const t = selectionPlain();
+        bubble.style.display = 'none';
+        await copyText(t, '已复制选中内容');
+      });
+    }
+    const hideBubble = () => { if (bubble) bubble.style.display = 'none'; };
+    const showBubble = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return hideBubble();
+      const r = sel.getRangeAt(0);
+      const holder = el.querySelector('.rtext');
+      if (!holder || !holder.contains(r.commonAncestorContainer)) return hideBubble();
+      if (!selectionPlain()) return hideBubble();
+      const rect = r.getBoundingClientRect();
+      const x = Math.min(window.innerWidth - 90, Math.max(10, rect.left + rect.width / 2 - 30));
+      const y = rect.bottom + 8 + (rect.bottom > window.innerHeight - 60 ? -rect.height - 42 : 0);
+      bubble.style.left = x + 'px'; bubble.style.top = Math.max(8, y) + 'px';
+      bubble.style.display = 'block';
+    };
+    el.onmouseup = () => setTimeout(showBubble, 10);
+    el.onscroll = hideBubble;
+    document.addEventListener('selectionchange', () => {
+      if (State.view !== 'read') return;
+      const s = window.getSelection();
+      if (!s || s.isCollapsed) hideBubble();
     });
   },
   chat() {
