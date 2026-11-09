@@ -1690,9 +1690,14 @@ $('#themeBtn').addEventListener('click', () => Theme.cycle());
 /* ============================================================
    2. 设置存储 + 模型提供方
    ============================================================ */
+/* 输出预算：一块材料最多让模型写这么多 token。
+   不给 max_tokens → 用模型默认值（常见 4096）→ 大块材料写到一半断，回来是半个 JSON。 */
+const MAX_OUT_TOKENS = 8000;
+/* 一块最多多少字：按"模型一次写得完"反推（输出 8000 tokens ≈ 4 万字材料的产出）。
+   这是【上限保护】，不是"一定要切"：小于这个数仍然整份送，保住跨章节的因果链。 */
+const MAX_CHUNK_CHARS = 40000;
 const DEFAULTS = {
-  provider: 'deepseek',      // 正在【使用】的服务商
-  cfgView: 'deepseek',       // 正在【配置】的服务商（点卡片只改这个）
+  provider: 'deepseek',      // 正在【使用】的服务商  cfgView: 'deepseek',       // 正在【配置】的服务商（点卡片只改这个）
   providers: {},                 // id -> {key, model, base, remember}
   custom: { name: '自定义', base: '', model: '', ctx: 0 },   // ctx：本地模型的上下文窗口（0=不知道，按 128k 估）
   // 三处用模型的场合，温度诉求完全不同，必须分开
@@ -1701,8 +1706,7 @@ const DEFAULTS = {
   chat: { temperature: 0.8, mode: 'auto' },
   chat: { temperature: 0.8 }
 };
-const Settings = {
-  d: JSON.parse(localStorage.getItem('dw.settings') || 'null') || structuredClone(DEFAULTS),
+const Settings = {  d: JSON.parse(localStorage.getItem('dw.settings') || 'null') || structuredClone(DEFAULTS),
   save() {
     const copy = structuredClone(this.d);
     for (const id in copy.providers) if (copy.providers[id].remember === false) copy.providers[id].key = '';
@@ -3422,7 +3426,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.2.2';
+const APP_VER = '6.2.3';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -3771,12 +3775,98 @@ const SYS_PROMPT = `你是知识蒸馏引擎。把用户给的文本片段蒸馏
 7. 关系 type 只能是 supports / derives / echoes / contrasts / fuses。只连本片段内出现的 id。
 8. 片段至少产出 4 条 points、2 条 skills（片段极短可少）。`;
 
+/* 模型输出被截断时，把 JSON 补全到"最后一个完整条目"再解析 ——
+   买家现场："Expected ',' or ']' after array element in JSON at position 17594"，
+   其实就是模型写到一半撞上 max_tokens。能救回来的条目不该整块丢掉。 */
+function repairJson(src) {
+  const s = String(src || '');
+  const scan = (text) => {
+    const st = []; let inStr = false, esc = false, lastItemEnd = -1;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+      if (c === '"') { inStr = true; continue; }
+      if (c === '{' || c === '[') st.push(c);
+      else if (c === '}' || c === ']') { st.pop(); if (st.length) lastItemEnd = i; }
+    }
+    return { st, inStr, lastItemEnd };
+  };
+  let { st, inStr, lastItemEnd } = scan(s);
+  let head = lastItemEnd >= 0 ? s.slice(0, lastItemEnd + 1) : s;
+  ({ st, inStr } = scan(head));
+  if (inStr) head += '"';
+  head = head.replace(/[\s,]+$/, '');
+  /* 若停在 "key": 这种半截字段上，把尾巴整个剪掉 */
+  head = head.replace(/,\s*"[^"]*"\s*:\s*$/, '');
+  while (st.length) head += (st.pop() === '{' ? '}' : ']');
+  return head;
+}
+/* 切半的位置：尽量落在换行处，别把一句话劈开 */
+/* 「有字但读不出来」的判定：CID 字体没带 ToUnicode 时，pdf.js 会吐 □ / ☒ / 私用区码位。
+   抽成独立函数，方便直接拿真实文本验（不然只能靠"整份 PDF"猜）。 */
+function garbledStats(text) {
+  const t = String(text || '');
+  /* 除了 □/☒/私用区，还要算「控制字符」：有些古籍 PDF 的 CID 字体映射出来是 \u0001-\u001b，
+     看起来"有字"（长度够、坏字符计数 0），其实完全读不出来（实测《正统道藏01.pdf》）。 */
+  const bad = (t.match(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\uFFFD\u25A1\u25A0\u25A2\u2610-\u2612\uE000-\uF8FF]/g) || []).length;
+  const ratio = t.length ? bad / t.length : 0;
+  return { bad, ratio, garbled: t.length > 500 && ratio > 0.02 };
+}
+function splitPoint(text) {
+  const mid = Math.floor(String(text || '').length / 2);
+  const near = String(text || '').indexOf('\n', mid);
+  return (near > 0 && near < text.length - 200) ? near : mid;
+}
+/* 把两块的结果合成一块：id 重编号（两半里都叫 p1 会撞）、去重、丢掉悬空关系 */
+function mergeParts(list) {
+  const out = { points: [], skills: [], relations: [] };
+  const pm = new Map(), sm = new Map();
+  let pi = 0, si = 0;
+  list.forEach((part, k) => {
+    (part.points || []).forEach(pt => {
+      const id = 'p' + (++pi);
+      pm.set(k + ':' + (pt.id || ''), id);
+      out.points.push(Object.assign({}, pt, { id }));
+    });
+    (part.skills || []).forEach(sk => {
+      const id = 's' + (++si);
+      sm.set(k + ':' + (sk.id || ''), id);
+      out.skills.push(Object.assign({}, sk, { id, pointIds: [] }));
+    });
+  });
+  list.forEach((part, k) => {
+    (part.skills || []).forEach(sk => {
+      const tgt = out.skills.find(x => x.id === sm.get(k + ':' + (sk.id || '')));
+      if (tgt) tgt.pointIds = (sk.pointIds || []).map(pid => pm.get(k + ':' + pid)).filter(Boolean);
+    });
+    (part.relations || []).forEach(r => {
+      const f = pm.get(k + ':' + r.from) || sm.get(k + ':' + r.from);
+      const t = pm.get(k + ':' + r.to) || sm.get(k + ':' + r.to);
+      if (f && t && f !== t) out.relations.push({ from: f, to: t, type: r.type || 'supports' });
+    });
+  });
+  const seenP = new Set(), seenS = new Set();
+  out.points = out.points.filter(p => seenP.has(p.title) ? false : (seenP.add(p.title), true));
+  out.skills = out.skills.filter(s => seenS.has(s.title) ? false : (seenS.add(s.title), true));
+  const ids = new Set(out.points.map(p => p.id).concat(out.skills.map(s => s.id)));
+  out.relations = out.relations.filter(r => ids.has(r.from) && ids.has(r.to));
+  return out;
+}
 function extractJSON(txt) {
   let s = String(txt).trim().replace(/^```(?:json)?/i, '').replace(/```\s*$/, '').trim();
   const i = s.indexOf('{'), j = s.lastIndexOf('}');
-  if (i < 0 || j < 0) throw new Error('模型没有返回 JSON（可能被截断或答非所问）');
-  s = s.slice(i, j + 1).replace(/,\s*([}\]])/g, '$1');
-  return JSON.parse(s);
+  if (i < 0) throw new Error('模型没有返回 JSON（可能被截断或答非所问）');
+  s = s.slice(i, j > i ? j + 1 : s.length).replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(s); }
+  catch (e) {
+    /* ① 先试补全（截断） ② 补完条目数为 0 才认输 */
+    try {
+      const j2 = JSON.parse(repairJson(s));
+      const n = (j2.points || []).length + (j2.skills || []).length;
+      if (n > 0) { j2._repaired = true; return j2; }
+    } catch (e2) { }
+    throw new Error('模型这一块没写完（输出被截断）。已自动把这段切成两半重试；如果反复失败，说明材料太长或模型输出上限太小');
+  }
 }
 
 const Engine = {
@@ -3845,9 +3935,13 @@ const Engine = {
       await this.yieldIfVisible();
     }
     const scanned = doc.numPages > 0 && (empty / doc.numPages > 0.6 || out.length / doc.numPages < 120);
+    /* 「有字但读不出来」：CID 字体没带 ToUnicode 映射时，pdf.js 会吐 □ / ☒ / 私用区码位。
+       这种文本长度够，scanned 判定为 false，会一路喂给模型 → 蒸出来的全是垃圾。 */
+    const gs = garbledStats(out);
+    const badChars = gs.bad, garbled = gs.garbled;
     return {
       name: file.name, ext: 'pdf', chars: out.length, text: out.trim(),
-      pages: doc.numPages, emptyPages: empty, scanned,
+      pages: doc.numPages, emptyPages: empty, scanned, garbled, badChars,
       _buf: saveBuf(file.name, buf)
     };
   },
@@ -3881,15 +3975,30 @@ const Engine = {
     if (!a.base || !a.model) throw new Error('没配置模型');
     const messages = [{
       role: 'user', content: [
-        { type: 'text', text: `这是书的第 ${pageNo} 页的扫描图。请把这一页的**正文**完整转成纯文本：\n- 保留段落换行；标题单独一行\n- 不要总结、不要评论、不要翻译、不要加任何解释\n- 表格用简单的竖线分隔\n- 如果这页是插图、封面或空白页，只回复：（本页无正文）` },
+        { type: 'text', text: `这是书的第 ${pageNo} 页的扫描图。请把这一页的**正文**完整转成纯文本：\n- 如果是竖排（古籍/繁体），从右往左、逐列转录成横排\n- 保留段落换行；标题单独一行\n- 不要总结、不要评论、不要翻译、不要加任何解释\n- 表格用简单的竖线分隔\n- 如果这页是插图、封面或空白页，只回复：（本页无正文）` },
         { type: 'image_url', image_url: { url: dataUrl } }
       ]
     }];
-    const r = await fetch(String(a.base).replace(/\/+$/, '') + '/chat/completions', {
+    /* 识读必须关掉「思考」并给足输出额度：
+       DeepSeek 的 flash 是思考模型，开思考时 1200 tokens 全花在 reasoning 上，
+       正文一个字都不出（实测：finish_reason=length、content 为空）——看起来像"这页没字"。 */
+    const noThink = a.id === 'deepseek';
+    const mk = (think) => JSON.stringify({
+      model: a.model, messages, temperature: 0, max_tokens: 4000,
+      ...(think ? { thinking: { type: 'disabled' } } : {})
+    });
+    let r = await fetch(String(a.base).replace(/\/+$/, '') + '/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-      body: JSON.stringify({ model: a.model, messages, temperature: 0, max_tokens: 4000 })
+      body: mk(noThink)
     });
+    if (!r.ok && r.status === 400 && noThink) {
+      r = await fetch(String(a.base).replace(/\/+$/, '') + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
+        body: mk(false)
+      });
+    }
     if (!r.ok) {
       const t = (await r.text()).slice(0, 200);
       if (r.status === 400 && /image|vision|modal|content/i.test(t)) {
@@ -3898,10 +4007,15 @@ const Engine = {
       throw new Error(r.status + ' ' + t.slice(0, 120));
     }
     const j = await r.json();
-    const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-    if (typeof c === 'string') return c;
-    if (Array.isArray(c)) return c.map(x => (typeof x === 'string' ? x : (x && x.text) || '')).join('');
-    return '';
+    const ch = (j.choices || [])[0] || {};
+    const c = ch.message && ch.message.content;
+    const txt = typeof c === 'string' ? c
+      : (Array.isArray(c) ? c.map(x => (typeof x === 'string' ? x : (x && x.text) || '')).join('') : '');
+    /* 正文空但思考用满额度 → 明确报错，别让调用方以为"这页没字" */
+    if (!txt.trim() && ch.finish_reason === 'length') {
+      throw new Error('模型把输出额度全用在思考上了，正文没写出来。换一个非思考模型（如通义/豆包视觉）或稍后再试。');
+    }
+    return txt;
   },
   async parseEPUB(file) {
     if (typeof JSZip === 'undefined') throw new Error('EPUB 组件未载入');
@@ -3945,8 +4059,19 @@ const Engine = {
           '不用换工具——可以直接让支持视觉的模型逐页读图（下面有按钮）。前提是模型得接受图片输入，例如 DeepSeek 的 deepseek-flash、通义或豆包的视觉模型。']
       };
     }
-    if (chars < 3000) { score -= 50; R.push(`只有 ${chars} 字，太短——蒸不出有结构的包，建议 1 万字以上（或几份材料合并着蒸）。`); }
-    else if (chars < 12000) { score -= 18; R.push(`${chars} 字偏短，知识点会比较少；如果想要更厚的包，建议一次放 2-3 份相关材料。`); }
+    /* 文字层是乱码（□/☒）：直接蒸只会产出垃圾，先让人看见问题 */
+    if (doc.ext === 'pdf' && doc.garbled) {
+      const ratio = Math.round((doc.badChars || 0) / Math.max(1, chars) * 100);
+      return {
+        verdict: 'poor', score: 8, stats, scanned: true, garbled: true,
+        reasons: [`这份 PDF 的「文字层」是乱码：${fmt(doc.badChars || 0)} 个字符读出来是 □ / ☒（占 ${ratio}%），说明字体没有可提取的文字映射（常见于古籍、扫描后转的 PDF、特殊排版软件导出）。`,
+          '直接蒸馏只会得到一堆方块字，蒸出来的东西没法用。两条路：① 用视觉模型逐页识读（下面有按钮，先试读 3 页看看认不认得）；② 换成 TXT / DOCX 版本再蒸。']
+      };
+    }
+    if (doc.pages && doc.pages > 300) {
+      R.push(`这本 ${doc.pages} 页、约 ${fmt(chars)} 字，属于大部头：会切成 ${autoChunkFor(chars)} 块分别蒸（每块约 ${fmt(MAX_CHUNK_CHARS)} 字），耗时按块数累加。建议先只放需要的章节试蒸，看效果再整本跑。`);
+    }
+    if (chars < 3000) { score -= 50; R.push(`只有 ${chars} 字，太短——蒸不出有结构的包，建议 1 万字以上（或几份材料合并着蒸）。`); }    else if (chars < 12000) { score -= 18; R.push(`${chars} 字偏短，知识点会比较少；如果想要更厚的包，建议一次放 2-3 份相关材料。`); }
     const heads = (t.match(/(^|\n)\s*(第[一二三四五六七八九十百零\d]+[章节篇部]|Chapter\s+\d+|CHAPTER\s+\d+|#{1,4}\s)/g) || []).length;
     stats.headings = heads;
     if (heads >= 5) R.push(`检测到 ${heads} 处章节标题，会按章节切块——这是最理想的情况。`);
@@ -4048,8 +4173,11 @@ const Engine = {
        （真实事故：23,678 字的材料挂了 19 分钟，最后"模型返回为空"）。
        非 DeepSeek 的服务商可能不认这个参数 → 400 时自动去掉重试。 */
     const noThink = (opts.noThink !== false) && (a.id === 'deepseek');
-    const mkBody = (withNoThink) => {
+    const mkBody = (withNoThink, withMax) => {
       const body = { model: a.model, messages, temperature: temp, stream: true, stream_options: { include_usage: true } };
+      /* 必须显式给 max_tokens：不给就是模型默认值（常见 4096），
+         一大块材料写到一半就断，回来是半个 JSON（买家看到的 position 17594 就是这个）。 */
+      if (withMax !== false) body.max_tokens = MAX_OUT_TOKENS;
       if (withNoThink) body.thinking = { type: 'disabled' };
       return JSON.stringify(body);
     };
@@ -4064,6 +4192,14 @@ const Engine = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
         body: mkBody(false)
+      });
+    }
+    /* 有的服务商不认 max_tokens（400）→ 去掉再试一次，别因为一个可选参数整块失败 */
+    if (!r.ok && r.status === 400) {
+      r = await fetch(base + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
+        body: mkBody(false, false)
       });
     }
     if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 160));
@@ -4357,6 +4493,15 @@ ${skills}
   async run() {
     if (D.running) return;
     if (!D.docs.length) return toast('先放入材料', 2400);
+    /* 扫描版 / 乱码 PDF：文字层里只有「第 N 页」标记，拿去蒸等于喂垃圾。
+       识读不是自动的（要花钱），所以这里必须拦住并告诉他下一步点哪。
+       原来只有"自动开始"那条路拦，手动点「开始蒸馏」会直接跑 —— 已补。 */
+    const needOCR = D.docs.filter(d => d.text && d.triage && d.triage.scanned);
+    if (needOCR.length) {
+      const names = needOCR.map(d => '《' + d.name + '》').join('、');
+      toast(`${names} 是扫描版/乱码 PDF，还没有文字 —— 先点它卡片上的「试读这几页」，确认认得准再点「识读全部页面」；识读完再蒸。`, 9000);
+      return;
+    }
     const key = this.ready();
     D.running = true; D.pack = null;
     D.t0 = Date.now(); D.log = []; D.phase = '';
@@ -4418,13 +4563,13 @@ ${skills}
                 renderJobs(); setBar(++done / total);
                 continue;
               }
-              /* ② 没有缓存才真调；空返回自动重试一次 */
-              {
+              /* ② 没有缓存才真调；失败（尤其 JSON 被截断）自动切半重试 */
+              const callOnce = async (ck) => {
                 let raw = '', lastErr = null;
                 for (let attempt = 0; attempt < 2 && !raw; attempt++) {
-                  if (attempt) { j.msg = '返回为空，重试中…'; logs(`第 ${j.ck.i + 1} 块返回为空，重试一次`); renderJobs(); await new Promise(r => setTimeout(r, 1200)); }
+                  if (attempt) { j.msg = '返回为空，重试中…'; logs(`第 ${ck.i + 1} 块返回为空，重试一次`); renderJobs(); await new Promise(r => setTimeout(r, 1200)); }
                   try {
-                    raw = await this.callStream(this.promptFor(d, j.ck),
+                    raw = await this.callStream(this.promptFor(d, ck),
                       (delta, n) => { j.recv = n; scheduleJobs(); },
                       { noThink: !deep, onThink: n => { j.thinking = n; scheduleJobs(); } });
                   } catch (e) {
@@ -4432,15 +4577,51 @@ ${skills}
                     // 流式不被支持 → 退回一次性调用（不重试）
                     if (/不支持|stream|400|415/i.test(String(e.message || e))) {
                       j.msg = '该模型不支持流式，改用一次性返回';
-                      try { raw = await this.call(this.promptFor(d, j.ck), { noThink: !deep }); } catch (e2) { lastErr = e2; }
+                      try { raw = await this.call(this.promptFor(d, ck), { noThink: !deep }); } catch (e2) { lastErr = e2; }
                       break;
                     }
                   }
                 }
                 if (!raw) throw (lastErr || new Error('模型返回为空'));
-                parts[j.ck.i] = extractJSON(raw);
-                if (parts[j.ck.i] && parts[j.ck.i].points) await chunkCachePut(d, j.ck, parts[j.ck.i]);
-              }
+                return extractJSON(raw);
+              };
+              /* 一块没蒸成（模型输出被截断 / 空返回）→ 对半切开各蒸一次再合并。
+                 这样"材料太大"不再是死路，买家不用自己猜该切几块。 */
+              const runChunk = async (ck, depth) => {
+                /* 这一块没蒸成（截断/空返回）→ 对半切开各蒸一次再合并。
+                   材料太大不该是死路，买家不用自己猜该切几块。 */
+                const split = async (reason) => {
+                  const mid = splitPoint(ck.text);
+                  const a = Object.assign({}, ck, { text: ck.text.slice(0, mid), chars: mid, title: ck.title + ' · 上半' });
+                  const b = Object.assign({}, ck, { text: ck.text.slice(mid), chars: ck.text.length - mid, title: ck.title + ' · 下半' });
+                  logs(`第 ${ck.i + 1} 块${reason} —— 对半切开各蒸一次`, 'err');
+                  const r1 = await runChunk(a, depth + 1);
+                  const r2 = await runChunk(b, depth + 1);
+                  return mergeParts([r1, r2]);
+                };
+                let r = null;
+                try { r = await callOnce(ck); }
+                catch (e) {
+                  const msg = String(e.message || e);
+                  const retriable = /JSON|截断|Unexpected|Unterminated|position|返回为空/i.test(msg);
+                  if (depth < 2 && ck.chars > 6000 && retriable) return split('没蒸成（' + msg.slice(0, 30) + '）');
+                  throw e;
+                }
+                /* 截断被"补全"救回来的：只救回半截，内容不全 → 再切一次补齐（能救的仍留着，合并时去重） */
+                if (r && r._repaired && depth < 2 && ck.chars > 6000) {
+                  const got = (r.points || []).length;
+                  logs(`第 ${ck.i + 1} 块输出被截断（先救回 ${got} 条），对半切开补齐`);
+                  const mid = splitPoint(ck.text);
+                  const a = Object.assign({}, ck, { text: ck.text.slice(0, mid), chars: mid, title: ck.title + ' · 上半' });
+                  const b = Object.assign({}, ck, { text: ck.text.slice(mid), chars: ck.text.length - mid, title: ck.title + ' · 下半' });
+                  const r1 = await runChunk(a, depth + 1);
+                  const r2 = await runChunk(b, depth + 1);
+                  return mergeParts([r, r1, r2]);
+                }
+                return r;
+              };
+              parts[j.ck.i] = await runChunk(j.ck, 0);
+              if (parts[j.ck.i] && parts[j.ck.i].points) await chunkCachePut(d, j.ck, parts[j.ck.i]);
               j.ms = Date.now() - j.t0;
               const np = (parts[j.ck.i].points || []).length, ns = (parts[j.ck.i].skills || []).length;
               j.st = 'ok'; j.msg = `${np} 知识点 / ${ns} 技能`;
@@ -4564,6 +4745,7 @@ function ocrEstimate(d, from, to) {
   return { n, tk: n * 1500, min: Math.max(1, Math.ceil(n * 2.5 / 60)) };
 }
 function triageCard(d) {
+  const garbled = !!(d.triage && d.triage.garbled);
   const scanned = !!(d.triage && d.triage.scanned);
   const v = d.triage.verdict;
   const bd = h('div', { class: 'bd' }, h('b', {}, d.name));
@@ -4571,7 +4753,9 @@ function triageCard(d) {
 
   if (scanned) {
     bd.appendChild(h('div', { style: 'font-size:13px;line-height:1.9;color:var(--txt-2);margin:6px 0 10px' },
-      `这份共 ${d.pages} 页，但只提取出 ${fmt(d.chars)} 个字符——整页都是图片，没有文字层。`));
+      garbled
+        ? `这份共 ${d.pages} 页，文字层读出来是乱码（□ ☒）—— 只能让模型看图识读。`
+        : `这份共 ${d.pages} 页，但只提取出 ${fmt(d.chars)} 个字符——整页都是图片，没有文字层。`));
     if (!d._preview || !d._preview.length) {
       bd.appendChild(h('div', { style: 'font-size:13px;line-height:1.9;color:var(--txt-2);margin-bottom:12px' },
         h('b', { style: 'color:var(--accent-2)' }, '第 1 步：'), '先试读几页，看看模型认不认得出来。读完会给你',
@@ -4624,7 +4808,22 @@ function triageCard(d) {
         (() => {
           const busy = !!(d._ocr && d._ocr.running);
           return h('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
-            h('button', { class: 'btn pri', disabled: busy ? 'disabled' : null, onclick: () => visionOCRDoc(d, 1, d.pages || 1, false) }, busy ? '识读中…' : '识读全部页面'),
+            h('button', {
+              class: 'btn pri', disabled: busy ? 'disabled' : null,
+              onclick: async () => {
+                const pages = d.pages || 1;
+                /* 大部头（古籍/全集常有上千页）：先说清代价再动手，别让买家默默烧掉几十万 tokens */
+                if (pages > 200) {
+                  const est = ocrEstimate(d, 1, pages);
+                  const okGo = await Dialog.confirm(
+                    `这本有 ${pages} 页，整本识读大约要 ${fmt(est.tk)} tokens、${Math.max(1, Math.ceil(pages * 2.5 / 60))} 分钟以上。\n\n` +
+                    `建议：先「试读 3 页」确认认得准；或者只选你要的那几十页识读（页码框里填范围）。\n\n` +
+                    `确定要整本识读吗？`);
+                  if (!okGo) return;
+                }
+                visionOCRDoc(d, 1, pages, false);
+              }
+            }, busy ? '识读中…' : '识读全部页面'),
             h('button', { class: 'btn', disabled: busy ? 'disabled' : null, onclick: () => { d._preview = null; d._trial = null; afterDocs(); } }, '重新试读'),
             h('button', { class: 'btn ghost', disabled: busy ? 'disabled' : null, onclick: () => { removeDoc(d); } }, '移除这份'));
         })(),
@@ -4934,13 +5133,21 @@ function modelCtx() {
 }
 function chunkBudget() {
   // 留 40% 给输出和系统提示词 —— 塞满上下文会让模型偷懒、结构化输出变差
-  return Math.max(24000, Math.floor(modelCtx() * 0.6));
+  // 下限给 3000：原来写死 24000，本地小窗口模型（8k）会被算出"一块 2.4 万 tokens"，直接超窗
+  return Math.max(3000, Math.floor(modelCtx() * 0.6));
+}
+/* 真正可用的块大小 = min(输入装得下的, 模型一次写得完的)。
+   只按输入算会出事故：14 万字装进 1M 窗口没问题，但那份 JSON 要写上万 token，
+   模型写到一半撞上限 → 回来是半个 JSON（买家现场，position 17594）。 */
+function chunkTokenBudget() {
+  const outTok = Math.round(MAX_CHUNK_CHARS * 0.62);
+  return Math.max(6000, Math.min(chunkBudget(), outTok));
 }
 function autoChunkFor(chars) {
   const tk = estTokens(chars);
-  const bud = chunkBudget();
+  const bud = chunkTokenBudget();
   if (tk <= bud) return 1;                        // 装得下 → 整份送
-  return Math.min(12, Math.ceil(tk / bud));       // 装不下才切
+  return Math.min(40, Math.ceil(tk / bud));       // 装不下才切
 }
 /* 把"为什么切/为什么不切"用人话讲出来，别让用户以为我们随便切 */
 function chunkWhy(chars) {
@@ -4949,10 +5156,14 @@ function chunkWhy(chars) {
   const m = fmt(modelCtx());
   if (n === 1) return `约 ${tk.toLocaleString()} tokens，当前模型是 ${m} 上下文，一次装得下 —— <b>整份送</b>，跨章节的因果链不断。`;
   const local = (() => { try { return Settings.active().id === 'custom'; } catch (e) { return false; } })();
-  return `约 ${tk.toLocaleString()} tokens，<b>超出当前模型 ${m} 的可用上下文</b>，所以切成 ${n} 段分别蒸再合并。` +
+  const byOut = tk <= chunkBudget();   // 输入装得下，是"输出写不完"才切的
+  return `约 ${tk.toLocaleString()} tokens，` +
+    (byOut
+      ? `虽然 ${m} 上下文装得下，但模型一次写不完这么多（每块上限约 ${fmt(MAX_CHUNK_CHARS)} 字），所以切成 ${n} 段分别蒸再合并。`
+      : `<b>超出当前模型 ${m} 的可用上下文</b>，所以切成 ${n} 段分别蒸再合并。`) +
     (local
       ? `想整份送：把本地模型的 num_ctx 调大（Ollama：设置里的上下文滑杆，或 OLLAMA_CONTEXT_LENGTH），再到「模型与设置 → 自定义端点」把「上下文长度」改成同一个数。`
-      : `想整份送，换一个更大上下文的模型（DeepSeek V4 是 1M）。`);
+      : `切块不会丢信息，跨章的关系会在合并那一步重新连上。`);
 }
 /* 材料性质选项（也用于拖拽区那一行） */
 
@@ -7134,7 +7345,7 @@ const Onboard = {
         <p>选一家服务商，把它的 API key 粘进来。<b>key 只存在这台电脑的浏览器里</b>，我们收不到。</p>
         <div class="provs">${list.map(x => `<button class="prov ${x.id === this.prov ? 'on' : ''}" data-prov="${x.id}">${esc(x.name)}${x.id === 'deepseek' ? '（推荐）' : ''}</button>`).join('')}</div>
         <div style="font-size:11.5px;color:var(--txt-3);line-height:1.75;margin:-6px 0 10px">
-          第一次用就选 <b>DeepSeek</b>：便宜、上下文大（1M，整本书一次读完）、支持图片（扫描版也能读）。充值几块钱就够蒸好几本。
+          第一次用就选 <b>DeepSeek</b>：便宜、上下文大（1M，整本书都读得进去）、支持图片（扫描版也能读）。充值几块钱就够蒸好几本。
         </div>
         <input id="obKey" type="password" placeholder="粘贴 API key…" autocomplete="off" spellcheck="false">
         ${(PROVIDERS.find(x => x.id === this.prov) || {}).link ? `<div style="margin-top:9px">
