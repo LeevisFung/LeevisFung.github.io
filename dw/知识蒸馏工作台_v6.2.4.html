@@ -1693,6 +1693,16 @@ $('#themeBtn').addEventListener('click', () => Theme.cycle());
 /* 输出预算：一块材料最多让模型写这么多 token。
    不给 max_tokens → 用模型默认值（常见 4096）→ 大块材料写到一半断，回来是半个 JSON。 */
 const MAX_OUT_TOKENS = 8000;
+/* 输出预算跟着"这一块有多少字"走，不再固定一个数。
+   依据是实测密度：书稿每 1 字材料约产出 0.06 token，SOP/清单这类"每句话都是要点"的要到 0.5
+   （2,229 字的清单能出 8 个知识点 + 5 个技能，约 1.2k token）。取 0.4 当中位，
+   下限 8000（不浪费额度），上限 32000（再高多数服务商不收，chatPost 会自动降到 8000→4096）。
+   —— 原来固定 8000 的坑：4 万字的密集材料要写约 2 万 token，必然撞上限、然后靠"对半切"补救。 */
+const OUT_TOKENS_MAX = 32000;
+const OUT_DENSITY = 0.4;
+function outBudgetFor(chars) {
+  return Math.max(MAX_OUT_TOKENS, Math.min(OUT_TOKENS_MAX, Math.ceil((chars || 0) * OUT_DENSITY)));
+}
 /* 一块最多多少字：按"模型一次写得完"反推（输出 8000 tokens ≈ 4 万字材料的产出）。
    这是【上限保护】，不是"一定要切"：小于这个数仍然整份送，保住跨章节的因果链。 */
 const MAX_CHUNK_CHARS = 40000;
@@ -3426,7 +3436,7 @@ const License = {
 };
 window.License = License;
 
-const APP_VER = '6.2.3';
+const APP_VER = '6.2.4';
 const DW_BASE = 'https://leevisfung.github.io/dw/';
 /* 下载新版的正确姿势：不要 window.open(html) —— 那是在标签页里渲染，
    浏览器会把 https:// 当成另一个存储空间，用户会以为数据丢了（真实事故）。
@@ -3869,6 +3879,66 @@ function extractJSON(txt) {
   }
 }
 
+/* ---------- 参数兼容层：有些模型不收某些字段 ----------
+   买家现场（2026-11-12）：Moonshot 的 kimi-k2.* 只接受 temperature=1，而我们固定发
+   0（识读）/ 0.25（蒸馏）/ 0.8（对话），于是一调就是
+   400 {"error":{"message":"invalid temperature: only 1 is allowed for this model"}}
+   —— 体检、蒸馏、对话全废；卖家自己用 DeepSeek，复现不出来。
+   同类还会遇到：不认 thinking / max_tokens / response_format / stream_options。
+   做法：400 时先看报错点名了哪个字段（能读出"只允许 X"就直接改成 X），读不出来就按
+   已知顺序去掉一个可选字段重试；结果按「端点 + 模型」记住，以后不再发这个字段 ——
+   否则每问一句都要白撞一次 400。 */
+const COMPAT_DROP = { temperature: {}, max_tokens: {}, response_format: {}, thinking: {}, stream_options: {} };
+const COMPAT_TEMP = {};   /* 端点|模型 → 这个模型只认的 temperature（有的模型只允许 1） */
+const NO_THINK = {};      /* 端点|模型 → 一开思考就空返回（本次会话内记住，别再白烧一轮） */
+const COMPAT_ORDER = ['thinking', 'response_format', 'stream_options', 'max_tokens', 'temperature'];
+function compatKey(a) { return String(a.base || '').replace(/\/+$/, '') + '|' + (a.model || ''); }
+async function chatPost(a, body, signal) {
+  const key = compatKey(a);
+  const b = Object.assign({}, body);
+  for (const f of Object.keys(COMPAT_DROP)) if (COMPAT_DROP[f][key]) delete b[f];
+  if (COMPAT_TEMP[key] != null) b.temperature = COMPAT_TEMP[key];
+  const send = () => fetch(String(a.base || '').replace(/\/+$/, '') + '/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
+    body: JSON.stringify(b), signal
+  });
+  let r = await send();
+  const att = {};
+  for (let i = 0; i < 6 && r.status === 400; i++) {
+    let t = '';
+    try { t = await r.clone().text(); } catch (e) { }
+    let changed = false;
+    if (/temperature/i.test(t) && ('temperature' in b)) {
+      /* "invalid temperature: only 1 is allowed for this model" → 记下这个模型只认 1，
+         以后每次都直接带 1，不再白撞一次 400 */
+      const m = /only\s+([0-9]+(?:\.[0-9]+)?)\s+is\s+allowed/i.exec(t);
+      if (m && !att.temperature) { COMPAT_TEMP[key] = parseFloat(m[1]); b.temperature = COMPAT_TEMP[key]; }
+      else { delete b.temperature; COMPAT_DROP.temperature[key] = 1; }
+      att.temperature = 1; changed = true;
+    } else if (/max_tokens|max_completion_tokens/i.test(t) && ('max_tokens' in b)) {
+      /* 很多服务商只是"上限更低"（比如只到 8192）：降到 8000 再试，别一上来就整个去掉 ——
+         去掉就是用服务商默认值（常见 4096），大块材料更容易写一半断。 */
+      if (b.max_tokens > 8000) b.max_tokens = 8000;
+      else if (b.max_tokens > 4096) b.max_tokens = 4096;
+      else { delete b.max_tokens; COMPAT_DROP.max_tokens[key] = 1; }
+      changed = true;
+    } else if (/response_format|json_object|json mode/i.test(t) && ('response_format' in b)) {
+      delete b.response_format; COMPAT_DROP.response_format[key] = 1; changed = true;
+    } else if (/thinking|reasoning/i.test(t) && ('thinking' in b)) {
+      delete b.thinking; COMPAT_DROP.thinking[key] = 1; changed = true;
+    } else if (/stream_options|include_usage/i.test(t) && ('stream_options' in b)) {
+      delete b.stream_options; COMPAT_DROP.stream_options[key] = 1; changed = true;
+    } else {
+      /* 报错没说清（很多服务商只回一句 invalid parameter）：按顺序去掉一个可选字段 */
+      for (const f of COMPAT_ORDER) if (f in b) { delete b[f]; changed = true; break; }
+    }
+    if (!changed) return r;
+    r = await send();
+  }
+  return r;
+}
+
 const Engine = {
   ready() { const a = Settings.active(); return a.id === 'custom' ? !!(a.base && a.model && a.key) : !!a.key; },
   yield() { return new Promise(r => setTimeout(r, 0)); },
@@ -3983,22 +4053,12 @@ const Engine = {
        DeepSeek 的 flash 是思考模型，开思考时 1200 tokens 全花在 reasoning 上，
        正文一个字都不出（实测：finish_reason=length、content 为空）——看起来像"这页没字"。 */
     const noThink = a.id === 'deepseek';
-    const mk = (think) => JSON.stringify({
+    const mk = (think) => ({
       model: a.model, messages, temperature: 0, max_tokens: 4000,
       ...(think ? { thinking: { type: 'disabled' } } : {})
     });
-    let r = await fetch(String(a.base).replace(/\/+$/, '') + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-      body: mk(noThink)
-    });
-    if (!r.ok && r.status === 400 && noThink) {
-      r = await fetch(String(a.base).replace(/\/+$/, '') + '/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-        body: mk(false)
-      });
-    }
+    let r = await chatPost(a, mk(noThink));
+    if (!r.ok && r.status === 400 && noThink) r = await chatPost(a, mk(false));
     if (!r.ok) {
       const t = (await r.text()).slice(0, 200);
       if (r.status === 400 && /image|vision|modal|content/i.test(t)) {
@@ -4172,36 +4232,27 @@ const Engine = {
        不需要长思考 —— 开着的话一半输出预算花在 reasoning 上，大材料容易把正文挤没
        （真实事故：23,678 字的材料挂了 19 分钟，最后"模型返回为空"）。
        非 DeepSeek 的服务商可能不认这个参数 → 400 时自动去掉重试。 */
-    const noThink = (opts.noThink !== false) && (a.id === 'deepseek');
+    /* forceThinkOff：不光是 DeepSeek —— 别的服务商的思考模型一样会把输出额度吃光，
+       调用方在"空返回"之后会强制关一次（参数不被接受时 chatPost 会自动去掉）。
+       NO_THINK：这个模型已经证明"一开思考就空返回"，本次会话内直接不发思考 ——
+       否则每蒸一块都要先白烧 30~40 秒才降级（2026-11-12 实测：2,229 字一份白等 41 秒）。 */
+    const cKey = compatKey(a);
+    const noThink = NO_THINK[cKey] === true ||
+      ((opts.noThink !== false) && (a.id === 'deepseek' || opts.forceThinkOff === true));
     const mkBody = (withNoThink, withMax) => {
       const body = { model: a.model, messages, temperature: temp, stream: true, stream_options: { include_usage: true } };
       /* 必须显式给 max_tokens：不给就是模型默认值（常见 4096），
          一大块材料写到一半就断，回来是半个 JSON（买家看到的 position 17594 就是这个）。 */
-      if (withMax !== false) body.max_tokens = MAX_OUT_TOKENS;
+      if (withMax !== false) body.max_tokens = opts.maxOut || MAX_OUT_TOKENS;
       if (withNoThink) body.thinking = { type: 'disabled' };
-      return JSON.stringify(body);
+      return body;
     };
     const ctrl = new AbortController();
-    let r = await fetch(base + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-      body: mkBody(noThink), signal: ctrl.signal
-    });
-    if (!r.ok && noThink && r.status === 400) {
-      r = await fetch(base + '/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-        body: mkBody(false)
-      });
-    }
-    /* 有的服务商不认 max_tokens（400）→ 去掉再试一次，别因为一个可选参数整块失败 */
-    if (!r.ok && r.status === 400) {
-      r = await fetch(base + '/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-        body: mkBody(false, false)
-      });
-    }
+    /* 到底哪个字段被拒，交给 chatPost 按报错判断（temperature / max_tokens / thinking …） */
+    let r = await chatPost(a, mkBody(noThink), ctrl.signal);
+    if (!r.ok && noThink && r.status === 400) r = await chatPost(a, mkBody(false), ctrl.signal);
+    /* 有的服务商连 max_tokens 都不认（400）→ 去掉再试一次，别因为一个可选参数整块失败 */
+    if (!r.ok && r.status === 400) r = await chatPost(a, mkBody(false, false), ctrl.signal);
     if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 160));
     const ct = (r.headers.get('content-type') || '').toLowerCase();
     if (!r.body || ct.includes('application/json')) {
@@ -4214,7 +4265,7 @@ const Engine = {
     }
     const reader = r.body.getReader();
     const dec = new TextDecoder('utf-8');
-    let buf = '', full = '';
+    let buf = '', full = '', finishReason = '';
     /* 90 秒收不到任何数据就中止 —— 原来是死等，实测挂过 19 分钟。
        思考模式下模型会先吐一大段 reasoning_content，那也算"有数据"，所以不会误杀。 */
     const idleMs = opts.idleMs || 90000;
@@ -4240,7 +4291,9 @@ const Engine = {
         try {
           const j = JSON.parse(d);
           if (j.usage) countUsage(j.usage);
-          const dlt = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+          const _ch = (j.choices && j.choices[0]) || {};
+          if (_ch.finish_reason) finishReason = _ch.finish_reason;
+          const dlt = _ch.delta || {};
           // 思维链单独计数（不拼进正文）—— 至少让界面显示"模型在想"，别让人以为卡死
           if (dlt.reasoning_content) { thinkN += String(dlt.reasoning_content).length; if (opts.onThink) opts.onThink(thinkN); }
           const delta = dlt.content || '';
@@ -4255,6 +4308,14 @@ const Engine = {
         if (c) { full = c; if (onDelta) onDelta(c, c.length); }
       } catch (e) { }
     }
+    /* 正文一个字都没有时别只说"返回为空"——把原因带上，
+       下一次日志里就能直接看出是思考吃光额度，还是服务商真的什么都没给。 */
+    if (!full) {
+      if (!noThink) NO_THINK[cKey] = true;   /* 记下来：这个模型开思考就会空 */
+      throw new Error('模型返回为空' + (finishReason === 'length'
+        ? '：输出额度用完了' + (thinkN ? '（思考写了 ' + thinkN + ' 字，正文还没开始）' : '')
+        : (thinkN ? '：思考写了 ' + thinkN + ' 字，正文 0 字' : '：模型什么都没返回')));
+    }
     return full;
   },
   /* ---- 调用模型 ---- */
@@ -4265,20 +4326,19 @@ const Engine = {
     const wantJson = opts.json !== false;
     const temp = (opts.temperature != null) ? opts.temperature : Settings.d.distill.temperature;
     /* 同样关掉思考模式（见 callStream 里的说明） */
-    const noThink = (opts.noThink !== false) && (a.id === 'deepseek');
+    const noThink = (opts.noThink !== false) && (a.id === 'deepseek' || opts.forceThinkOff === true);
     const mk = (jsonMode, withNoThink) => {
       const body = { model: a.model, messages, temperature: temp };
+      /* 一次性调用同样要给输出额度 —— 以前这里没有 max_tokens，
+         流式失败回落后就吃服务商默认（常见 4096），更容易写一半断。 */
+      body.max_tokens = opts.maxOut || MAX_OUT_TOKENS;
       if (jsonMode) body.response_format = { type: 'json_object' };
       if (withNoThink) body.thinking = { type: 'disabled' };
-      return {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + a.key },
-        body: JSON.stringify(body)
-      };
+      return body;
     };
-    let r = await fetch(base + '/chat/completions', mk(wantJson, noThink));
-    if (r.status === 400 && noThink) r = await fetch(base + '/chat/completions', mk(wantJson, false));
-    if (wantJson && r.status === 400) r = await fetch(base + '/chat/completions', mk(false, false));
+    let r = await chatPost(a, mk(wantJson, noThink));
+    if (r.status === 400 && noThink) r = await chatPost(a, mk(wantJson, false));
+    if (wantJson && r.status === 400) r = await chatPost(a, mk(false, false));
     if (!r.ok) {
       const t = (await r.text()).slice(0, 200);
       throw new Error(`${r.status} ${t}`);
@@ -4404,12 +4464,23 @@ ${skills}
 - fusions 给 0-4 条，每条必须跨 ≥2 个来源，steps ≥2 步
 - 没有发现就返回空数组，不要硬凑`;
     if (job) job.msg = '正在找跨来源关联…';
+    /* 这一步（找同一件事 / 找矛盾 / 融合）是真正的推理活，输出又短 —— 深思唯一值得用的地方。
+       默认开；界面上的「关联时多想一下」可关。蒸馏分块里则固定关思考（见 run()）。 */
+    const box = $('#optInferDeep');
+    const wantThink = box ? box.checked : !(Settings.d.infer && Settings.d.infer.deep === false);
     let raw = '';
     const msgs = [{ role: 'system', content: '你是知识图谱分析器。只输出 JSON。' }, { role: 'user', content: ask }];
     try {
-      raw = await this.callStream(msgs, (d, n) => { if (job) { job.recv = n; scheduleJobs(); } });
+      raw = await this.callStream(msgs, (d, n) => { if (job) { job.recv = n; scheduleJobs(); } },
+        {
+          noThink: !wantThink, forceThinkOff: !wantThink, maxOut: 8000,
+          /* 想的时候也要有反馈 —— 关联这步开着思考时可能二十几秒不出正文 */
+          onThink: wantThink ? (n => { if (job) { job.thinking = n; scheduleJobs(); } }) : null
+        });
     } catch (e) {
-      raw = await this.call(msgs);
+      /* 一开思考就把输出额度用光（正文为空）→ 关掉思考再来一次 */
+      if (job) { job.msg = '返回为空，关掉思考再试…'; scheduleJobs(); }
+      raw = await this.call(msgs, { noThink: true, forceThinkOff: true, maxOut: 8000 });
     }
     const out = extractJSON(raw);
     if (job) { job.msg = ''; job.recv = 0; }
@@ -4510,12 +4581,10 @@ ${skills}
     const grow = $('#optGrow') ? $('#optGrow').checked : true;
     /* 断点续传：上一轮已经蒸好的片段直接复用，只补失败的 */
     const resume = $('#optResume') ? $('#optResume').checked : true;
-    /* 深思模式：默认关。实测两者单条质量一致（引文 100%、结构 100%），
-       深思只是条数多约 20%，代价是慢 3 倍、贵 3.5 倍、大材料更容易空返回。 */
-    const deep = $('#optDeep') ? $('#optDeep').checked : false;
-    Settings.d.distill.deep = deep;
+    /* 蒸馏这一步【一律关思考】。实测：同一材料关思考正文更长（3,459 字 vs 1,539 字）、
+       条数与质量没差、快 3 倍便宜 3.5 倍。深思留给「跨来源关联」那一步（见 Engine.grow）。 */
+    Settings.d.distill.deep = false;
     Settings.save();
-    if (deep) logs('深思模式：模型会先想一会儿再答 —— 更全面，但慢约 3 倍');
     Settings.d.distill.goal = (($('#pickGoal') || {}).value || '').trim();
     const ck = (Settings.d.distill.chunk | 0) || 1;      // 分块由 autoChunkFor 决定
     const strategyChanged = false;
@@ -4564,23 +4633,28 @@ ${skills}
                 continue;
               }
               /* ② 没有缓存才真调；失败（尤其 JSON 被截断）自动切半重试 */
+              /* 两次尝试，换的维度不是"同参数重发"：
+                 ① 关思考 + 按这块字数给的输出预算（密集材料多给，稀疏材料不多给）
+                 ② 还空 → 改用一次性返回（有的服务商流式里拿不到正文）
+                 深思模式不参与蒸馏（见上面 run() 里的说明）。 */
               const callOnce = async (ck) => {
                 let raw = '', lastErr = null;
+                const maxOut = outBudgetFor(ck.chars);
                 for (let attempt = 0; attempt < 2 && !raw; attempt++) {
-                  if (attempt) { j.msg = '返回为空，重试中…'; logs(`第 ${ck.i + 1} 块返回为空，重试一次`); renderJobs(); await new Promise(r => setTimeout(r, 1200)); }
-                  try {
-                    raw = await this.callStream(this.promptFor(d, ck),
-                      (delta, n) => { j.recv = n; scheduleJobs(); },
-                      { noThink: !deep, onThink: n => { j.thinking = n; scheduleJobs(); } });
-                  } catch (e) {
-                    lastErr = e;
-                    // 流式不被支持 → 退回一次性调用（不重试）
-                    if (/不支持|stream|400|415/i.test(String(e.message || e))) {
-                      j.msg = '该模型不支持流式，改用一次性返回';
-                      try { raw = await this.call(this.promptFor(d, ck), { noThink: !deep }); } catch (e2) { lastErr = e2; }
-                      break;
-                    }
+                  if (attempt) {
+                    j.msg = '返回为空，改用一次性返回再试…';
+                    logs(`第 ${ck.i + 1} 块返回为空 —— 改用一次性返回再试（本块输出预算 ${fmt(maxOut)}）`, 'err');
+                    renderJobs(); await new Promise(r => setTimeout(r, 1200));
                   }
+                  try {
+                    if (attempt === 0) {
+                      raw = await this.callStream(this.promptFor(d, ck),
+                        (delta, n) => { j.recv = n; scheduleJobs(); },
+                        { noThink: true, forceThinkOff: true, maxOut });
+                    } else {
+                      raw = await this.call(this.promptFor(d, ck), { noThink: true, forceThinkOff: true, maxOut });
+                    }
+                  } catch (e) { lastErr = e; }
                 }
                 if (!raw) throw (lastErr || new Error('模型返回为空'));
                 return extractJSON(raw);
@@ -5079,6 +5153,32 @@ async function removeDoc(d) {
   }
   renderFiles();
 }
+/* 400 的原始体是一段 JSON，按 40 字截给买家看等于没信息
+   （"400 {"error":{"message":"inval" —— 买家截图就长这样）。
+   能把服务商那句原话抠出来就显示原话。 */
+function briefErr(e) {
+  const s = String((e && e.message) || e);
+  const m = /"message"\s*:\s*"([^"]{1,120})"/.exec(s);
+  return m ? m[1] : s;
+}
+/* 服务商的原始报错对买家没有意义（"401 {"error":{"message":"Authentication Fails"）。
+   这里翻成"下一步该动哪" —— 买家少问一轮客服，我们也少一次来回。 */
+function explainErr(m) {
+  const s = String(m || '');
+  if (/Failed to fetch|NetworkError|ERR_/i.test(s))
+    return '连不上这家。浏览器直连被拦住了：换一家，或在「自定义端点」里填一个中转地址。原始信息：' + s;
+  if (/\b401\b|invalid.*(key|authentication)|unauthori/i.test(s))
+    return 'key 不对。多半是复制时多带了空格，或者这把 key 已经被删了 —— 重新复制一次再试。原始信息：' + s;
+  if (/\b402\b|insufficient|balance|quota|arrear/i.test(s))
+    return '这家账户余额不足或额度用完了。充一点，或先换一家。原始信息：' + s;
+  if (/\b404\b|model.*(not.*found|does not exist)|no such model|invalid.*model/i.test(s))
+    return '模型名不对，这家没有这个型号。点「重新拉取」从官方清单里选一个。原始信息：' + s;
+  if (/\b429\b|rate.?limit|too many requests/i.test(s))
+    return '请求太频繁或今天的量到顶了。等一分钟再试。原始信息：' + s;
+  if (/temperature/i.test(s))
+    return '这个模型不接受默认的随机度（新版会自动改成它认的值）。原始信息：' + s;
+  return s;
+}
 async function modelTriage(d) {
   if (d.triage && d.triage.scanned) {
     return toast('这是扫描版，模型只能看到封面和序言那一小段，评出来的结论不准。先用上面的「开始识读」把正文转成文字，再让它评。', 8000);
@@ -5107,7 +5207,7 @@ ${d.text.slice(0, 4000)}
       score: out.score, reasons: (out.reasons || []).slice(0, 4).map(x => String(x)),
       advice: String(out.advice || '')
     };
-  } catch (e) { d._mt = { err: String(e.message || e) }; }
+  } catch (e) { d._mt = { err: explainErr(briefErr(e)) }; }
   afterDocs();
 }
 /* 一键蒸馏：分块由系统决定，不再问用户。
@@ -5154,13 +5254,19 @@ function chunkWhy(chars) {
   const tk = estTokens(chars);
   const n = autoChunkFor(chars);
   const m = fmt(modelCtx());
-  if (n === 1) return `约 ${tk.toLocaleString()} tokens，当前模型是 ${m} 上下文，一次装得下 —— <b>整份送</b>，跨章节的因果链不断。`;
+  /* 把"到底在用什么模型"直接写在这一行：买家以为在用 A、其实在用 B 时，
+     这是不点进设置就能发现问题的唯一线索（2026-11-12：界面写 128,000 上下文，
+     而 deepseek-flash 是 1,048,576 —— 说明模型根本填错了）。 */
+  let mdl = '';
+  try { mdl = esc(String(Settings.active().model || '')); } catch (e) { }
+  const who = mdl ? `当前模型 <b>${mdl}</b>（${m} 上下文）` : `当前模型 ${m} 上下文`;
+  if (n === 1) return `约 ${tk.toLocaleString()} tokens，${who}，一次装得下 —— <b>整份送</b>，跨章节的因果链不断。`;
   const local = (() => { try { return Settings.active().id === 'custom'; } catch (e) { return false; } })();
   const byOut = tk <= chunkBudget();   // 输入装得下，是"输出写不完"才切的
   return `约 ${tk.toLocaleString()} tokens，` +
     (byOut
       ? `虽然 ${m} 上下文装得下，但模型一次写不完这么多（每块上限约 ${fmt(MAX_CHUNK_CHARS)} 字），所以切成 ${n} 段分别蒸再合并。`
-      : `<b>超出当前模型 ${m} 的可用上下文</b>，所以切成 ${n} 段分别蒸再合并。`) +
+      : `<b>超出${who}的可用上下文</b>，所以切成 ${n} 段分别蒸再合并。`) +
     (local
       ? `想整份送：把本地模型的 num_ctx 调大（Ollama：设置里的上下文滑杆，或 OLLAMA_CONTEXT_LENGTH），再到「模型与设置 → 自定义端点」把「上下文长度」改成同一个数。`
       : `切块不会丢信息，跨章的关系会在合并那一步重新连上。`);
@@ -5291,7 +5397,8 @@ function renderJobs() {
     return `<div class="job ${j.st === 'ok' ? 'done' : j.st}">
       <span class="ix">${j.ck.i + 1}<span style="color:var(--txt-4)">/${(j.doc.chunks || []).length}</span></span>
       <span class="tt">${esc(j.doc.name)} · ${esc(j.ck.title)}</span>
-      ${j.st === 'run' ? `<span class="recv num">${j.recv ? '已收 ' + fmt(j.recv) + ' 字' : '等待首个字…'}</span>` : ''}
+      ${j.st === 'run' ? `<span class="recv num">${j.recv ? '已收 ' + fmt(j.recv) + ' 字'
+        : (j.thinking ? '思考中 · 已写 ' + fmt(j.thinking) + ' 字' : '等待首个字…')}</span>` : ''}
       <span class="pg"><i></i></span>
       <span class="msg">${esc(tag)}${j.msg ? ' · ' + esc(j.msg) : ''}${live ? ' · ' + (live / 1000).toFixed(1) + 's' : ''}</span>
     </div>`;
@@ -5303,6 +5410,7 @@ function renderJobs() {
     gRow = `<div class="job ${growJob.st === 'ok' ? 'done' : growJob.st}">
       <span class="ix">＋</span><span class="tt">跨来源关联（生长）</span>
       <span class="pg"><i></i></span>
+      ${growJob.st === 'run' && !growJob.recv && growJob.thinking ? `<span class="recv num">思考中 · 已写 ${fmt(growJob.thinking)} 字</span>` : ''}
       <span class="msg">${tag}${growJob.msg ? ' · ' + esc(growJob.msg) : ''}${growJob.ms ? ' · ' + (growJob.ms / 1000).toFixed(1) + 's' : ''}</span>
     </div>`;
   }
@@ -6404,9 +6512,9 @@ const Views = {
           <label class="switch" style="flex:0 0 auto;margin-left:4px" title="失败后重跑时，已经蒸好的片段直接复用，只补失败的那几份">
             <input type="checkbox" id="optResume" checked><span class="tr"></span>跳过已蒸好的片段
           </label>
-          <label class="switch" style="flex:0 0 auto;margin-left:4px" title="默认关：把材料拆成知识点，不需要长思考，关掉更快更省、也不会出现“想太久最后什么都没写”。
-勾上：让模型多想一会儿，条数通常多 20% 左右（实测引文准确率和结构完整度两者一样），但慢约 3 倍、更贵，超大材料也更容易失败。">
-            <input type="checkbox" id="optDeep"${(Settings.d.distill.deep ? ' checked' : '')}><span class="tr"></span>深思模式（更全面，慢 3 倍）
+          <label class="switch" style="flex:0 0 auto;margin-left:4px" title="这一项只管「找跨来源关联」那一步（蒸完之后，把不同来源之间在讲同一件事 / 互相矛盾的条目连起来）。
+那一步是推理型任务、输出很短，想一下更准；蒸馏本身固定关思考（实测：关思考正文更长、条数一样、快 3 倍、便宜 3.5 倍）。">
+            <input type="checkbox" id="optInferDeep"${(Settings.d.infer && Settings.d.infer.deep === false ? '' : ' checked')}><span class="tr"></span>关联时多想一下（更准，慢约 3 倍）
           </label>
           <span id="runHint" style="font-size:12px;color:var(--txt-3)"></span>
         </div>
@@ -6874,7 +6982,8 @@ const Views = {
         </div>
         <div class="field"><label>接口地址</label><input type="text" id="pb" value="${esc(cfg.base || meta.base)}" class="num"><span class="hint">一般不用改</span></div>
         <label class="switch"><input type="checkbox" id="pr" ${cfg.remember !== false ? 'checked' : ''}><span class="tr"></span>记住 key（关掉则只在本次会话有效）</label>
-        <div class="inline" style="margin-top:14px"><button class="btn pri" id="pSave">保存并拉取模型</button><button class="btn" id="pTest">测试连接</button></div>`;
+        <div class="inline" style="margin-top:14px"><button class="btn pri" id="pSave">${Settings.d.provider === cur ? '保存' : '保存并使用这家'}</button><button class="btn" id="pTest">测试连接</button></div>
+        ${Settings.d.provider === cur ? '' : '<div class="hint" style="margin-top:8px">这家还没启用 —— 点「保存并使用这家」才会真的用它。</div>'}`;
       const sel = $('#pmSel'), inp = $('#pm');
       sel.addEventListener('change', () => { if (sel.value !== '__custom') inp.value = sel.value; else inp.focus(); });
       const doFetch = async (silent) => {
@@ -6901,9 +7010,14 @@ const Views = {
       $('#pSave').addEventListener('click', () => {
         const c = Settings.p(cur);
         c.key = $('#pk').value.trim(); c.model = $('#pm').value.trim(); c.base = $('#pb').value.trim().replace(/\/+$/, ''); c.remember = $('#pr').checked;
+        /* 按钮在"没启用"时写的是「保存并使用这家」——那就必须真切过去。
+           买家现场：配了 key 也点了保存，但没点上面那行小字「就用这家」，
+           结果一直在用另一家，报错还是另一家的（"两个模型都不行"就是这么来的）。 */
+        const wasUsing = Settings.d.provider === cur;
+        if (!wasUsing) Settings.d.provider = cur;
         Settings.save(); Settings.syncStatus();
-        if (c.key && !(c.cachedModels || []).length) { toast('已保存，正在拉取官方模型列表…', 2600); doFetch(true); }
-        else { Views.settings(); toast('已保存'); }
+        if (c.key && !(c.cachedModels || []).length) { toast(wasUsing ? '已保存，正在拉取官方模型列表…' : '已切换为使用 ' + meta.name + '，正在拉取模型列表…', 3000); doFetch(true); }
+        else { Views.settings(); toast(wasUsing ? '已保存' : '已切换为使用：' + meta.name, 3000); }
       });
       $('#pTest').addEventListener('click', () => testConn({
         base: $('#pb').value.trim().replace(/\/+$/, ''), model: $('#pm').value.trim(), key: $('#pk').value.trim(), name: meta.name
@@ -7113,7 +7227,7 @@ function renderChatLog() {
   box.innerHTML = State.msgs.map((m, i) => {
     if (m.role === 'user') return `<div style="align-self:flex-end;max-width:76%"><div style="padding:10px 14px;border-radius:12px 12px 3px 12px;background:var(--accent-bg);border:1px solid var(--accent-line);font-size:13.5px;line-height:1.7;white-space:pre-wrap">${esc(m.content)}</div></div>`;
     if (m.loading) return `<div style="align-self:flex-start"><div class="load"><i></i><i></i><i></i> ${m.mode === 'plain' ? '思考中…' : '检索 + 生成中…'}</div></div>`;
-    if (m.err) return `<div style="align-self:flex-start;max-width:86%"><div style="padding:10px 14px;border-radius:12px 12px 12px 3px;background:var(--surface-2);border:1px solid color-mix(in srgb,var(--err) 40%,transparent);font-size:13px;color:var(--err);line-height:1.7">调用失败：${esc(m.err)}<div style="color:var(--txt-3);margin-top:6px">去「模型与设置」点「测试连接」看具体报错。</div></div></div>`;
+    if (m.err) return `<div style="align-self:flex-start;max-width:86%"><div style="padding:10px 14px;border-radius:12px 12px 12px 3px;background:var(--surface-2);border:1px solid color-mix(in srgb,var(--err) 40%,transparent);font-size:13px;color:var(--err);line-height:1.7">调用失败：${esc(explainErr(m.err))}<div style="color:var(--txt-3);margin-top:6px">去「模型与设置」点「测试连接」看具体报错。</div></div></div>`;
     const live = (i === State.msgs.length - 1) ? ' data-live="1"' : '';
     const tag = (m.hits && m.hits.length)
       ? `<div class="mode-tag">${m.mode === 'cites' ? '引用模式 · 未配置模型' : '依据知识包回答'} · ${m.hits.length} 条</div>`
@@ -7241,9 +7355,7 @@ async function testConn(cfg) {
     const j = await r.json();
     toast(`✅ ${cfg.name} 连接成功 · ${ms}ms · ${(j.choices && j.choices[0] && j.choices[0].message.content || '').slice(0, 20)}`, 4200);
   } catch (e) {
-    const msg = String(e.message || e);
-    const hint = /Failed to fetch/i.test(msg) ? '（浏览器直连被拦或地址不对，试试 OpenRouter 中转，或检查接口地址）' : '';
-    toast('❌ 连接失败：' + msg + hint, 6000);
+    toast('❌ 连接失败：' + explainErr(String(e.message || e)), 6200);
   }
 }
 
